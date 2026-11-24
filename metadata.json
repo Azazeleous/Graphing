@@ -1,0 +1,6 @@
+{
+  "name": "GAIA / NEXUS · 4D Sierpinski & Golden Spiral Engine",
+  "description": "High-performance 4D Six-Axis Sierpinski & Golden Spiral Engine with Web Workers PoW mining, ZK-Fold IVC accumulator, and V5 geodesic lattice.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

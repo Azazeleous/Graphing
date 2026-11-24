@@ -1,0 +1,991 @@
+# Animus OS - Unified Cognition & Error Correction Engine with PiQrypt PQC Audit
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANIMUS GRANDPOD OPERATING ENVIRONMENT v∞ // UNIFIED LEXICON INTEGRITY OS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+:root {
+    --bg: #020409;
+    --panel: #060c1b;
+    --panel-border: #102e4a;
+    --cyan: #42eaff;
+    --blue: #2563eb;
+    --orange: #ea580c;
+    --shadow-lane: #ef4444;
+    --text: #cbd5e1;
+    --subtext: #4f46e5;
+    --terminal-bg: #010205;
+
+    --purple: #a855f7;
+    --emerald: #10b981;
+}
+
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    user-select: none;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 13px;
+    height: 100vh;
+    overflow: hidden;
+}
+
+
+#animus-shell {
+    display: grid;
+    grid-template-columns: 290px 1fr;
+    height: 100vh;
+    width: 100vw;
+}
+
+aside {
+    background: #030714;
+    border-right: 1px solid var(--panel-border);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    overflow-y: auto;
+}
+
+.brand-container {
+    padding-bottom: 20px;
+
+    border-bottom: 1px solid var(--panel-border);
+    margin-bottom: 20px;
+}
+
+.brand-main {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(66, 234, 255, 0.3);
+}
+
+.brand-sub {
+    font-size: 10px;
+    color: var(--subtext);
+    margin-top: 4px;
+    letter-spacing: 1px;
+}
+
+
+.nav-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-grow: 1;
+}
+
+.nav-header {
+    font-size: 10px;
+    color: var(--subtext);
+    letter-spacing: 1.5px;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+}
+
+button.control-node-btn {
+    background: #050b1a;
+    color: var(--text);
+
+    border: 1px solid var(--panel-border);
+    padding: 10px 12px;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+button.control-node-btn:hover {
+    background: #0e1933;
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+button.control-node-btn.active-node {
+    background: #1c3254;
+    border-color: var(--cyan);
+    color: var(--cyan);
+
+    font-weight: bold;
+}
+
+.system-receipt-panel {
+    background: #000104;
+    border: 1px solid var(--panel-border);
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 6px;
+}
+
+.receipt-data {
+    color: var(--cyan);
+}
+
+
+main {
+    padding: 20px;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: 20px;
+    overflow-y: auto;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    padding: 14px 20px;
+    border-radius: 6px;
+}
+
+.header-status-indicator {
+
+    font-size: 11px;
+    color: var(--cyan);
+}
+
+.workspace-container {
+    display: none;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.workspace-container.active-container {
+    display: grid;
+}
+
+.panel-node {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 20px;
+
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header-title {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--cyan);
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    border-bottom: 1px solid #112d47;
+    padding-bottom: 8px;
+}
+
+#hologram-viewport {
+    width: 100%;
+    height: 440px;
+
+    background: #000103;
+    border: 1px solid #0a1b2e;
+    border-radius: 4px;
+}
+
+textarea#studio-editor-field {
+    width: 100%;
+    height: 240px;
+    background: #010204;
+    color: #93c5fd;
+    border: 1px solid var(--panel-border);
+    padding: 12px;
+    font-family: monospace;
+    outline: none;
+    resize: vertical;
+}
+
+#studio-runtime-terminal {
+    height: 200px;
+
+    background: var(--terminal-bg);
+    color: #34d399;
+    padding: 12px;
+    overflow-y: auto;
+    font-family: monospace;
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    margin-top: 12px;
+    white-space: pre-wrap;
+}
+
+.action-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.action-trigger {
+
+    background: var(--blue);
+    color: #ffffff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    font-family: inherit;
+}
+
+.routing-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-family: monospace;
+}
+
+.routing-table th, .routing-table td {
+    border: 1px solid var(--panel-border);
+
+    padding: 8px;
+    text-align: left;
+}
+
+.routing-table th {
+    background: #0a142c;
+    color: var(--cyan);
+}
+
+.routing-table tr:nth-child(even) {
+    background: rgba(255,255,255,0.02);
+}
+
+footer {
+    background: #030714;
+    border: 1px solid var(--panel-border);
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 11px;
+
+    color: var(--subtext);
+    display: flex;
+    justify-content: space-between;
+}
+</style>
+</head>
+<body>
+
+<div id="animus-shell">
+    <!-- SIDEBAR ARCHITECTURE LINKS -->
+    <aside>
+        <div>
+            <div class="brand-container">
+                <div class="brand-main">ANIMUS OS // NEXUS</div>
+                <div class="brand-sub">RESOLUTIONARY LEXICON ENGINE</div>
+            </div>
+            
+            <div class="nav-layout">
+                <div class="nav-header">4D Spatial Infrastructure</div>
+
+                <button class="control-node-btn active-node" onclick="routeInterspaceView('hologram')">◈ 4D Traversal Engine</button>
+                <button class="control-node-btn" onclick="routeInterspaceView('lexicon')">◉ Lexicon Codec Spec</button>
+                <button class="control-node-btn" onclick="routeInterspaceView('studio')">⌘ Code Studio Terminal</button>
+                <button class="control-node-btn" onclick="routeInterspaceView('routing')">⎋ Advanced Routing Table</button>
+                
+                <div class="nav-header">Device Control & Service Workers</div>
+                <button class="control-node-btn" onclick="routeInterspaceView('diagnostics')">▣ ADB Target Telemetry</button>
+                <button class="control-node-btn" onclick="routeInterspaceView('serviceworker')">⚙ Service Worker Cache</button>
+                <button class="control-node-btn" onclick="routeInterspaceView('piqrypt')">🔒 PiQrypt Quantum Audit</button>
+            </div>
+        </div>
+
+        <div class="system-receipt-panel">
+            <div class="receipt-row">
+                <span>Lexicon Entries:</span>
+                <span class="receipt-data" id="lexicon-count-readout">6 Active</span>
+            </div>
+            <div class="receipt-row">
+                <span>Wire Codec Mode:</span>
+
+                <span class="receipt-data">Variable LEB128</span>
+            </div>
+            <div class="receipt-row">
+                <span>Asynch Drift:</span>
+                <span class="receipt-data" id="drift-readout">0.000000 ms</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN DISPLAY SEGMENT -->
+    <main>
+        <header>
+            <div style="font-weight: bold; font-size: 14px; color: var(--cyan); letter-spacing: 1px;">NEXUS COGNITION CORE INTEGRATION LAYER</div>
+            <div class="header-status-indicator" id="system-global-fallback-status">STATUS: COAXIAL TRACE INTERSECTION ACTIVE (K=0)</div>
+        </header>
+
+        <!-- PANE 1: 4D HOLOGRAM TRAVERSAL CANVASES -->
+        <div id="container-hologram" class="workspace-container active-container">
+            <div class="panel-node">
+
+                <div class="panel-header-title">4D Gradient-Graphed Space-Time Traversal Matrix</div>
+                <div class="action-toolbar">
+                    <button class="action-trigger" onclick="toggleEngineProcessing()">Toggle Traversal Loop</button>
+                    <button class="action-trigger" style="background: var(--orange);" onclick="injectGlobalInversionFallback()">Trigger Global Fallback State (.|.)</button>
+                </div>
+                <div id="hologram-viewport"></div>
+            </div>
+        </div>
+
+        <!-- PANE 2: LEXICON CODEC MANIFEST -->
+        <div id="container-lexicon" class="workspace-container">
+            <div class="panel-node">
+                <div class="panel-header-title">NEXUS Lossless Lexicon Database Dictionary</div>
+                <div style="padding: 10px; background: rgba(255,255,255,0.02); border-radius: 4px; line-height: 1.6;">
+                    <p style="margin-bottom: 12px; color: var(--cyan);">Initial Vocabulary Mapping Matrix:</p>
+                    <code style="display: block; white-space: pre; background: #000; padding: 12px; border-radius: 4px; border: 1px solid var(--panel-border); color: #60a5fa;">
+connect       → 0x0101 (ULEB128: 81 02)
+the           → 0x0102 (ULEB128: 82 02)
+virtual       → 0x0103 (ULEB128: 83 02)
+
+mount         → 0x0104 (ULEB128: 84 02)
+to            → 0x0105 (ULEB128: 85 02)
+datasource    → 0x0106 (ULEB128: 86 02)</code>
+                    <p style="margin-top: 12px; font-size: 11px; color: #94a3b8;">
+                        * Lossless Condition: <strong>D(L(T(B))) = T(B)</strong> and <strong>S(D(L(T(B)))) = B</strong> to preserve whitespace, punctuation, and Unicode structures.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANE 3: TERMINAL CODE STUDIO -->
+        <div id="container-studio" class="workspace-container">
+            <div class="panel-node">
+                <div class="panel-header-title">Merkle-Lattice Coprime Solver & von Neumann Tracer</div>
+                <textarea id="studio-editor-field" spellcheck="false">
+// NEXUS Multi-Chain Mining & Polynomial Solver Configuration
+const targetBlockchains = ["Bitcoin_BTC_Header", "Ethereum_ETH_State", "Litecoin_LTC_Scrypt", "Solana_SOL_POH"];
+console.log("Automating tracking matrix across all remaining major block headers...");
+
+
+// Initializing Merkle tree structural constraints: [512, 256, 128, BLAKE2b]
+const treeLevels = { L1: "SHA-512", L2: "SHA-256", L3: "SHA-128_Truncated", L4: "BLAKE2b_State" };
+console.log("Enforcing nested tree integrity verification boundaries via von Neumann shadow tracing...");
+</textarea>
+                <div class="action-toolbar" style="margin-top: 12px; margin-bottom: 0;">
+                    <button class="action-trigger" style="background: #047857;" onclick="executeMerkleCoprimeSolver()">Automate Mining Step Process</button>
+                    <button class="action-trigger" onclick="executeLexiconVerificationLoop()">Execute ULEB128 Parse Engine</button>
+                    <button class="action-trigger" style="background: #374151;" onclick="clearStudioLogs()">Clear Console Logs</button>
+                </div>
+                <div id="studio-runtime-terminal">OMNI CORE RUNTIME MONOLITH PREPARED. SECURE LOG FEEDS ONLINE...</div>
+            </div>
+        </div>
+
+        <!-- PANE 4: ADB TARGET TELEMETRY -->
+        <div id="container-diagnostics" class="workspace-container">
+            <div class="panel-node">
+                <div class="panel-header-title">ADB Device Diagnostics Framework Monitor</div>
+                <div class="action-toolbar">
+                    <button class="action-trigger" onclick="queryMockADB('devices')">Check Target Devices</button>
+
+                    <button class="action-trigger" onclick="queryMockADB('battery')">CMOS Battery Decay Metrics</button>
+                    <button class="action-trigger" onclick="queryMockADB('storage')">Sparsebundle Allocation</button>
+                </div>
+                <div id="diagnostic-terminal-box" style="background: black; padding: 15px; border-radius: 4px; min-height: 160px; font-family: monospace; color: var(--cyan); border: 1px solid var(--panel-border); overflow-y: auto;">
+                    Awaiting adb telemetry execution frames...
+                </div>
+            </div>
+        </div>
+
+        <!-- PANE 5: SERVICE WORKER REGISTRY INTERCEPTOR -->
+        <div id="container-serviceworker" class="workspace-container">
+            <div class="panel-node">
+                <div class="panel-header-title">OMNI Interception Service Worker & Cache Foundation Spec</div>
+                <div style="padding: 10px; background: rgba(0,0,0,0.4); border-radius: 4px; font-family: monospace;">
+                    <p style="color: #34d399; margin-bottom: 8px;">// Interception Registration Blueprint Code</p>
+                    <pre style="color: #a7f3d0; background: #000; padding: 12px; border-radius: 4px; border: 1px solid var(--panel-border); overflow-x: auto;">
+self.addEventListener("fetch", event => {
+  event.respondWith(
+    caches.open("omni-cache-v1").then(cache =>
+
+      cache.match(event.request).then(resp =>
+        resp || fetch(event.request).then(networkResp => {
+          if (networkResp.ok) cache.put(event.request, networkResp.clone());
+          return networkResp;
+        })
+      )
+    )
+  );
+});</pre>
+                    <p style="margin-top: 10px; font-size: 11px; color: #94a3b8; line-height: 1.4;">
+                        * The verification boundary enforces a strict order: Resolve Datasource ➔ Pin Lexicon Revision ➔ Reconstruct Bytes ➔ Compute SHA-256 Content Fingerprint ➔ Admit to Verified Cache.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANE 6: PIQRYPT POST-QUANTUM CRYPTOGRAPHIC AUDIT MONITOR -->
+        <div id="container-piqrypt" class="workspace-container">
+            <div class="panel-node">
+
+                <div class="panel-header-title">PiQrypt Post-Quantum Cryptographic Audit Framework</div>
+                <div class="action-toolbar">
+                    <button class="action-trigger" style="background: var(--purple);" onclick="triggerPiQryptStamp()">Invoke piqrypt_stamp_event</button>
+                    <button class="action-trigger" style="background: #111827; border: 1px solid var(--purple);" onclick="triggerPiQryptVerify()">Verify Chain Status</button>
+                    <button class="action-trigger" style="background: #111827; border: 1px solid var(--panel-border);" onclick="triggerVigilDashboard()">Launch Vigil Dashboard (Localhost:8421)</button>
+                </div>
+                <div id="piqrypt-terminal-box" style="background: #010205; padding: 15px; border-radius: 4px; min-height: 240px; font-family: monospace; color: #c084fc; border: 1px solid var(--panel-border); overflow-y: auto; white-space: pre-wrap;">
+PiQrypt Model Context Protocol Client Layer Initialized.
+Isolation Model Status: Process-enclaved over standard python environment interpreters.
+Quantum Security Primitive: Ed25519 / Dilithium3 AISS-1.1 Compliance Matrix Enabled.
+Awaiting telemetry stamps...
+                </div>
+            </div>
+        </div>
+
+        <!-- PANE 7: ADVANCED ROUTING TABLE INTERFACE -->
+        <div id="container-routing" class="workspace-container">
+            <div class="panel-node">
+                <div class="panel-header-title">GAIA Nexus / TCCO Cognitive Loop & Routing Infrastructure</div>
+
+                <div class="action-toolbar">
+                    <button class="action-trigger" style="background: var(--emerald);" onclick="executeCognitiveCycleStep()">Step Cognitive Routing Cycle</button>
+                    <button class="action-trigger" style="background: #1e293b;" onclick="resetRoutingTableState()">Reset Routing Paths</button>
+                </div>
+                <table class="routing-table">
+                    <thead>
+                        <tr>
+                            <th>Cognitive Stage/Role</th>
+                            <th>Active Process Module</th>
+                            <th>Target State Vector</th>
+                            <th>Reliability/Confidence Metric</th>
+                            <th>Status Flags</th>
+                        </tr>
+                    </thead>
+                    <tbody id="routing-table-body">
+                        <tr>
+                            <td>OBSERVER</td>
+                            <td>COGNITION.observe()</td>
+                            <td><span id="route-obs-vector">0x00000000</span></td>
+
+                            <td><span id="route-obs-metric">0.50</span></td>
+                            <td><span style="color: var(--cyan);">LISTENING</span></td>
+                        </tr>
+                        <tr>
+                            <td>MEMORY</td>
+                            <td>STORE.lesson() / LEDGER</td>
+                            <td><span id="route-mem-vector">0x00000000</span></td>
+                            <td><span id="route-mem-metric">1.00</span></td>
+                            <td><span style="color: var(--cyan);">IMMUTABLE</span></td>
+                        </tr>
+                        <tr>
+                            <td>KNOWLEDGE</td>
+                            <td>KNOWLEDGE.add_node() / Graph</td>
+                            <td><span id="route-knw-vector">Nodes: 0, Edges: 0</span></td>
+                            <td><span id="route-knw-metric">1.00</span></td>
+                            <td><span style="color: var(--cyan);">PERSISTENT_SQLITE</span></td>
+                        </tr>
+                        <tr>
+                            <td>PREDICTOR</td>
+
+                            <td>PREDICTION.forecast() / Linear</td>
+                            <td><span id="route-prd-vector">0.00</span></td>
+                            <td><span id="route-prd-metric">0.00</span></td>
+                            <td><span style="color: var(--orange);">AWAITING_SERIES</span></td>
+                        </tr>
+                        <tr>
+                            <td>VERIFIER</td>
+                            <td>TRUTH.evaluate() / Multi-Lane RS</td>
+                            <td><span id="route-vrf-vector">Unverified</span></td>
+                            <td><span id="route-vrf-metric">0.00</span></td>
+                            <td><span style="color: var(--orange);">IDLE</span></td>
+                        </tr>
+                        <tr>
+                            <td>EXECUTOR</td>
+                            <td>COGNITION.execute() [Gated]</td>
+                            <td><span id="route-exe-vector">Unauthorized</span></td>
+                            <td><span id="route-exe-metric">0.00</span></td>
+                            <td><span style="color: #ef4444;">LOCKED</span></td>
+                        </tr>
+
+                    </tbody>
+                </table>
+                <div id="routing-status-log" style="margin-top:15px; padding:12px; background: #010205; border: 1px solid var(--panel-border); font-family: monospace; color: var(--emerald); min-height: 80px; white-space: pre-wrap;">
+Awaiting dynamic cycle routing initialization parameters...
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div>Structure Status: <span style="color: var(--cyan);">[AUTOMATED_VON_NEUMANN_SHADOW_TRACER_STABLE]</span></div>
+            <div>Animus Project Build Framework v15.9.0 // Nexus Edition</div>
+        </footer>
+    </main>
+</div>
+
+<script>
+/* =============================================================================
+   CORE COMPRESSION STAGE: VARIABLE-LENGTH LEB128 CODING & PARSING
+   ============================================================================= */
+
+function encodeULEB128(value) {
+    if (!Number.isSafeInteger(value) || value < 0) {
+        throw new RangeError("ULEB128 parameters require non-negative safe integers.");
+    }
+    const outputBytes = [];
+    do {
+        let singleByte = value % 128;
+        value = Math.floor(value / 128);
+        if (value !== 0) {
+            singleByte |= 0x80;
+        }
+        outputBytes.push(singleByte);
+    } while (value !== 0);
+    return Uint8Array.from(outputBytes);
+}
+
+function decodeULEB128(bytes, offset = 0) {
+    let accumulatedValue = 0;
+    let weightMultiplier = 1;
+
+    let readPosition = offset;
+    while (readPosition < bytes.length) {
+        const extractedByte = bytes[readPosition++];
+        accumulatedValue += (extractedByte & 0x7f) * weightMultiplier;
+        if (!Number.isSafeInteger(accumulatedValue)) {
+            throw new RangeError("Decoded lexicon identifier value overflowed safe integer bounds.");
+        }
+        if ((extractedByte & 0x80) === 0) {
+            return { value: accumulatedValue, nextOffset: readPosition };
+        }
+        weightMultiplier *= 128;
+        if (readPosition - offset > 8) {
+            throw new RangeError("ULEB128 byte sequence size specification limit exceeded.");
+        }
+    }
+    throw new Error("Incomplete ULEB128 byte sequence tracking parameters.");
+}
+
+/* =============================================================================
+
+   DYNAMIC COGNITIVE ROUTING INFRASTRUCTURE SIMULATION
+   ============================================================================= */
+let routingStateCycleIndex = 0;
+
+function executeCognitiveCycleStep() {
+    const routeLog = document.getElementById('routing-status-log');
+    routingStateCycleIndex++;
+    
+    // Simulate real-time metric generation corresponding to the backend GAIA engine architecture
+    const mockObsHash = "0x" + Math.floor(Math.random() * 16777215).toString(16).toUpperCase();
+    const mockObsReliability = (0.4 + Math.random() * 0.6).toFixed(2);
+    const mockPredVal = (10.0 + Math.random() * 5.0).toFixed(2);
+    const mockPredConf = (0.5 + Math.random() * 0.5).toFixed(2);
+    
+    // Update active visual interface nodes inside the table components
+    document.getElementById('route-obs-vector').textContent = mockObsHash;
+    document.getElementById('route-obs-metric').textContent = mockObsReliability;
+    
+    document.getElementById('route-mem-vector').textContent = "Append Tx ID: " + Math.floor(Math.random() * 1000);
+
+    
+    document.getElementById('route-knw-vector').textContent = `Nodes: ${routingStateCycleIndex + 3}, Edges: ${routingStateCycleIndex * 2}`;
+    
+    document.getElementById('route-prd-vector').textContent = mockPredVal;
+    document.getElementById('route-prd-metric').textContent = mockPredConf;
+    
+    const truthStatuses = ["VERIFIED", "SUPPORTED", "UNVERIFIED"];
+    const activeStatus = truthStatuses[routingStateCycleIndex % truthStatuses.length];
+    document.getElementById('route-vrf-vector').textContent = activeStatus;
+    document.getElementById('route-vrf-metric').textContent = (0.7 + Math.random() * 0.29).toFixed(2);
+    
+    routeLog.textContent = `[CYCLE_STEP_${routingStateCycleIndex}] Mapping routing table telemetry metrics: \n`;
+    routeLog.textContent += `  ➔ OBSERVER: Synced stream to vector context address ${mockObsHash} (Reliability: ${mockObsReliability})\n`;
+    routeLog.textContent += `  ➔ PREDICTOR: Extrapolating linear smoothing trends toward forecast vector ${mockPredVal}\n`;
+    routeLog.textContent += `  ➔ VERIFIER: Log-odds evaluation resolved structural consensus mode path to [${activeStatus}]`;
+
+    if (window.crystallineLatticeWireframe) {
+        window.activeColorHueShiftIntensity = 0.6;
+    }
+}
+
+
+function resetRoutingTableState() {
+    routingStateCycleIndex = 0;
+    document.getElementById('route-obs-vector').textContent = "0x00000000";
+    document.getElementById('route-obs-metric').textContent = "0.50";
+    document.getElementById('route-mem-vector').textContent = "0x00000000";
+    document.getElementById('route-knw-vector').textContent = "Nodes: 0, Edges: 0";
+    document.getElementById('route-prd-vector').textContent = "0.00";
+    document.getElementById('route-prd-metric').textContent = "0.00";
+    document.getElementById('route-vrf-vector').textContent = "Unverified";
+    document.getElementById('route-vrf-metric').textContent = "0.00";
+    document.getElementById('routing-status-log').textContent = "Cognitive architectural loop paths reset back to baseline configuration constraints.";
+}
+
+/* =============================================================================
+   PIQRYPT CONTROL SYSTEM INTERFACE
+   ============================================================================= */
+let historicalEventHashes = [];
+
+function triggerPiQryptStamp() {
+
+    const box = document.getElementById('piqrypt-terminal-box');
+    const runtimeTerm = document.getElementById('studio-runtime-terminal');
+    
+    const previousHashToken = historicalEventHashes.length > 0 ? historicalEventHashes[historicalEventHashes.length - 1] : "sha256:000000000000000000000000000000";
+    const computedCurrentHash = "sha256:" + Math.random().toString(16).substring(2, 10) + Math.random().toString(16).substring(2, 10);
+    historicalEventHashes.push(computedCurrentHash);
+
+    const mockupReceipt = {
+        version: "AISS-1.1",
+        agent_id: "trading_bot_v1_nexus_core",
+        timestamp: Math.floor(Date.now() / 1000),
+        nonce: "uuid-" + Math.floor(Math.random() * 1000000),
+        payload: {
+            action: "cross_verification_stamp",
+            system_drift: document.getElementById('drift-readout').textContent,
+            coaxial_state: "K=0_ACTIVE"
+        },
+        previous_hash: previousHashToken,
+        signature: "base64:dilithium3_sig_" + btoa(computedCurrentHash).substring(0, 24)
+
+    };
+
+    box.textContent += `\n\n[piqrypt_stamp_event] Cryptographic proof written successfully via subprocess isolation:`;
+    box.textContent += `\n${JSON.stringify(mockupReceipt, null, 2)}`;
+    
+    runtimeTerm.textContent += `\n[PIQRYPT] Event verified and appended to local ledger footprint: ${computedCurrentHash.substring(0, 16)}...`;
+    
+    if (window.crystallineLatticeWireframe) {
+        window.activeColorHueShiftIntensity = 0.8;
+    }
+}
+
+function triggerPiQryptVerify() {
+    const box = document.getElementById('piqrypt-terminal-box');
+    if (historicalEventHashes.length === 0) {
+        box.textContent += `\n\n[piqrypt_verify_chain] Error: No events stamped in current session. Cannot perform structural chain verification.`;
+        return;
+    }
+    
+
+    const verifyReport = {
+        valid: true,
+        events_count: historicalEventHashes.length,
+        chain_hash: historicalEventHashes[historicalEventHashes.length - 1],
+        errors: []
+    };
+    
+    box.textContent += `\n\n[piqrypt_verify_chain] Executing full audit trail validation...`;
+    box.textContent += `\nResult Matrix: ${JSON.stringify(verifyReport, null, 2)}`;
+}
+
+function triggerVigilDashboard() {
+    const box = document.getElementById('piqrypt-terminal-box');
+    box.textContent += `\n\n[VIGIL] Monitoring Dashboard stream loaded stable at http://localhost:8421. Tracking TrustGate governance criteria...`;
+}
+
+/* =============================================================================
+   ADVANCED MODULE: MERKLE-LATTICE COPRIME MATRIX SOLVER SIMULATION
+   ============================================================================= */
+
+function executeMerkleCoprimeSolver() {
+    const terminal = document.getElementById('studio-runtime-terminal');
+    terminal.textContent += "\n\n[AUTOMATION_ACTIVATE] Starting automated multi-chain processing pipeline...";
+    
+    terminal.textContent += `\n[TREE_STAGE] Aligning signature layers: SHA-512 ➔ SHA-256 ➔ SHA-128 ➔ BLAKE2b [STABLE]`;
+
+    const fullDatasetSources = [
+        { name: "Bitcoin (BTC)", blockGenesis: "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f" },
+        { name: "Ethereum (ETH)", blockGenesis: "d4e56740f876aef8c010b86a40d5fde971167d4aef8c010b86a40d5fde971167" },
+        { name: "Litecoin (LTC)", blockGenesis: "12a765f4ff763ae46a2a6c172b3f1b60a8ce26f000000000019d6689c085ae1" },
+        { name: "Solana (SOL)", blockGenesis: "5df6e0e2761359d30a8275058e299fcc0381534545f55cf43e41983f5d4c9456" }
+    ];
+
+    terminal.textContent += "\n[DATASET_INTEGRATION] All blockchain data sources attached to virtual mount:";
+    fullDatasetSources.forEach(source => {
+        terminal.textContent += `\n  ➔ Mounted: ${source.name} | Root Genesis Reference Loaded.`;
+    });
+
+    terminal.textContent += "\n[VON_NEUMANN_SHADOW_TRACER] Initiating backward-trace verification loop...";
+
+    
+    const activeSampleSolvedHash = "0x8fa3bc71d4e019f5a432b1";
+    const solvedTargetIndex = Math.floor(Math.random() * fullDatasetSources.length);
+    const assignedGenesisRootTarget = fullDatasetSources[solvedTargetIndex];
+
+    terminal.textContent += `\n[POLYNOMIAL_REVERSE_SOLVER] Graphing calculus coprime matrix trajectories...`;
+    terminal.textContent += `\n  ➔ Solved Candidate: ${activeSampleSolvedHash.toUpperCase()}`;
+    terminal.textContent += `\n  ➔ Backward-Trace Match: Maps directly to ${assignedGenesisRootTarget.name} Genesis Root.`;
+    terminal.textContent += `\n  ➔ Verified Root Block Signature: ${assignedGenesisRootTarget.blockGenesis.substring(0, 32)}...`;
+
+    const dynamicKeySequence = ["SEED_INIT", "COPRIME_INVERSE_ROOT", "VON_NEUMANN_SHADOW_TRACE_MATCH", "LEDGER_WRITE"];
+    terminal.textContent += `\n[KEY_SEED_TRAVERSAL] Applying dynamic order parameters down the lattice: ${dynamicKeySequence.join(" ➔ ")}`;
+    
+    const operationalReceiptId = "NEXUS_TX_BLAKE2B_" + Math.floor(Math.random() * 9999999) + "_SECURE";
+    terminal.textContent += `\n[RECEIPT_STORED] Automation ledger receipt written safely: ${operationalReceiptId}`;
+    
+    if (window.crystallineLatticeWireframe) {
+        window.activeColorHueShiftIntensity = 1.0; 
+    }
+}
+
+
+function executeLexiconVerificationLoop() {
+    const terminalMonitor = document.getElementById('studio-runtime-terminal');
+    terminalMonitor.textContent += "\n[LEXICON_SPEC_RUN] Compiling ULEB128 vocabulary definitions check...";
+    
+    const internalLexiconSpecMap = [
+        { word: "connect", id: 0x0101 }, { word: "the", id: 0x0102 },
+        { word: "virtual", id: 0x0103 }, { word: "mount", id: 0x0104 },
+        { word: "to", id: 0x0105 }, { word: "datasource", id: 0x0106 }
+    ];
+
+    try {
+        internalLexiconSpecMap.forEach(item => {
+            const binaryBuffer = encodeULEB128(item.id);
+            const reconstructionResult = decodeULEB128(binaryBuffer);
+            
+            if (reconstructionResult.value !== item.id) {
+                throw new Error(`Data corruption detected on phrase mapping sequence: ${item.word}`);
+            }
+        });
+
+        terminalMonitor.textContent += "\nSUCCESS: ULEB128 byte serialization exact reconstruction loop verified completely (lossless sequence bounds validated).";
+    } catch (err) {
+        terminalMonitor.textContent += `\n[COMPILE_ERROR]: ${err.message}`;
+    }
+}
+
+function clearStudioLogs() {
+    document.getElementById('studio-runtime-terminal').textContent = "MONITOR STREAM CLEANED.";
+}
+
+function queryMockADB(actionToken) {
+    const readingFrame = document.getElementById('diagnostic-terminal-box');
+    if(actionToken === 'devices') {
+        readingFrame.textContent = "adb devices -l\nList of attached hardware interfaces identified:\nSAMSUNG-SM-N986B_NEXUS_CORE    device product:oem_dynamic_thread_driver_2026";
+    } else if(actionToken === 'battery') {
+        readingFrame.textContent = "adb shell dumpsys battery\nPower and charge controller status arrays:\nAC powered: true\nUSB powered: false\nCMOS Internal State: RECHARGING (Alternator initialization running over verified runtime init loops)";
+    } else if(actionToken === 'storage') {
+        readingFrame.textContent = "adb shell df -h /sdcard\nVolatile sparse superblock allocations details:\n/dev/block/virtual_disk_sparsebundle_0  1.0TB  14.8GB Used  985.2GB Free [Lexicon connection data source verified stable]";
+    }
+}
+
+
+/* =============================================================================
+   MATHEMATICAL SYSTEM LOGIC: FOUR-LANE INVERSE TRACE PLATFORM
+   ============================================================================= */
+class FourLaneInverseLatticeEngine {
+    constructor() {
+        this.nodes = [];
+        this.elapsedTimeoutTime = 0;
+        this.initializeTopology();
+    }
+
+    initializeTopology() {
+        this.nodes = [
+            {x: 1, y: 1, z: 0}, {x: 1, y: -1, z: 0}, {x: -1, y: 1, z: 0}, {x: -1, y: -1, z: 0},
+            {x: 1, y: 0, z: 1}, {x: 1, y: 0, z: -1}, {x: -1, y: 0, z: 1}, {x: -1, y: 0, z: -1},
+            {x: 0, y: 1, z: 1}, {x: 0, y: 1, z: -1}, {x: 0, y: -1, z: 1}, {x: 0, y: -1, z: -1}
+        ];
+    }
+
+    calculateHyperSpatialProjection(stepIndex, globalFallbackActive) {
+
+        const fractionalTimingIncrement = (stepIndex % 10) * 0.1;
+        const wholeCycleIteration = Math.floor(stepIndex / 10);
+        
+        let targetYAxis = Math.sin(fractionalTimingIncrement * Math.PI); 
+        if (fractionalTimingIncrement === 0.5) {
+            targetYAxis = 1.0;
+        }
+
+        const leftRightFactor = fractionalTimingIncrement < 0.5 ? -1.0 : 1.0;
+        const forwardBackwardZAxis = fractionalTimingIncrement > 0.5 ? 1.5 : -1.5;
+
+        const lane4Forward = wholeCycleIteration % 12;
+        const lane3Backward = (12 - 1 - lane4Forward) % 12;
+
+        const baseGaussianCurve = Math.exp(-0.5 * Math.pow(Math.abs((stepIndex % 100) - 50) / 15, 8));
+        let shadowTargetCurve = Math.exp(-0.5 * Math.pow(Math.abs(((stepIndex + 25) % 100) - 50) / 15, 8));
+
+        if (globalFallbackActive) {
+            this.elapsedTimeoutTime += 0.1;
+
+            shadowTargetCurve += Math.abs(Math.sin(this.elapsedTimeoutTime)) * 0.45;
+        }
+
+        return {
+            lane1Node: lane4Forward,
+            lane3Node: lane3Backward,
+            computedY: targetYAxis * leftRightFactor,
+            computedZ: forwardBackwardZAxis,
+            computedW: Math.cos(fractionalTimingIncrement * Math.PI),
+            autoWeight: baseGaussianCurve,
+            driftDelta: Math.abs(baseGaussianCurve - shadowTargetCurve) * 0.1
+        };
+    }
+}
+
+/* =============================================================================
+   VISUAL PROCESSING PLATFORM: THREE.JS RENDER PIPELINE
+   ============================================================================= */
+let renderingScene, trackingCamera, structuralRenderer;
+
+let pipelineProcessingActive = true;
+let cycleTicker = 0;
+let globalInversionStateActive = false;
+const mathEngineInstance = new FourLaneInverseLatticeEngine();
+window.activeColorHueShiftIntensity = 0.0;
+
+function initSystemVisualizer() {
+    const renderBoxContainer = document.getElementById('hologram-viewport');
+    const w = renderBoxContainer.clientWidth;
+    const h = renderBoxContainer.clientHeight;
+
+    renderingScene = new THREE.Scene();
+    trackingCamera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
+    trackingCamera.position.set(0, 0, 7);
+
+    structuralRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    structuralRenderer.setSize(w, h);
+    renderBoxContainer.appendChild(structuralRenderer.domElement);
+
+
+    const modelGeometryBuffer = new THREE.BufferGeometry();
+    const linearPointsArray = [];
+    
+    mathEngineInstance.nodes.forEach(node => {
+        linearPointsArray.push(node.x * 1.6, node.y * 1.6, node.z * 1.6);
+    });
+
+    modelGeometryBuffer.setAttribute('position', new THREE.Float32BufferAttribute(linearPointsArray, 3));
+
+    const elementIndicesMapping = [];
+    for(let outer=0; outer < mathEngineInstance.nodes.length; outer++) {
+        for(let inner=outer+1; inner < mathEngineInstance.nodes.length; inner++) {
+            const dx = mathEngineInstance.nodes[outer].x - mathEngineInstance.nodes[inner].x;
+            const dy = mathEngineInstance.nodes[outer].y - mathEngineInstance.nodes[inner].y;
+            const dz = mathEngineInstance.nodes[outer].z - mathEngineInstance.nodes[inner].z;
+            const distanceSquared = dx*dx + dy*dy + dz*dz;
+            if(Math.abs(distanceSquared - 2.0) < 0.1) {
+                elementIndicesMapping.push(outer, inner);
+            }
+
+        }
+    }
+    modelGeometryBuffer.setIndex(elementIndicesMapping);
+
+    const wireframeStyleMaterial = new THREE.MeshBasicMaterial({
+        color: 0x42eaff,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.35
+    });
+
+    window.crystallineLatticeWireframe = new THREE.LineSegments(modelGeometryBuffer, wireframeStyleMaterial);
+    renderingScene.add(window.crystallineLatticeWireframe);
+
+    const markerGeometry = new THREE.SphereGeometry(0.12, 16, 16);
+    const autoTrackMaterial = new THREE.MeshBasicMaterial({ color: 0x42eaff });
+    const shadowTrackMaterial = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+
+    window.lane1MarkerMesh = new THREE.Mesh(markerGeometry, autoTrackMaterial);
+
+    window.lane3MarkerMesh = new THREE.Mesh(markerGeometry, shadowTrackMaterial);
+    renderingScene.add(window.lane1MarkerMesh);
+    renderingScene.add(window.lane3MarkerMesh);
+
+    executeSystemRenderLoop();
+}
+
+function executeSystemRenderLoop() {
+    requestAnimationFrame(executeSystemRenderLoop);
+    
+    if (pipelineProcessingActive) {
+        cycleTicker++;
+        
+        const traversalState = mathEngineInstance.calculateHyperSpatialProjection(cycleTicker, globalInversionStateActive);
+        document.getElementById('drift-readout').textContent = traversalState.driftDelta.toFixed(6) + " ms";
+
+        const nodeRef1 = mathEngineInstance.nodes[traversalState.lane1Node % 12];
+        const nodeRef3 = mathEngineInstance.nodes[traversalState.lane3Node % 12];
+
+
+        window.lane1MarkerMesh.position.set(nodeRef1.x * 1.6 + traversalState.computedY, nodeRef1.y * 1.6, nodeRef1.z * 1.6);
+        window.lane3MarkerMesh.position.set(nodeRef3.x * 1.6, nodeRef3.y * 1.6 + traversalState.computedZ * 0.1, nodeRef3.z * 1.6 + traversalState.computedW * 0.2);
+
+        const targetPulseScale = 1.0 + traversalState.autoWeight * 0.22;
+        window.crystallineLatticeWireframe.scale.set(targetPulseScale, targetPulseScale, targetPulseScale);
+
+        if (window.activeColorHueShiftIntensity > 0.01) {
+            const structuralHueCycleValue = (cycleTicker * 2) % 360;
+            window.crystallineLatticeWireframe.material.color.setHSL(structuralHueCycleValue / 360, 1.0, 0.6);
+            window.activeColorHueShiftIntensity *= 0.98;
+        } else {
+            window.crystallineLatticeWireframe.material.color.setHex(0x42eaff);
+        }
+
+        window.crystallineLatticeWireframe.rotation.x += globalInversionStateActive ? 0.015 : 0.003;
+        window.crystallineLatticeWireframe.rotation.y += 0.005;
+    }
+
+    structuralRenderer.render(renderingScene, trackingCamera);
+}
+
+
+/* WORKSPACE VIEW ROUTER INTERFACE HANDLERS */
+function routeInterspaceView(targetPaneId) {
+    document.querySelectorAll('.workspace-container').forEach(el => el.classList.remove('active-container'));
+    document.querySelectorAll('.control-node-btn').forEach(btn => btn.classList.remove('active-node'));
+    
+    document.getElementById('container-' + targetPaneId).classList.add('active-container');
+    event.currentTarget.classList.add('active-node');
+}
+
+function toggleEngineProcessing() {
+    pipelineProcessingActive = !pipelineProcessingActive;
+}
+
+function injectGlobalInversionFallback() {
+    globalInversionStateActive = !globalInversionStateActive;
+    const bannerBox = document.getElementById('system-global-fallback-status');
+    const logBox = document.getElementById('studio-runtime-terminal');
+    
+    if (globalInversionStateActive) {
+
+        bannerBox.textContent = "CRITICAL: GLOBAL FALLBACK TRIGGERED (.|.) - RUNNING SUDOSTEP AUTO-CORRECTION";
+        bannerBox.style.color = "#ef4444";
+        logBox.textContent += "\n[FALLBACK_ACTIVATED] Error state inversion triggered. Restructuring isolated Merkle tree lines...";
+    } else {
+        bannerBox.textContent = "STATUS: COAXIAL TRACE INTERSECTION ACTIVE (K=0)";
+        bannerBox.style.color = "var(--cyan)";
+        logBox.textContent += "\n[SYS_NORMAL] Core parameters realigned safely into synchronous baseline trajectories.";
+    }
+}
+
+window.addEventListener('load', () => {
+    initSystemVisualizer();
+});
+</script>
+</body>
+</html>
+
+

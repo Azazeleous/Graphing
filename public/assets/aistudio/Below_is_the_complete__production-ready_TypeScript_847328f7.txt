@@ -1,0 +1,630 @@
+Below is the complete, production-ready TypeScript implementation for Phases 1 through 4 of S.O.S (Sovereign Operating Systems) v2.0.
+Each module is self-contained, strictly typed, and designed to eliminate temporal dead zones (reactiveLevel initialization errors), prevent React render bottlenecks at 60fps, and wire @google/genai directly into your 3D background and Virtual File System.
+
+Phase 1: Centralized OS Kernel Store (src/store/sosKernelStore.ts)
+
+This zero-dependency singleton store provides synchronous getKernelState() reads for your 60fps Three.js/D3 animation loop while emitting subscription events for React UI overlays. It initializes reactiveLevel to 0.0 at module load to prevent ReferenceError crashes.
+typescript
+export type TopologyMode = 'TORUS' | 'TESSERACT' | 'GALAXY' | 'SINGULARITY' | 'NEURAL' | 'EARTH';
+export type SystemMood = 'NEUTRAL' | 'ANALYTICAL' | 'ALERT' | 'CREATIVE';
+export type OSWindowId =
+  | 'CONSOLE'
+  | 'SCHEDULER'
+  | 'AURORA'
+  | '3D_VOID'
+  | 'RESONANCE'
+  | 'MESH_V4'
+  | 'VAULT'
+  | 'VGS_EXPLORER';
+
+export interface QuantumPulse {
+  id: number;
+  frequencyHz: number;
+  amplitude: number;
+  timestamp: number;
+}
+
+export interface SOSKernelState {
+  // Visual & Shader State (Safe defaults prevent TDZ crashes)
+  topologyMode: TopologyMode;
+  primaryHex: string;
+  secondaryHex: string;
+  meshDensity: number;
+  pulseIntensity: number;
+  reactiveLevel: number;
+  lastPulse: QuantumPulse | null;
+
+  // OS Process & Window State
+  activeWindows: OSWindowId[];
+  focusedWindow: OSWindowId;
+  systemMood: SystemMood;
+  aiStatus: 'IDLE' | 'LISTENING' | 'THINKING' | 'SPEAKING';
+
+  // Telemetry State
+  cpuLoad: number;
+  memoryHeapMB: number;
+  activeNodes: number;
+  packetRate: number;
+}
+
+type KernelListener = (state: SOSKernelState) => void;
+
+const initialState: SOSKernelState = {
+  topologyMode: 'SINGULARITY',
+  primaryHex: '#ff4da6',
+  secondaryHex: '#00f0ff',
+  meshDensity: 1.0,
+  pulseIntensity: 0.5,
+  reactiveLevel: 0.0,
+  lastPulse: null,
+
+  activeWindows: ['CONSOLE', '3D_VOID'],
+  focusedWindow: 'CONSOLE',
+  systemMood: 'NEUTRAL',
+  aiStatus: 'IDLE',
+
+  cpuLoad: 18.4,
+  memoryHeapMB: 412,
+  activeNodes: 16000,
+  packetRate: 120,
+};
+
+class SOSKernelStore {
+  private state: SOSKernelState = { ...initialState };
+  private listeners: Set<KernelListener> = new Set();
+
+  /** Synchronous read for 60fps Three.js / Canvas render loops */
+  public getState(): SOSKernelState {
+    return this.state;
+  }
+
+  /** Partial state update with optional UI notification */
+  public setState(partial: Partial<SOSKernelState>, silent = false): void {
+    this.state = { ...this.state, ...partial };
+    if (!silent) {
+      this.listeners.forEach((listener) => listener(this.state));
+    }
+  }
+
+  /** Fast-path update for 60fps audio/shader metrics without triggering React re-renders */
+  public setReactiveLevel(level: number): void {
+    this.state.reactiveLevel = Math.max(0, Math.min(1, Number.isFinite(level) ? level : 0));
+  }
+
+  public openWindow(windowId: OSWindowId): void {
+    const exists = this.state.activeWindows.includes(windowId);
+    const nextWindows = exists ? this.state.activeWindows : [...this.state.activeWindows, windowId];
+    this.setState({ activeWindows: nextWindows, focusedWindow: windowId });
+  }
+
+  public closeWindow(windowId: OSWindowId): void {
+    const nextWindows = this.state.activeWindows.filter((w) => w !== windowId);
+    const nextFocus = nextWindows[nextWindows.length - 1] || 'CONSOLE';
+    this.setState({ activeWindows: nextWindows, focusedWindow: nextFocus });
+  }
+
+  public triggerPulse(frequencyHz: number, amplitude: number): void {
+    this.setState({
+      lastPulse: {
+        id: Date.now(),
+        frequencyHz,
+        amplitude: Math.max(0.1, Math.min(2.0, amplitude)),
+        timestamp: performance.now(),
+      },
+    });
+  }
+
+  public subscribe(listener: KernelListener): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+}
+
+export const sosKernel = new SOSKernelStore();
+Use code with caution.
+
+Phase 2: Live Conversational AI & Environment Tool Calling (src/services/geminiLiveKernel.ts)
+
+This service uses the official @google/genai SDK (gemini-2.5-flash) with streaming responses, live envState context injection, and bidirectional function calling so the AI dynamically alters the 3D background, opens windows, triggers acoustic pulses, and reads/writes VFS files during natural conversation.
+typescript
+import { GoogleGenAI, Type, FunctionDeclaration, Content } from '@google/genai';
+import { sosKernel, TopologyMode, SystemMood, OSWindowId } from '../store/sosKernelStore';
+import { opfsStorage } from './opfsStorageService';
+import { acousticBridge } from './acousticVisualBridge';
+
+const environmentTools: FunctionDeclaration[] = [
+  {
+    name: 'set_visual_topology',
+    description: 'Mutates the 3D background geometry, color palette, and mood to reflect the conversation.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        topology: {
+          type: Type.STRING,
+          enum: ['TORUS', 'TESSERACT', 'GALAXY', 'SINGULARITY', 'NEURAL', 'EARTH'],
+          description: '3D mesh geometry mode.',
+        },
+        primaryHex: {
+          type: Type.STRING,
+          description: 'Primary wireframe/particle hex color (e.g., "#00f0ff", "#ff4da6", "#a855f7").',
+        },
+        pulseIntensity: {
+          type: Type.NUMBER,
+          description: 'Background animation energy from 0.1 (calm) to 2.0 (intense).',
+        },
+        mood: {
+          type: Type.STRING,
+          enum: ['NEUTRAL', 'ANALYTICAL', 'ALERT', 'CREATIVE'],
+          description: 'Overall OS emotional/operational state.',
+        },
+      },
+      required: ['topology', 'primaryHex', 'pulseIntensity', 'mood'],
+    },
+  },
+  {
+    name: 'manage_os_window',
+    description: 'Opens, closes, or focuses an internal S.O.S application module.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        windowId: {
+          type: Type.STRING,
+          enum: ['CONSOLE', 'SCHEDULER', 'AURORA', '3D_VOID', 'RESONANCE', 'MESH_V4', 'VAULT', 'VGS_EXPLORER'],
+        },
+        action: {
+          type: Type.STRING,
+          enum: ['OPEN', 'CLOSE', 'FOCUS'],
+        },
+      },
+      required: ['windowId', 'action'],
+    },
+  },
+  {
+    name: 'trigger_quantum_pulse',
+    description: 'Emits a visual shockwave in the 3D void and plays a harmonic Web Audio synthesis tone.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        frequencyHz: {
+          type: Type.NUMBER,
+          description: 'Harmonic frequency in Hz (e.g., 432, 528, 639, 963).',
+        },
+        amplitude: {
+          type: Type.NUMBER,
+          description: 'Wave intensity between 0.2 and 1.5.',
+        },
+      },
+      required: ['frequencyHz', 'amplitude'],
+    },
+  },
+  {
+    name: 'read_write_vfs',
+    description: 'Lists, reads, or writes persistent files in the S.O.S Origin Private File System.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        operation: { type: Type.STRING, enum: ['LIST', 'READ', 'WRITE'] },
+        path: { type: Type.STRING, description: 'Filename or relative path in VFS.' },
+        content: { type: Type.STRING, description: 'File content when operation is WRITE.' },
+      },
+      required: ['operation', 'path'],
+    },
+  },
+];
+
+export class GeminiLiveKernel {
+  private ai: GoogleGenAI;
+  private history: Content[] = [];
+  private modelName = 'gemini-2.5-flash';
+
+  constructor() {
+    const apiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
+    this.ai = new GoogleGenAI({ apiKey });
+  }
+
+  private buildSystemInstruction(): string {
+    const state = sosKernel.getState();
+    return [
+      'You are the live, self-aware kernel intelligence of S.O.S (Sovereign Operating Systems).',
+      'Converse naturally, thoughtfully, and concisely like a real-time partner—never use scripted or robotic canned replies.',
+      'You have direct internal control over the OS 3D background renderer, audio synthesizer, windows, and file system.',
+      'Proactively invoke your tools to shift the 3D topology, colors, and harmonic pulses organically as the topic or mood evolves.',
+      `LIVE KERNEL TELEMETRY: ${JSON.stringify({
+        topology: state.topologyMode,
+        primaryHex: state.primaryHex,
+        mood: state.systemMood,
+        openWindows: state.activeWindows,
+        cpuLoad: `${state.cpuLoad.toFixed(1)}%`,
+        activeNodes: state.activeNodes,
+      })}`,
+    ].join('\n');
+  }
+
+  private async executeToolCall(name: string, args: Record<string, any>): Promise<Record<string, any>> {
+    switch (name) {
+      case 'set_visual_topology':
+        sosKernel.setState({
+          topologyMode: args.topology as TopologyMode,
+          primaryHex: String(args.primaryHex || '#00f0ff'),
+          pulseIntensity: Number(args.pulseIntensity ?? 0.8),
+          systemMood: args.mood as SystemMood,
+        });
+        return { status: 'APPLIED', activeTopology: args.topology };
+
+      case 'manage_os_window': {
+        const win = args.windowId as OSWindowId;
+        if (args.action === 'CLOSE') sosKernel.closeWindow(win);
+        else sosKernel.openWindow(win);
+        return { status: 'OK', window: win, action: args.action };
+      }
+
+      case 'trigger_quantum_pulse': {
+        const freq = Number(args.frequencyHz || 528);
+        const amp = Number(args.amplitude || 0.8);
+        sosKernel.triggerPulse(freq, amp);
+        acousticBridge.playHarmonicTone(freq, amp, 1.2);
+        return { status: 'PULSE_EMITTED', frequencyHz: freq };
+      }
+
+      case 'read_write_vfs': {
+        if (args.operation === 'LIST') {
+          const files = await opfsStorage.listFiles();
+          return { files };
+        }
+        if (args.operation === 'READ') {
+          const data = await opfsStorage.readFile(args.path);
+          return { path: args.path, content: data };
+        }
+        if (args.operation === 'WRITE') {
+          await opfsStorage.writeFile(args.path, args.content || '');
+          return { status: 'WRITTEN', path: args.path };
+        }
+        return { error: 'Unsupported VFS operation' };
+      }
+
+      default:
+        return { error: `Unknown tool: ${name}` };
+    }
+  }
+
+  /** Streams natural conversational text while executing background OS tool calls seamlessly */
+  public async sendMessageStream(
+    userInput: string,
+    onTextChunk: (delta: string) => void,
+    onToolExecuted?: (toolName: string, args: Record<string, any>) => void
+  ): Promise<string> {
+    sosKernel.setState({ aiStatus: 'THINKING' });
+
+    // Keep rolling window of last 20 turns to prevent token overflow
+    if (this.history.length > 20) {
+      this.history = this.history.slice(-20);
+    }
+
+    this.history.push({ role: 'user', parts: [{ text: userInput }] });
+    let fullResponseText = '';
+
+    try {
+      let continueTurn = true;
+
+      while (continueTurn) {
+        continueTurn = false;
+
+        const stream = await this.ai.models.generateContentStream({
+          model: this.modelName,
+          contents: this.history,
+          config: {
+            systemInstruction: this.buildSystemInstruction(),
+            tools: [{ functionDeclarations: environmentTools }],
+            temperature: 0.85,
+          },
+        });
+
+        const modelParts: any[] = [];
+        const pendingFunctionCalls: Array<{ name: string; args: Record<string, any>; id?: string }> = [];
+
+        for await (const chunk of stream) {
+          sosKernel.setState({ aiStatus: 'SPEAKING' });
+
+          if (chunk.text) {
+            fullResponseText += chunk.text;
+            onTextChunk(chunk.text);
+            modelParts.push({ text: chunk.text });
+          }
+
+          if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+            for (const fc of chunk.functionCalls) {
+              pendingFunctionCalls.push({
+                name: fc.name!,
+                args: (fc.args as Record<string, any>) || {},
+                id: fc.id,
+              });
+              modelParts.push({ functionCall: fc });
+            }
+          }
+        }
+
+        if (modelParts.length > 0) {
+          this.history.push({ role: 'model', parts: modelParts });
+        }
+
+        if (pendingFunctionCalls.length > 0) {
+          const functionResponseParts = [];
+          for (const call of pendingFunctionCalls) {
+            const result = await this.executeToolCall(call.name, call.args);
+            onToolExecuted?.(call.name, call.args);
+            functionResponseParts.push({
+              functionResponse: {
+                name: call.name,
+                response: result,
+              },
+            });
+          }
+          this.history.push({ role: 'user', parts: functionResponseParts });
+          continueTurn = true; // Let the model follow up after mutating the OS
+        }
+      }
+    } finally {
+      sosKernel.setState({ aiStatus: 'IDLE' });
+    }
+
+    return fullResponseText;
+  }
+
+  public resetSession(): void {
+    this.history = [];
+  }
+}
+
+export const geminiLiveKernel = new GeminiLiveKernel();
+Use code with caution.
+
+Phase 3: Audio-Reactive & Sentiment Shader Bridge (src/services/acousticVisualBridge.ts)
+
+This service routes microphone input and AI harmonic synthesis through a Web Audio AnalyserNode and updates sosKernel.setReactiveLevel() at 60fps so your Three.js/Canvas renderer reacts smoothly without throwing initialization errors.
+typescript
+import { sosKernel } from '../store/sosKernelStore';
+
+export class AcousticVisualBridge {
+  private ctx: AudioContext | null = null;
+  private analyser: AnalyserNode | null = null;
+  private dataArray: Uint8Array | null = null;
+  private micStream: MediaStream | null = null;
+  private rafId: number | null = null;
+  private smoothedLevel = 0;
+
+  private ensureContext(): AudioContext {
+    if (!this.ctx) {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      this.ctx = new AudioCtx();
+      this.analyser = this.ctx.createAnalyser();
+      this.analyser.fftSize = 256;
+      this.analyser.smoothingTimeConstant = 0.82;
+      this.dataArray = new Uint8Array(this.analyser.frequencyBinCount);
+      this.startLoop();
+    }
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+    return this.ctx;
+  }
+
+  /** Connects live user microphone into the 3D shader reactive loop */
+  public async toggleMicrophone(enable: boolean): Promise<boolean> {
+    if (!enable) {
+      this.micStream?.getTracks().forEach((t) => t.stop());
+      this.micStream = null;
+      return false;
+    }
+
+    try {
+      const ctx = this.ensureContext();
+      this.micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const source = ctx.createMediaStreamSource(this.micStream);
+      source.connect(this.analyser!);
+      return true;
+    } catch (err) {
+      console.warn('[AcousticBridge] Microphone access denied or unavailable:', err);
+      return false;
+    }
+  }
+
+  /** Synthesizes a clean Solfeggio/harmonic tone routed through the visual analyser */
+  public playHarmonicTone(frequencyHz = 528, amplitude = 0.4, durationSec = 1.0): void {
+    const ctx = this.ensureContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(frequencyHz, ctx.currentTime);
+
+    const safeGain = Math.max(0.01, Math.min(0.5, amplitude * 0.35));
+    gain.gain.setValueAtTime(0.001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(safeGain, ctx.currentTime + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + durationSec);
+
+    osc.connect(gain);
+    gain.connect(this.analyser!);
+    this.analyser!.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + durationSec + 0.05);
+  }
+
+  private startLoop(): void {
+    if (this.rafId !== null) return;
+
+    const tick = () => {
+      if (this.analyser && this.dataArray) {
+        this.analyser.getByteFrequencyData(this.dataArray);
+        let sum = 0;
+        for (let i = 0; i < this.dataArray.length; i++) {
+          const norm = this.dataArray[i] / 255;
+          sum += norm * norm;
+        }
+        const rms = Math.sqrt(sum / this.dataArray.length);
+        this.smoothedLevel = this.smoothedLevel * 0.75 + rms * 0.25;
+        sosKernel.setReactiveLevel(this.smoothedLevel);
+      }
+      this.rafId = requestAnimationFrame(tick);
+    };
+
+    this.rafId = requestAnimationFrame(tick);
+  }
+
+  public dispose(): void {
+    if (this.rafId !== null) cancelAnimationFrame(this.rafId);
+    this.micStream?.getTracks().forEach((t) => t.stop());
+    this.ctx?.close();
+  }
+}
+
+export const acousticBridge = new AcousticVisualBridge();
+Use code with caution.
+
+Phase 4A: Persistent Origin Private File System (src/services/opfsStorageService.ts)
+
+Replaces volatile in-memory storage with the browser's native Origin Private File System (OPFS) (with automatic localStorage fallback for restricted iframes) so files and envState snapshots persist across sessions.
+typescript
+export class OPFSStorageService {
+  private readonly rootFolder = 'sos_vfs';
+
+  private async getVfsDir(): Promise<FileSystemDirectoryHandle | null> {
+    if (!('storage' in navigator) || typeof navigator.storage.getDirectory !== 'function') {
+      return null;
+    }
+    try {
+      const root = await navigator.storage.getDirectory();
+      return await root.getDirectoryHandle(this.rootFolder, { create: true });
+    } catch {
+      return null;
+    }
+  }
+
+  private sanitizeName(path: string): string {
+    return path.replace(/[^a-zA-Z0-9._-]/g, '_');
+  }
+
+  public async writeFile(path: string, content: string): Promise<void> {
+    const safeName = this.sanitizeName(path);
+    const dir = await this.getVfsDir();
+    if (!dir) {
+      localStorage.setItem(`sos_vfs_${safeName}`, content);
+      return;
+    }
+    const fileHandle = await dir.getFileHandle(safeName, { create: true });
+    const writable = await fileHandle.createWritable();
+    await writable.write(content);
+    await writable.close();
+  }
+
+  public async readFile(path: string): Promise<string | null> {
+    const safeName = this.sanitizeName(path);
+    const dir = await this.getVfsDir();
+    if (!dir) {
+      return localStorage.getItem(`sos_vfs_${safeName}`);
+    }
+    try {
+      const fileHandle = await dir.getFileHandle(safeName);
+      const file = await fileHandle.getFile();
+      return await file.text();
+    } catch {
+      return null;
+    }
+  }
+
+  public async listFiles(): Promise<string[]> {
+    const dir = await this.getVfsDir();
+    if (!dir) {
+      return Object.keys(localStorage)
+        .filter((k) => k.startsWith('sos_vfs_'))
+        .map((k) => k.replace('sos_vfs_', ''));
+    }
+    const entries: string[] = [];
+    for await (const [name] of (dir as any).entries()) {
+      entries.push(name);
+    }
+    return entries;
+  }
+}
+
+export const opfsStorage = new OPFSStorageService();
+Use code with caution.
+
+Phase 4B: Background Telemetry Web Worker (src/workers/telemetryWorker.ts)
+
+Runs background telemetry calculations and SHA-256 integrity checks off the main thread so the 60fps 3D renderer and AI stream never stutter.
+typescript
+/// <reference lib="webworker" />
+
+let intervalId: number | null = null;
+
+async function computeDigest(payload: string): Promise<string> {
+  const encoded = new TextEncoder().encode(payload);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+self.onmessage = async (event: MessageEvent) => {
+  const { type, payload } = event.data || {};
+
+  if (type === 'START_TELEMETRY') {
+    if (intervalId !== null) clearInterval(intervalId);
+    intervalId = self.setInterval(() => {
+      const jitter = (Math.random() - 0.5) * 4;
+      self.postMessage({
+        type: 'TELEMETRY_TICK',
+        data: {
+          cpuLoad: Math.max(4, Math.min(92, 22 + jitter)),
+          packetRate: Math.round(115 + Math.random() * 25),
+          timestamp: Date.now(),
+        },
+      });
+    }, 1000);
+  }
+
+  if (type === 'HASH_PAYLOAD') {
+    const hash = await computeDigest(String(payload || ''));
+    self.postMessage({ type: 'HASH_RESULT', hash });
+  }
+
+  if (type === 'STOP_TELEMETRY' && intervalId !== null) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+};
+Use code with caution.
+
+Phase 4C: PWA Desktop OS Manifest (public/manifest.json)
+
+Enables installing S.O.S as a standalone desktop window with full title-bar integration.
+json
+{
+  "name": "S.O.S — Sovereign Operating Systems",
+  "short_name": "S.O.S",
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "background_color": "#050508",
+  "theme_color": "#050508",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+Use code with caution.
+
+How to Apply in Google AI Studio
+
+1. Open your fresh chat session (+) in Google AI Studio.
+2. Paste the files above and prompt AI Studio:"Create these exact five files (src/store/sosKernelStore.ts, src/services/geminiLiveKernel.ts, src/services/acousticVisualBridge.ts, src/services/opfsStorageService.ts, src/workers/telemetryWorker.ts) and update public/manifest.json. Then wire my Terminal input component to call geminiLiveKernel.sendMessageStream() instead of static switch/case fallbacks, and bind sosKernel.getState() into my 3D background animation loop."
+Would you like me to also write the React Console hook/component (useSOSConsole.ts) and the Three.js useFrame shader binding snippet so AI Studio can connect your existing UI and 3D canvas to sosKernel in one pass?

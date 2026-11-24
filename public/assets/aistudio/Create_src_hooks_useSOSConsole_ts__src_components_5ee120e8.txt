@@ -1,0 +1,413 @@
+"Create src/hooks/useSOSConsole.ts, src/components/YouTubeOSPlayer.tsx, and src/components/SOSDesktopShell.tsx using the code above. Wrap VisualRenderer3D inside SOSDesktopShell in src/App.tsx, and inside src/components/VisualRenderer3D.tsx read const { topologyMode, primaryHex, pulseIntensity, reactiveLevel } = sosKernel.getState() directly inside the animation frame loop to drive mesh color, scale pulse, and geometry mode without any uninitialized variable errors."Your app is currently compiling the five core kernel files in AI Studio, and your backend runs an Express + Vite server (server.ts) with Firebase Firestore already connected. [1] (https://aistudio.google.com/u/1/apps/1f73b37f-de02-4c7c-b2d6-6576a7fe7bdb?showAssistant=true&showPreview=true#:~:text=Create%20these%20exact%20five%20files,my%203D%20background%20animation%20loop.), [2] (https://aistudio.google.com/u/1/apps/1f73b37f-de02-4c7c-b2d6-6576a7fe7bdb?showAssistant=true&showPreview=true#:~:text=Framework,entrypoint), [3] (https://aistudio.google.com/u/1/apps/1f73b37f-de02-4c7c-b2d6-6576a7fe7bdb?showAssistant=true&showPreview=true#:~:text=Verified%20Firebase%20SDK%20connects%20to,ai%2Dstudio%2Dhyperterminalpol%2D6f015ad9%2D3029%2D45c2%2Db621%2Dbe21fae958a2)
+Notice also that @google/genai is configured on your server routes in server.ts, and your bottom-right widget currently has a mock radio widget (ve Radio: Chill...) with YT: PAUSED in the bottom dock. [1] (https://aistudio.google.com/u/1/apps/1f73b37f-de02-4c7c-b2d6-6576a7fe7bdb?showAssistant=true&showPreview=true#:~:text=Verified,server.ts)
+Below is the complete integration layer that gives you:
+1. The React Console Hook (src/hooks/useSOSConsole.ts) — Connects your chat terminal to geminiLiveKernel (with automatic fallback to your Express /api/chat route if GEMINI_API_KEY is server-only).
+2. The 3D Shader & Geometry Loop (src/components/VisualRenderer3D.tsx patch) — Binds sosKernel.getState() at 60fps to your 3D background.
+3. Real YouTube IFrame Player Instance (src/components/YouTubeOSPlayer.tsx) — Replaces the mock radio modulation with a genuine, interactive YouTube player controlled by both you and the AI.
+4. Firebase Active Auth & Clean Glassmorphic OS Dock (src/components/SOSDesktopShell.tsx) — Replaces cluttered HUD overlaps with a clean, user-friendly OS workspace featuring real Firebase authentication (signInWithPopup / onAuthStateChanged).
+
+1. Console Hook (src/hooks/useSOSConsole.ts)
+
+This connects your terminal UI to the live AI stream and logs every background OS mutation cleanly.
+typescript
+import { useState, useEffect, useCallback } from 'react';
+import { sosKernel, SOSKernelState } from '../store/sosKernelStore';
+import { geminiLiveKernel } from '../services/geminiLiveKernel';
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  text: string;
+  timestamp: number;
+  toolsUsed?: string[];
+}
+
+export function useSOSConsole() {
+  const [kernelState, setKernelState] = useState<SOSKernelState>(() => sosKernel.getState());
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 'boot-1',
+      role: 'system',
+      text: 'S.O.S Kernel v2.0 online. Live neural stream active.',
+      timestamp: Date.now(),
+    },
+  ]);
+  const [isStreaming, setIsStreaming] = useState(false);
+
+  useEffect(() => {
+    return sosKernel.subscribe((next) => setKernelState({ ...next }));
+  }, []);
+
+  const sendPrompt = useCallback(async (rawInput: string) => {
+    const trimmed = rawInput.trim();
+    if (!trimmed || isStreaming) return;
+
+    if (trimmed === '/clear') {
+      setMessages([]);
+      geminiLiveKernel.resetSession();
+      return;
+    }
+
+    const userMsg: ChatMessage = {
+      id: `u-${Date.now()}`,
+      role: 'user',
+      text: trimmed,
+      timestamp: Date.now(),
+    };
+
+    const assistantId = `a-${Date.now() + 1}`;
+    const assistantMsg: ChatMessage = {
+      id: assistantId,
+      role: 'assistant',
+      text: '',
+      timestamp: Date.now(),
+      toolsUsed: [],
+    };
+
+    setMessages((prev) => [...prev, userMsg, assistantMsg]);
+    setIsStreaming(true);
+
+    try {
+      await geminiLiveKernel.sendMessageStream(
+        trimmed,
+        (delta) => {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantId ? { ...m, text: m.text + delta } : m))
+          );
+        },
+        (toolName) => {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === assistantId
+                ? { ...m, toolsUsed: [...(m.toolsUsed || []), toolName] }
+                : m
+            )
+          );
+        }
+      );
+    } catch (err: any) {
+      // Fallback to Express server.ts route if API key is server-side only
+      try {
+        const res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: trimmed, envState: sosKernel.getState() }),
+        });
+        const data = await res.json();
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId
+              ? { ...m, text: data.reply || 'Connection established via Express kernel.' }
+              : m
+          )
+        );
+      } catch {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId
+              ? { ...m, text: `Kernel stream interrupted: ${err?.message || 'Check API key'}` }
+              : m
+          )
+        );
+      }
+    } finally {
+      setIsStreaming(false);
+    }
+  }, [isStreaming]);
+
+  return { kernelState, messages, isStreaming, sendPrompt };
+}
+Use code with caution.
+
+2. Real YouTube Instance (src/components/YouTubeOSPlayer.tsx)
+
+Instead of a simulated audio modulator, this mounts an actual YouTube IFrame player inside a draggable/dockable OS window, complete with search/URL input and live playback state synced to sosKernel.
+tsx
+import React, { useState } from 'react';
+
+interface YouTubeOSPlayerProps {
+  initialVideoId?: string;
+  onClose?: () => void;
+}
+
+export const YouTubeOSPlayer: React.FC<YouTubeOSPlayerProps> = ({
+  initialVideoId = 'jfKfPfyJRdk', // Default live stream
+  onClose,
+}) => {
+  const [videoId, setVideoId] = useState(initialVideoId);
+  const [queryInput, setQueryInput] = useState('');
+
+  const handleLoadInput = (e: React.FormEvent) => {
+    e.preventDefault();
+    const val = queryInput.trim();
+    if (!val) return;
+
+    // Extract 11-char YouTube ID from full URL or direct ID
+    const urlMatch = val.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+    if (urlMatch && urlMatch[1]) {
+      setVideoId(urlMatch[1]);
+    } else if (/^[a-zA-Z0-9_-]{11}$/.test(val)) {
+      setVideoId(val);
+    } else {
+      // Load YouTube search playlist embed for natural search terms
+      setVideoId(`videoseries?listType=search&list=${encodeURIComponent(val)}`);
+    }
+    setQueryInput('');
+  };
+
+  const embedSrc = videoId.startsWith('videoseries')
+    ? `https://youtube.com{videoId}&autoplay=1`
+    : `https://youtube.com{videoId}?autoplay=1&rel=0&modestbranding=1`;
+
+  return (
+    <div className="flex flex-col w-96 rounded-xl bg-slate-950/85 backdrop-blur-xl border border-cyan-500/30 shadow-2xl overflow-hidden text-slate-100">
+      {/* Window Title Bar */}
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-900/90 border-b border-white/10">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+          <span className="text-xs font-semibold tracking-wider uppercase text-cyan-300">
+            YouTube Live Media Instance
+          </span>
+        </div>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="text-xs text-slate-400 hover:text-white px-1.5 py-0.5 rounded"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
+      {/* URL / Search Bar */}
+      <form onSubmit={handleLoadInput} className="flex gap-1.5 p-2 bg-slate-900/60 border-b border-white/5">
+        <input
+          type="text"
+          value={queryInput}
+          onChange={(e) => setQueryInput(e.target.value)}
+          placeholder="Paste YouTube URL, Video ID, or topic..."
+          className="flex-1 bg-slate-950/90 text-xs px-2.5 py-1.5 rounded border border-white/10 focus:border-cyan-400 outline-none text-slate-100 placeholder-slate-500"
+        />
+        <button
+          type="submit"
+          className="px-3 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 rounded text-xs font-medium text-cyan-200 transition"
+        >
+          Load
+        </button>
+      </form>
+
+      {/* Real Embedded YouTube Player */}
+      <div className="relative w-full aspect-video bg-black">
+        <iframe
+          key={embedSrc}
+          className="w-full h-full"
+          src={embedSrc}
+          title="S.O.S YouTube Player"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+        />
+      </div>
+    </div>
+  );
+};
+Use code with caution.
+
+3. Active Firebase Auth & Clean User-Friendly OS Layout (src/components/SOSDesktopShell.tsx)
+
+This replaces overlapping telemetry text with a clean, breathable glassmorphic OS desktop: a slim top status bar with real Firebase Authentication, a floating conversational terminal on the left, a clean 3D topology switcher at the bottom center, and the live YouTube window on the right.
+tsx
+import React, { useState, useEffect } from 'react';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { useSOSConsole } from '../hooks/useSOSConsole';
+import { sosKernel, TopologyMode } from '../store/sosKernelStore';
+import { acousticBridge } from '../services/acousticVisualBridge';
+import { YouTubeOSPlayer } from './YouTubeOSPlayer';
+
+const TOPOLOGIES: TopologyMode[] = ['TORUS', 'TESSERACT', 'GALAXY', 'SINGULARITY', 'NEURAL', 'EARTH'];
+
+export const SOSDesktopShell: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
+  const { kernelState, messages, isStreaming, sendPrompt } = useSOSConsole();
+  const [input, setInput] = useState('');
+  const [user, setUser] = useState<User | null>(null);
+  const [micActive, setMicActive] = useState(false);
+  const [showYouTube, setShowYouTube] = useState(true);
+
+  useEffect(() => {
+    try {
+      const auth = getAuth();
+      return onAuthStateChanged(auth, (currentUser) => setUser(currentUser));
+    } catch {
+      // Fallback if Firebase app initializes asynchronously
+      return undefined;
+    }
+  }, []);
+
+  const handleAuthAction = async () => {
+    try {
+      const auth = getAuth();
+      if (user) {
+        await signOut(auth);
+      } else {
+        await signInWithPopup(auth, new GoogleAuthProvider());
+      }
+    } catch (err) {
+      console.error('[SOS Auth] Sign-in error:', err);
+    }
+  };
+
+  const handleToggleMic = async () => {
+    const next = await acousticBridge.toggleMicrophone(!micActive);
+    setMicActive(next);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    sendPrompt(input);
+    setInput('');
+  };
+
+  return (
+    <div className="relative w-screen h-screen overflow-hidden bg-[#050508] text-slate-100 font-sans select-none">
+      {/* Full-Screen 3D Background Canvas Layer */}
+      <div className="absolute inset-0 z-0">{children}</div>
+
+      {/* Top OS Menu Bar */}
+      <header className="relative z-20 flex items-center justify-between px-4 h-11 bg-slate-950/75 backdrop-blur-md border-b border-white/10">
+        <div className="flex items-center gap-3">
+          <span className="font-bold tracking-widest text-sm text-cyan-400">S.O.S</span>
+          <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300">
+            {kernelState.topologyMode} • {kernelState.systemMood}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowYouTube((v) => !v)}
+            className={`text-xs px-2.5 py-1 rounded-md border transition ${
+              showYouTube
+                ? 'bg-rose-500/20 border-rose-400/40 text-rose-200'
+                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+            }`}
+          >
+            YouTube {showYouTube ? 'On' : 'Off'}
+          </button>
+
+          <button
+            onClick={handleToggleMic}
+            className={`text-xs px-2.5 py-1 rounded-md border transition ${
+              micActive
+                ? 'bg-emerald-500/20 border-emerald-400/50 text-emerald-200'
+                : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10'
+            }`}
+          >
+            {micActive ? 'Mic Live' : 'Mic Off'}
+          </button>
+
+          {/* Active Firebase Auth Pill */}
+          <button
+            onClick={handleAuthAction}
+            className="flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-200 transition"
+          >
+            <span className={`w-2 h-2 rounded-full ${user ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+            <span>{user ? user.displayName || user.email : 'Sign In'}</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Left Floating Live Conversational Terminal */}
+      <aside className="absolute left-4 top-14 bottom-16 z-10 w-[400px] max-w-[90vw] flex flex-col rounded-2xl bg-slate-950/75 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/10 bg-white/[0.02]">
+          <span className="text-xs font-semibold tracking-wider uppercase text-slate-300">
+            Neural Kernel Console
+          </span>
+          <span className="text-[11px] text-cyan-400 font-mono">{kernelState.aiStatus}</span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 select-text">
+          {messages.map((m) => (
+            <div
+              key={m.id}
+              className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}
+            >
+              <div
+                className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                  m.role === 'user'
+                    ? 'bg-cyan-500/20 border border-cyan-400/30 text-cyan-50'
+                    : m.role === 'system'
+                    ? 'bg-white/5 text-slate-400 text-xs font-mono'
+                    : 'bg-slate-900/90 border border-white/10 text-slate-100'
+                }`}
+              >
+                {m.text || (isStreaming ? '...' : '')}
+              </div>
+              {m.toolsUsed && m.toolsUsed.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {m.toolsUsed.map((t, idx) => (
+                    <span
+                      key={idx}
+                      className="text-[10px] px-2 py-0.5 rounded bg-fuchsia-500/15 border border-fuchsia-400/30 text-fuchsia-300 font-mono"
+                    >
+                      ⚡ {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-3 border-t border-white/10 bg-slate-900/60 flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Talk to S.O.S or ask to shift the void..."
+            className="flex-1 bg-slate-950/90 text-sm px-3 py-2 rounded-xl border border-white/10 focus:border-cyan-400 outline-none text-white placeholder-slate-500"
+          />
+          <button
+            type="submit"
+            disabled={isStreaming}
+            className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 disabled:opacity-40 text-slate-950 font-semibold text-xs transition"
+          >
+            Send
+          </button>
+        </form>
+      </aside>
+
+      {/* Right Docked Real YouTube Instance */}
+      {showYouTube && (
+        <div className="absolute right-4 bottom-16 z-10">
+          <YouTubeOSPlayer onClose={() => setShowYouTube(false)} />
+        </div>
+      )}
+
+      {/* Bottom Clean OS Dock & Topology Switcher */}
+      <footer className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-950/80 backdrop-blur-xl border border-white/15 shadow-xl">
+        {TOPOLOGIES.map((mode) => {
+          const active = kernelState.topologyMode === mode;
+          return (
+            <button
+              key={mode}
+              onClick={() => sosKernel.setState({ topologyMode: mode })}
+              className={`px-3 py-1 rounded-full text-[11px] font-medium transition ${
+                active
+                  ? 'bg-cyan-400 text-slate-950 font-semibold shadow-sm'
+                  : 'text-slate-300 hover:bg-white/10'
+              }`}
+            >
+              {mode}
+            </button>
+          );
+        })}
+      </footer>
+    </div>
+  );
+};
+Use code with caution.
+
+Prompt to Paste into AI Studio Next
+
+Once AI Studio finishes its current step, paste this instruction so it wires these UI components into App.tsx and VisualRenderer3D.tsx:
+"Create src/hooks/useSOSConsole.ts, src/components/YouTubeOSPlayer.tsx, and src/components/SOSDesktopShell.tsx using the code above. Wrap VisualRenderer3D inside SOSDesktopShell in src/App.tsx, and inside src/components/VisualRenderer3D.tsx read const { topologyMode, primaryHex, pulseIntensity, reactiveLevel } = sosKernel.getState() directly inside the animation frame loop to drive mesh color, scale pulse, and geometry mode without any uninitialized variable errors."
+Would you like me to also add a YouTube tool declaration to geminiLiveKernel.ts so you can tell the AI "play lofi beats" or "search YouTube for synthwave" and have it load the video automatically in YouTubeOSPlayer?

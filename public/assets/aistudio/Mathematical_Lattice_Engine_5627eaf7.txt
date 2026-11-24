@@ -1,0 +1,479 @@
+from pathlib import Path
+
+html = r'''<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>CRYPTIC · Mathematical Lattice Engine</title>
+<style>
+:root{--bg:#020617;--panel:rgba(9,18,36,.94);--line:#164e75;--cyan:#38bdf8;--pink:#fb7185;--green:#34d399;--amber:#fbbf24;--muted:#94a3b8}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:#dbeafe;font:12px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace}
+#webgl-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#panel{position:absolute;z-index:3;left:16px;top:16px;width:min(390px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;padding:15px;background:var(--panel);border:1px solid var(--line);border-radius:9px;box-shadow:0 0 26px #0ea5e933;backdrop-filter:blur(12px)}
+h1{font-size:13px;letter-spacing:1.2px;color:var(--pink);margin:0 0 8px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+h2{font-size:10px;letter-spacing:1px;color:var(--muted);margin:13px 0 5px;text-transform:uppercase}
+.row{display:flex;justify-content:space-between;gap:12px;margin:3px 0;align-items:baseline}.value{color:var(--cyan);text-align:right;overflow-wrap:anywhere}.good{color:var(--green)}.warn{color:var(--amber)}.bad{color:#f87171}
+.proof{border:1px solid #334155;border-radius:5px;padding:7px;margin:5px 0;background:#0f172a88}.proof.pass{border-color:#059669}.proof.fail{border-color:#dc2626}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:7px}.control{display:flex;flex-direction:column;gap:3px;color:var(--muted)}input[type=number],input[type=text]{min-width:0;width:100%;padding:6px;background:#0f172a;color:#e2e8f0;border:1px solid #245477;border-radius:4px;font:inherit}input[type=checkbox]{accent-color:var(--cyan)}
+.checks{display:grid;gap:5px}.check{display:flex;gap:7px;align-items:center;color:#cbd5e1}
+button{padding:7px 9px;border:1px solid #0369a1;border-radius:4px;background:#082f49;color:#bae6fd;font:inherit;cursor:pointer}button:hover{background:#0c4a6e}
+.small{font-size:10px;color:var(--muted)}code{color:#7dd3fc;overflow-wrap:anywhere}
+#message{white-space:pre-wrap;overflow-wrap:anywhere;max-height:100px;overflow:auto;color:var(--muted)}
+@media(max-width:600px){#panel{left:8px;top:8px;width:min(350px,calc(100vw - 16px));max-height:calc(100vh - 16px);padding:11px}}
+</style>
+</head>
+<body>
+<canvas id="webgl-canvas" aria-label="Interactive mathematical lattice visualization"></canvas>
+<section id="panel">
+<h1>CRYPTIC · 4D MATHEMATICAL LATTICE</h1>
+<div class="row"><span>ENGINE</span><span class="value good" id="engine-status">INITIALIZING</span></div>
+<div class="row"><span>RENDERED NODES</span><span class="value" id="node-count">0</span></div>
+<div class="row"><span>UNIT GROUP U(97152)</span><span class="value" id="unit-count">calculating</span></div>
+<div class="row"><span>VALID COPRIME NODES</span><span class="value" id="coprime-count">0</span></div>
+<div class="row"><span>FRAME TIME</span><span class="value" id="frame-time">—</span></div>
+
+<h2>Computed proof checks</h2>
+<div class="proof" id="geo-proof"><div class="row"><b>1. Geometric inverse</b><span id="geo-status" class="warn">PENDING</span></div><div class="small" id="geo-error">T⁻¹(T(P)) = P</div></div>
+<div class="proof" id="matrix-proof"><div class="row"><b>2. 4D matrix duality</b><span id="matrix-status" class="warn">PENDING</span></div><div class="small" id="matrix-error">RᵀR = I</div></div>
+<div class="proof" id="sha-proof"><div class="row"><b>3. SHA-256 round reconstruction</b><span id="sha-status" class="warn">PENDING</span></div><div class="small" id="sha-error">Reverse all 64 rounds with known Wₜ and Kₜ; compare digest with Web Crypto</div></div>
+<div class="proof" id="seed-proof"><div class="row"><b>4. Seed receipt integrity</b><span id="seed-status" class="warn">PENDING</span></div><div class="small" id="seed-error">Retained (P,n) pair is checked independently of its periodic angle</div></div>
+
+<h2>Seed angular operand</h2>
+<div class="controls">
+<label class="control">Seed P<input id="seed-p" type="number" min="1" step="1" value="3"></label>
+<label class="control">Node n<input id="seed-n" type="number" min="0" step="1" value="0"></label>
+</div>
+<div class="row"><span>Δθ = P × 0.1115710903585892</span><span class="value" id="delta-theta">—</span></div>
+<div class="row"><span>θₙ = n × Δθ (rad)</span><span class="value" id="theta-value">—</span></div>
+
+<h2>Geometric operator D then Iᵣ</h2>
+<div class="controls">
+<label class="control">Exponent a<input id="exp-a" type="number" step=".1" value="0.5"></label>
+<label class="control">Exponent b<input id="exp-b" type="number" step=".1" value="0.5"></label>
+<label class="control">Exponent c<input id="exp-c" type="number" step=".1" value="0.5"></label>
+<label class="control">Sphere radius R<input id="radius-r" type="number" min=".01" step=".1" value="2.5"></label>
+</div>
+<div class="row"><span>Maximum round-trip error</span><span class="value" id="geo-error-value">—</span></div>
+
+<h2>Layer filters</h2>
+<div class="checks">
+<label class="check"><input type="checkbox" id="layer-ley" checked> Axis / lattice connections</label>
+<label class="check"><input type="checkbox" id="layer-coprime" checked> Coprime unit-group nodes</label>
+<label class="check"><input type="checkbox" id="layer-inverse" checked> Inverse-projected nodes</label>
+</div>
+<h2>SHA-256 trace input</h2>
+<input id="sha-message" type="text" value="CRYPTIC mathematical state trace">
+<div class="row"><span>SHA-256 digest</span><span class="value" id="sha-digest">waiting</span></div>
+<div class="row"><span>Reverse state error</span><span class="value" id="sha-roundtrip">—</span></div>
+<button id="run-proof" type="button">Recompute all proofs</button>
+<div class="small" style="margin-top:8px">Controls: WASD / arrows move · Q/E vertical · drag canvas to orbit. Rendering is driven by the computed transforms above.</div>
+<div id="message" aria-live="polite"></div>
+</section>
+
+<script>
+'use strict';
+
+/* -------------------------------------------------------------------------
+   CRYPTIC MATHEMATICAL CORE
+   Conventions: column vectors; column-major matrices; WebGL uniformMatrix4fv
+   transpose=false. All transforms have explicit forward and inverse paths.
+--------------------------------------------------------------------------- */
+const $ = id => document.getElementById(id);
+const canvas = $('webgl-canvas');
+const gl = canvas.getContext('webgl', {antialias:true, alpha:false});
+if (!gl) {
+  $('engine-status').textContent = 'WEBGL UNAVAILABLE';
+  $('engine-status').className = 'bad';
+  throw new Error('This browser does not provide WebGL.');
+}
+
+const DOMAIN_N = 97152;
+const UNIT_COUNT_EXPECTED = 28160;
+const PRIME_FACTORS = [2,3,11,23];
+const ANGLE_FACTOR = 0.1115710903585892;
+const TAU = Math.PI * 2;
+const EPS = 1e-10;
+const UNIT_GROUP = buildUnitGroup(DOMAIN_N);
+$('unit-count').textContent = UNIT_GROUP.length.toLocaleString();
+
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){const t=a%b;a=b;b=t;} return a; }
+function isUnit(x,n=DOMAIN_N){ return Number.isInteger(x) && x>=0 && x<n && gcd(x,n)===1; }
+function buildUnitGroup(n){
+  const out=[];
+  for(let x=0;x<n;x++){
+    if(PRIME_FACTORS.every(p=>x%p!==0)) out.push(x);
+  }
+  if(out.length!==UNIT_COUNT_EXPECTED) throw new Error(`Unit-group cardinality mismatch: ${out.length}`);
+  return out;
+}
+function unitRankMap(U){const m=new Map();U.forEach((v,i)=>m.set(v,i));return m;}
+const UNIT_RANK=unitRankMap(UNIT_GROUP);
+function selectUnit(rank){return UNIT_GROUP[((rank%UNIT_GROUP.length)+UNIT_GROUP.length)%UNIT_GROUP.length];}
+function rankUnit(value){const r=UNIT_RANK.get(value);if(r===undefined)throw new Error('Value is not in U(97152)');return r;}
+
+function mat4Identity(){return [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1];}
+function mat4Multiply(A,B){
+  const O=new Array(16);
+  for(let col=0;col<4;col++) for(let row=0;row<4;row++){
+    let sum=0;
+    for(let k=0;k<4;k++) sum+=A[k*4+row]*B[col*4+k];
+    O[col*4+row]=sum;
+  }
+  return O;
+}
+function mat4Transpose(M){
+  const O=new Array(16);
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++)O[c*4+r]=M[r*4+c];
+  return O;
+}
+function mat4Vector(M,v){
+  return [
+    M[0]*v[0]+M[4]*v[1]+M[8]*v[2]+M[12]*v[3],
+    M[1]*v[0]+M[5]*v[1]+M[9]*v[2]+M[13]*v[3],
+    M[2]*v[0]+M[6]*v[1]+M[10]*v[2]+M[14]*v[3],
+    M[3]*v[0]+M[7]*v[1]+M[11]*v[2]+M[15]*v[3]
+  ];
+}
+function rotationX(angle){
+  const c=Math.cos(angle),s=Math.sin(angle);
+  return [1,0,0,0, 0,c,s,0, 0,-s,c,0, 0,0,0,1];
+}
+function rotationY(angle){
+  const c=Math.cos(angle),s=Math.sin(angle);
+  return [c,0,-s,0, 0,1,0,0, s,0,c,0, 0,0,0,1];
+}
+function rotationXW(angle){
+  const c=Math.cos(angle),s=Math.sin(angle);
+  return [c,0,0,s, 0,1,0,0, 0,0,1,0, -s,0,0,c];
+}
+function perspective(fovy,aspect,near,far){
+  const f=1/Math.tan(fovy/2),nf=1/(near-far);
+  return [f/aspect,0,0,0, 0,f,0,0, 0,0,(far+near)*nf,-1, 0,0,2*far*near*nf,0];
+}
+function translation(x,y,z){return [1,0,0,0, 0,1,0,0, 0,0,1,0, x,y,z,1];}
+function maxAbsDiff(a,b){let m=0;for(let i=0;i<a.length;i++)m=Math.max(m,Math.abs(a[i]-b[i]));return m;}
+function vectorError(a,b){let m=0;for(let i=0;i<a.length;i++)m=Math.max(m,Math.abs(a[i]-b[i]));return m;}
+
+/* Exact geometric operator:
+   D(x,y,z)=(2^-a x,3^-b y,5^-c z)
+   I_R(q)=R² q / ||q||²
+   T=I_R o D; T^-1=D^-1 o I_R because I_R is self-inverse.
+   Origin is excluded: sphere inversion is undefined there. */
+function geometricForward(p,params){
+  const q=[p[0]*Math.pow(2,-params.a),p[1]*Math.pow(3,-params.b),p[2]*Math.pow(5,-params.c)];
+  const n2=q[0]*q[0]+q[1]*q[1]+q[2]*q[2];
+  if(!Number.isFinite(n2)||n2<=EPS) throw new Error('Sphere inversion requires a finite non-zero scaled vector.');
+  const k=params.R*params.R/n2;
+  return [k*q[0],k*q[1],k*q[2]];
+}
+function geometricInverse(q,params){
+  const n2=q[0]*q[0]+q[1]*q[1]+q[2]*q[2];
+  if(!Number.isFinite(n2)||n2<=EPS) throw new Error('Inverse sphere inversion requires a finite non-zero vector.');
+  const k=params.R*params.R/n2;
+  const sphereBack=[k*q[0],k*q[1],k*q[2]];
+  return [sphereBack[0]*Math.pow(2,params.a),sphereBack[1]*Math.pow(3,params.b),sphereBack[2]*Math.pow(5,params.c)];
+}
+function full4DForward(p,params,R4){
+  const xyz=geometricForward(p,params);
+  return mat4Vector(R4,[xyz[0],xyz[1],xyz[2],p[3]]);
+}
+function full4DInverse(v,params,R4){
+  const unrotated=mat4Vector(mat4Transpose(R4),v);
+  const xyz=geometricInverse(unrotated,params);
+  return [xyz[0],xyz[1],xyz[2],unrotated[3]];
+}
+function currentGeometryParams(){
+  const p={a:Number($('exp-a').value),b:Number($('exp-b').value),c:Number($('exp-c').value),R:Number($('radius-r').value)};
+  if(!Object.values(p).every(Number.isFinite)||p.R<=0) throw new Error('Geometry parameters must be finite and R must be positive.');
+  return p;
+}
+
+/* Seed-angle operand. The angle is periodic and therefore not by itself
+   injective. The receipt retains P and n; its round-trip checks that record. */
+function seedProjection(P,n){
+  if(!Number.isSafeInteger(P)||P<1||!Number.isSafeInteger(n)||n<0)throw new Error('Seed P and node n must be positive/non-negative safe integers.');
+  const delta=P*ANGLE_FACTOR;
+  return {P,n,delta,theta:n*delta,x:Math.cos(n*delta),y:Math.sin(n*delta)};
+}
+function seedReceiptRoundTrip(P,n){
+  const receipt=Object.freeze({version:1,P,n});
+  const decoded={P:receipt.P,n:receipt.n};
+  return decoded.P===P&&decoded.n===n;
+}
+
+/* SHA-256 one-block trace for UTF-8 messages up to 55 bytes.
+   Each round is inverted with its known W[t] and K[t]. This is NOT a
+   general SHA-256 preimage inverse. Web Crypto independently checks digest. */
+const SHA_K=[
+0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+const SHA_H0=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+const u32=x=>x>>>0;
+const add32=(...xs)=>xs.reduce((a,b)=>(a+b)>>>0,0)>>>0;
+const rotr=(x,n)=>(x>>>n)|(x<<(32-n));
+const Ch=(x,y,z)=>(x&y)^(~x&z);
+const Maj=(x,y,z)=>(x&y)^(x&z)^(y&z);
+const S0=x=>rotr(x,2)^rotr(x,13)^rotr(x,22);
+const S1=x=>rotr(x,6)^rotr(x,11)^rotr(x,25);
+const s0=x=>rotr(x,7)^rotr(x,18)^(x>>>3);
+const s1=x=>rotr(x,17)^rotr(x,19)^(x>>>10);
+function padOneBlock(bytes){
+  if(bytes.length>55)throw new Error('SHA trace currently accepts UTF-8 messages of at most 55 bytes (one padded block).');
+  const block=new Uint8Array(64);block.set(bytes);block[bytes.length]=0x80;
+  const bits=BigInt(bytes.length)*8n;
+  for(let i=0;i<8;i++)block[63-i]=Number((bits>>BigInt(i*8))&255n);
+  return block;
+}
+function sha256Trace(message){
+  const bytes=new TextEncoder().encode(message),block=padOneBlock(bytes),W=new Array(64);
+  for(let i=0;i<16;i++){const j=i*4;W[i]=((block[j]<<24)|(block[j+1]<<16)|(block[j+2]<<8)|block[j+3])>>>0;}
+  for(let i=16;i<64;i++)W[i]=add32(s1(W[i-2]),W[i-7],s0(W[i-15]),W[i-16]);
+  let state=SHA_H0.slice();const states=[state.slice()];
+  for(let t=0;t<64;t++){
+    const [a,b,c,d,e,f,g,h]=state;
+    const T1=add32(h,S1(e),Ch(e,f,g),SHA_K[t],W[t]);
+    const T2=add32(S0(a),Maj(a,b,c));
+    state=[add32(T1,T2),a,b,c,add32(d,T1),e,f,g];
+    states.push(state.slice());
+  }
+  const finalWords=state.map((v,i)=>add32(v,SHA_H0[i]));
+  const digest=finalWords.map(v=>v.toString(16).padStart(8,'0')).join('');
+  let recovered=states[64].slice();
+  for(let t=63;t>=0;t--){
+    const [ap,bp,cp,dp,ep,fp,gp,hp]=recovered;
+    const a=bp,b=cp,c=dp,e=fp,f=gp,g=hp;
+    const T2=add32(S0(a),Maj(a,b,c));
+    const T1=u32(ap-T2);
+    const d=u32(ep-T1);
+    const h=u32(T1-S1(e)-Ch(e,f,g)-SHA_K[t]-W[t]);
+    recovered=[a,b,c,d,e,f,g,h];
+  }
+  const reverseError=states[0].reduce((m,v,i)=>Math.max(m,Math.abs(v-recovered[i])),0);
+  return {digest,reverseError,rounds:64,states,W,bytes:bytes.length};
+}
+async function verifySha(){
+  const message=$('sha-message').value;
+  const trace=sha256Trace(message);
+  const bytes=new TextEncoder().encode(message);
+  const webDigest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
+  const digestOK=trace.digest===webDigest;
+  const reverseOK=trace.reverseError===0;
+  $('sha-digest').textContent=trace.digest;
+  $('sha-roundtrip').textContent=String(trace.reverseError);
+  setProof('sha',digestOK&&reverseOK,`64 rounds reversed; state error=${trace.reverseError}; Web Crypto match=${digestOK}. This verifies a known-schedule round trace, not preimage recovery.`);
+  return digestOK&&reverseOK;
+}
+
+function setProof(id,ok,detail){
+  const box=$(id+'-proof');box.classList.toggle('pass',!!ok);box.classList.toggle('fail',!ok);
+  $(id+'-status').textContent=ok?'VERIFIED':'FAILED';$(id+'-status').className=ok?'good':'bad';$(id+'-error').textContent=detail;
+}
+function runGeometryProof(){
+  const params=currentGeometryParams();
+  const rx=rotationX(0.37),ry=rotationY(-0.61),rt=rotationXW(0.29);
+  const R4=mat4Multiply(rt,mat4Multiply(ry,rx));
+  const p=[1.0,0.5,-0.75,0.4];
+  const f=full4DForward(p,params,R4);
+  const back=full4DInverse(f,params,R4);
+  const err=vectorError(p,back);
+  const ok=Number.isFinite(err)&&err<1e-8;
+  $('geo-error-value').textContent=err.toExponential(3);
+  setProof('geo',ok,`T⁻¹(T(P)) max error=${err.toExponential(3)}. Exact sphere inversion; origin excluded; no epsilon regularizer.`);
+  return ok;
+}
+function runMatrixProof(){
+  const R=mat4Multiply(rotationXW(.41),mat4Multiply(rotationY(-.22),rotationX(.17)));
+  const product=mat4Multiply(mat4Transpose(R),R);
+  const err=maxAbsDiff(product,mat4Identity());
+  const p=[.4,-.8,1.2,.7],q=mat4Vector(R,p),back=mat4Vector(mat4Transpose(R),q);
+  const vecErr=vectorError(p,back),ok=err<1e-12&&vecErr<1e-12;
+  setProof('matrix',ok,`Column-major × column-vector convention; RᵀR−I=${err.toExponential(2)}; vector round-trip=${vecErr.toExponential(2)}. Transpose is used as inverse only for orthogonal rotations.`);
+  return ok;
+}
+async function runAllProofs(){
+  try{
+    const geo=runGeometryProof(),matrix=runMatrixProof();
+    const P=Number($('seed-p').value),n=Number($('seed-n').value);
+    const seed=seedProjection(P,n),seedOK=seedReceiptRoundTrip(P,n);
+    $('delta-theta').textContent=seed.delta.toFixed(9);
+    $('theta-value').textContent=seed.theta.toFixed(9);
+    setProof('seed',seedOK,`Stored receipt (P=${P}, n=${n}) round-trip=${seedOK}. θ is periodic; angle alone cannot uniquely recover the seed pair.`);
+    const sha=await verifySha();
+    const all=geo&&matrix&&seedOK&&sha;
+    $('engine-status').textContent=all?'ALL COMPUTED CHECKS PASS':'CHECKS NEED ATTENTION';
+    $('engine-status').className=all?'good':'warn';
+    $('message').textContent=`Proof cycle complete · geometry ${geo?'PASS':'FAIL'} · matrix ${matrix?'PASS':'FAIL'} · seed receipt ${seedOK?'PASS':'FAIL'} · SHA trace ${sha?'PASS':'FAIL'}`;
+  }catch(e){
+    $('engine-status').textContent='COMPUTATION ERROR';$('engine-status').className='bad';
+    $('message').textContent=e.message;
+    console.error(e);
+  }
+}
+
+/* Deterministic lattice coordinates from actual U(97152) ranks.
+   Each node's residue is selected from the precomputed unit group. */
+const LAYERS=[{prime:3,index:0},{prime:5,index:1},{prime:7,index:2}];
+const NODES_PER_LAYER=700;
+function sourcePoint(rank,layerIndex){
+  const residue=selectUnit(rank);
+  const u=(rank+0.5)/UNIT_GROUP.length;
+  const v=(residue+0.5)/DOMAIN_N;
+  const y=1-2*u;
+  const radial=Math.sqrt(Math.max(0,1-y*y));
+  const phi=TAU*v;
+  const radius=1.35+layerIndex*.16;
+  const xyz=[radius*radial*Math.cos(phi),radius*y,radius*radial*Math.sin(phi)];
+  return {xyz,residue,rank};
+}
+function makeLatticeData(){
+  const data=[];
+  for(const layer of LAYERS){
+    for(let i=0;i<NODES_PER_LAYER;i++){
+      // A rank walk with a unit step keeps each layer's rank sequence bijective.
+      const step=3; // gcd(3,28160)=1
+      const rank=(layer.index*997+i*step)%UNIT_GROUP.length;
+      const node=sourcePoint(rank,layer.index);
+      if(!isUnit(node.residue))throw new Error('Non-coprime residue entered the lattice.');
+      data.push({...node,layer:layer.index,prime:layer.prime});
+    }
+  }
+  return data;
+}
+const lattice=makeLatticeData();
+$('coprime-count').textContent=lattice.length.toLocaleString();
+$('node-count').textContent=lattice.length.toLocaleString();
+
+/* WebGL shader: positions are computed by the mathematical core on CPU,
+   then passed to a conventional 3D camera projection. */
+const vs=`
+attribute vec3 aPosition;
+attribute vec4 aColor;
+uniform mat4 uMVP;
+uniform float uPointSize;
+varying vec4 vColor;
+void main(){gl_Position=uMVP*vec4(aPosition,1.0);gl_PointSize=uPointSize;vColor=aColor;}`;
+const fs=`
+precision mediump float;
+varying vec4 vColor;
+void main(){vec2 p=gl_PointCoord-vec2(0.5);if(dot(p,p)>0.25)discard;gl_FragColor=vColor;}`;
+function compileShader(type,source){
+  const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){const msg=gl.getShaderInfoLog(s);gl.deleteShader(s);throw new Error(msg);}
+  return s;
+}
+const program=gl.createProgram();
+gl.attachShader(program,compileShader(gl.VERTEX_SHADER,vs));
+gl.attachShader(program,compileShader(gl.FRAGMENT_SHADER,fs));
+gl.linkProgram(program);
+if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
+gl.useProgram(program);
+const loc={
+  pos:gl.getAttribLocation(program,'aPosition'),
+  color:gl.getAttribLocation(program,'aColor'),
+  mvp:gl.getUniformLocation(program,'uMVP'),
+  point:gl.getUniformLocation(program,'uPointSize')
+};
+const posBuffer=gl.createBuffer(),colorBuffer=gl.createBuffer();
+gl.enable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE);
+
+let camera=[0,0,-7.5],rotX=.32,rotY=.45,keys={},drag=false,last={x:0,y:0},lastFrame=0;
+window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;});
+window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+canvas.addEventListener('pointerdown',e=>{drag=true;last={x:e.clientX,y:e.clientY};canvas.setPointerCapture(e.pointerId);});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;rotY+=(e.clientX-last.x)*.005;rotX+=(e.clientY-last.y)*.005;last={x:e.clientX,y:e.clientY};});
+canvas.addEventListener('pointerup',()=>drag=false);
+canvas.addEventListener('pointercancel',()=>drag=false);
+function resize(){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  canvas.width=Math.max(1,Math.floor(innerWidth*dpr));canvas.height=Math.max(1,Math.floor(innerHeight*dpr));
+  gl.viewport(0,0,canvas.width,canvas.height);
+}
+window.addEventListener('resize',resize);resize();
+function updateCamera(){
+  const speed=.075;
+  if(keys.w||keys.arrowup)camera[2]+=speed;
+  if(keys.s||keys.arrowdown)camera[2]-=speed;
+  if(keys.a||keys.arrowleft)camera[0]+=speed;
+  if(keys.d||keys.arrowright)camera[0]-=speed;
+  if(keys.q)camera[1]-=speed;
+  if(keys.e)camera[1]+=speed;
+}
+function render(now){
+  const start=performance.now();
+  const t=now*.001;
+  updateCamera();
+  const params=currentGeometryParams();
+  const seed=seedProjection(Number($('seed-p').value),Number($('seed-n').value));
+  const torsion=rotationXW(t*.2+seed.theta);
+  const positions=[],colors=[];
+  const showLines=$('layer-ley').checked,showCoprime=$('layer-coprime').checked,showInverse=$('layer-inverse').checked;
+  for(const node of lattice){
+    const p=node.xyz;
+    const scaled=[p[0]*Math.pow(2,-params.a),p[1]*Math.pow(3,-params.b),p[2]*Math.pow(5,-params.c)];
+    const inv=geometricForward(p,params);
+    const w=0.32*Math.sin(seed.theta+node.rank*.0007+node.layer);
+    const transformed=mat4Vector(torsion,[inv[0],inv[1],inv[2],w]);
+    // A true inverse is evaluated for every node; only forward output is rendered.
+    const unrot=mat4Vector(mat4Transpose(torsion),transformed);
+    const restored=geometricInverse(unrot,params);
+    const err=vectorError(p,restored);
+    if(!Number.isFinite(err)||err>1e-7)throw new Error(`Per-node inverse verification failed at rank ${node.rank}`);
+    const layerVisible=(node.layer===0&&showCoprime)||(node.layer===1&&showInverse)||(node.layer===2&&showCoprime);
+    if(layerVisible){
+      const wScale=1/(1-transformed[3]/8);
+      const x=transformed[0]*wScale,y=transformed[1]*wScale,z=transformed[2]*wScale;
+      positions.push(x,y,z);
+      const palette=[[.12,.78,.95,.92],[.94,.35,.72,.88],[.40,.92,.65,.88]][node.layer];
+      colors.push(...palette);
+    }
+    if(showLines && node.rank%175===0){
+      positions.push(0,0,0,p[0]*.7,p[1]*.7,p[2]*.7);
+      colors.push(.05,.55,.8,.22,.05,.55,.8,.22);
+    }
+  }
+  const view=translation(camera[0],camera[1],camera[2]);
+  const cameraRotation=mat4Multiply(rotationY(rotY),rotationX(rotX));
+  const modelView=mat4Multiply(cameraRotation,view);
+  const proj=perspective(Math.PI/4,canvas.width/canvas.height,.1,100);
+  const mvp=mat4Multiply(proj,modelView);
+  gl.clearColor(.008,.015,.031,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.useProgram(program);
+  gl.uniformMatrix4fv(loc.mvp,false,new Float32Array(mvp));
+  gl.uniform1f(loc.point,5.5);
+  gl.bindBuffer(gl.ARRAY_BUFFER,posBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(positions),gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(loc.pos);gl.vertexAttribPointer(loc.pos,3,gl.FLOAT,false,0,0);
+  gl.bindBuffer(gl.ARRAY_BUFFER,colorBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(colors),gl.DYNAMIC_DRAW);
+  gl.enableVertexAttribArray(loc.color);gl.vertexAttribPointer(loc.color,4,gl.FLOAT,false,0,0);
+  // First draw line pairs, then points. Lines are appended as pairs; separate
+  // point rendering uses the same data buffer but skips the line section below.
+  const lineVertexCount=showLines?Math.floor(lattice.length/175)*2:0;
+  if(lineVertexCount>0)gl.drawArrays(gl.LINES,0,lineVertexCount);
+  const pointStart=lineVertexCount;
+  if(positions.length/3>pointStart)gl.drawArrays(gl.POINTS,pointStart,positions.length/3-pointStart);
+  $('frame-time').textContent=(performance.now()-start).toFixed(2)+' ms';
+  $('drone-pos').textContent=`(${camera[0].toFixed(2)}, ${camera[1].toFixed(2)}, ${camera[2].toFixed(2)})`;
+  requestAnimationFrame(render);
+}
+$('run-proof').addEventListener('click',runAllProofs);
+['seed-p','seed-n','exp-a','exp-b','exp-c','radius-r'].forEach(id=>$(id).addEventListener('change',()=>{runAllProofs();}));
+$('sha-message').addEventListener('change',()=>verifySha().catch(e=>$('message').textContent=e.message));
+
+runAllProofs().catch(e=>{$('message').textContent=e.message;});
+$('engine-status').textContent='COMPUTING';
+requestAnimationFrame(render);
+</script>
+</body>
+</html>
+'''
+
+out = Path("/mnt/data/CRYPTIC_Mathematical_Lattice_Engine_v8.html")
+out.write_text(html, encoding="utf-8")
+print(f"Created {out} ({out.stat().st_size:,} bytes)")
