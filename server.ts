@@ -1463,13 +1463,41 @@ async function startServer() {
   });
 
   // =========================================================================
-  // 192 GiB GOOGLE DRIVE SPARSEBUNDLE + HTTPFS VIRTUAL DISK GATEWAY
+  // 384 GiB (16,384 × 3) 8-SPARSE-FUSION GOOGLE DRIVE + HTTPFS VIRTUAL DISK
   // =========================================================================
   const BAND_SIZE_BYTES = 8_388_608; // 8 MiB per sparse band
-  const TOTAL_SPARSE_BANDS = 24_576; // 8,192 x 3 sets
-  const LOGICAL_SPARSE_VOLUME_BYTES = TOTAL_SPARSE_BANDS * BAND_SIZE_BYTES; // 206,158,430,208 B = 192 GiB
+  const BANDS_PER_SET = 16_384;
+  const TOTAL_SPARSE_BANDS = 49_152; // 16,384 × 3 sets
+  const LOGICAL_SPARSE_VOLUME_BYTES = TOTAL_SPARSE_BANDS * BAND_SIZE_BYTES; // 412,316,860,416 B = 384 GiB
   const SPARSE_PAYLOAD_PARTITION_BYTES = 8_000_000;
   const SPARSE_TAIL_RESERVED_BITS = 388_605;
+
+  const SERVER_FUSION_TIERS: Array<{ id: string; bitWidth: number; label: string; bandStart: number; bandCount: number; logicalGiB: number }> = [
+    { id: 'BIT_64', bitWidth: 64, label: '64-bit Micro-Index', bandStart: 0, bandCount: 1536, logicalGiB: 12 },
+    { id: 'BIT_128', bitWidth: 128, label: '128-bit Address Band', bandStart: 1536, bandCount: 3072, logicalGiB: 24 },
+    { id: 'BIT_256', bitWidth: 256, label: '256-bit Parity Band', bandStart: 4608, bandCount: 4608, logicalGiB: 36 },
+    { id: 'BIT_512', bitWidth: 512, label: '512-bit Payload Host', bandStart: 9216, bandCount: 6144, logicalGiB: 48 },
+    { id: 'BIT_1024', bitWidth: 1024, label: '1024-bit Dual-Hemisphere', bandStart: 15360, bandCount: 9216, logicalGiB: 72 },
+    { id: 'BIT_2048', bitWidth: 2048, label: '2048-bit Hypercube Super', bandStart: 24576, bandCount: 12288, logicalGiB: 96 },
+    { id: 'SOLVENT_EQUATOR', bitWidth: 3072, label: 'Osmosis Equator Solvent', bandStart: 36864, bandCount: 6144, logicalGiB: 48 },
+    { id: 'ELGAMAL_L10', bitWidth: 4096, label: 'ElGamal L10 Straddle', bandStart: 43008, bandCount: 6144, logicalGiB: 48 },
+  ];
+  const ALL_FUSION_TIER_IDS = SERVER_FUSION_TIERS.map((t) => t.id);
+
+  function getFusionTierForGlobalBand(gIdx: number): string {
+    for (const tier of SERVER_FUSION_TIERS) {
+      if (gIdx >= tier.bandStart && gIdx < tier.bandStart + tier.bandCount) {
+        return tier.id;
+      }
+    }
+    return 'BIT_64';
+  }
+
+  function isBandPermittedByClipPath(gIdx: number): { ok: boolean; tierId: string } {
+    const tierId = getFusionTierForGlobalBand(gIdx);
+    if (httpfsSessionState.mountMode === 'ALL') return { ok: true, tierId };
+    return { ok: httpfsSessionState.activeTiers.includes(tierId), tierId };
+  }
 
   interface VirtualBandDescriptor {
     bandHex: string;
@@ -1477,6 +1505,7 @@ async function startServer() {
     setIndex: number;
     blockIndex: number;
     faceLabel: string;
+    tierId: string;
     driveFileId: string | null;
     payloadBytesUsed: number;
     tailBitsUsed: number;
@@ -1494,6 +1523,9 @@ async function startServer() {
     bandsFolderId: string | null;
     mountedAt: string | null;
     unmountedAt: string | null;
+    mountMode: 'ALL' | 'CLIP_PATH_SELECTIVE';
+    activeTiers: string[];
+    rcloneRemotePath: string;
     setRootsHex: [string, string, string];
     populatedBands: Map<string, VirtualBandDescriptor>;
     mountHistory: Array<{ ts: string; action: 'MOUNT' | 'SYNC_BAND' | 'UNMOUNT'; ownerEmail: string; detail: string }>;
@@ -1505,12 +1537,23 @@ async function startServer() {
     bandsFolderId: null,
     mountedAt: null,
     unmountedAt: null,
+    mountMode: 'ALL',
+    activeTiers: [...ALL_FUSION_TIER_IDS],
+    rcloneRemotePath: 'gdrive:GAIA_NEXUS_384GiB.sparsebundle',
     setRootsHex: ['0'.repeat(64), '0'.repeat(64), '0'.repeat(64)],
     populatedBands: new Map(),
     mountHistory: [],
   };
 
+  function getMountedLogicalGiBServer(): number {
+    if (httpfsSessionState.mountMode === 'ALL') return 384;
+    return SERVER_FUSION_TIERS
+      .filter((t) => httpfsSessionState.activeTiers.includes(t.id))
+      .reduce((acc, t) => acc + t.logicalGiB, 0);
+  }
+
   function buildSparseBundlePlistXml(): string {
+    const mountedGiB = getMountedLogicalGiBServer();
     return [
       '<?xml version="1.0" encoding="UTF-8"?>',
       '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">',
@@ -1527,11 +1570,46 @@ async function startServer() {
       '  <key>size</key>',
       `  <integer>${LOGICAL_SPARSE_VOLUME_BYTES}</integer>`,
       '  <key>gaia-logical-gib</key>',
-      '  <integer>192</integer>',
+      `  <integer>${mountedGiB}</integer>`,
+      '  <key>gaia-full-capacity-gib</key>',
+      '  <integer>384</integer>',
       '  <key>gaia-total-bands</key>',
       `  <integer>${TOTAL_SPARSE_BANDS}</integer>`,
+      '  <key>gaia-fusion-mode</key>',
+      `  <string>${httpfsSessionState.mountMode}</string>`,
+      '  <key>gaia-active-tiers</key>',
+      `  <string>${httpfsSessionState.activeTiers.join(',')}</string>`,
       '</dict>',
       '</plist>',
+    ].join('\n');
+  }
+
+  function buildSanitizedRcloneConf(originHost: string, ownerEmail: string, remotePath: string, driveFolderId: string | null): string {
+    const activeTiersComment = httpfsSessionState.activeTiers.join(', ');
+    return [
+      '# GAIA NEXUS 384 GiB 8-Sparse-Fusion rclone Configuration (Zero-Secret Template)',
+      `# Account Owner: ${ownerEmail || 'sign-in-with-google@pending'}`,
+      `# Mount Mode: ${httpfsSessionState.mountMode} (${getMountedLogicalGiBServer()} / 384 GiB)`,
+      `# Active Clip-Path Tiers: ${activeTiersComment}`,
+      `# Drive Sparsebundle Folder ID: ${driveFolderId || 'AUTO_DISCOVER_ON_LOGIN'}`,
+      `# Target Database Path: ${remotePath}`,
+      '',
+      '[gaia-httpfs-384g]',
+      'type = http',
+      `url = ${originHost}/v1/sparsebundle/httpfs/GAIA_NEXUS_384GiB.sparsebundle/`,
+      'no_slash = false',
+      '',
+      '[gaia-gdrive-384g]',
+      'type = drive',
+      'scope = drive',
+      `root_folder_id = ${driveFolderId || ''}`,
+      'token = <SUPPLIED_AT_RUNTIME_FROM_GDRIVE_SESSION>',
+      `database_path = ${remotePath}`,
+      '',
+      '[gaia-sparse-union]',
+      'type = union',
+      'upstreams = gaia-httpfs-384g: gaia-gdrive-384g:',
+      '',
     ].join('\n');
   }
 
@@ -1615,15 +1693,22 @@ async function startServer() {
       mountedAt: httpfsSessionState.mountedAt,
       unmountedAt: httpfsSessionState.unmountedAt,
       logicalVolumeBytes: LOGICAL_SPARSE_VOLUME_BYTES,
-      logicalVolumeGiB: 192,
+      logicalVolumeGiB: 384,
+      mountedLogicalGiB: getMountedLogicalGiBServer(),
       bandSizeBytes: BAND_SIZE_BYTES,
       totalSparseBands: TOTAL_SPARSE_BANDS,
+      mountMode: httpfsSessionState.mountMode,
+      activeTiers: httpfsSessionState.activeTiers,
+      rcloneRemotePath: httpfsSessionState.rcloneRemotePath,
+      fusionTiers: SERVER_FUSION_TIERS,
       populatedBandCount: httpfsSessionState.populatedBands.size,
       setRootsHex: httpfsSessionState.setRootsHex,
       httpfsEndpoints: {
-        plist: '/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.sparsebundle/Info.plist',
-        bandsBase: '/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.sparsebundle/bands/',
-        linearImage: '/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.img',
+        plist: '/v1/sparsebundle/httpfs/GAIA_NEXUS_384GiB.sparsebundle/Info.plist',
+        bandsBase: '/v1/sparsebundle/httpfs/GAIA_NEXUS_384GiB.sparsebundle/bands/',
+        linearImage: '/v1/sparsebundle/httpfs/GAIA_NEXUS_384GiB.img',
+        rcloneConf: '/v1/sparsebundle/rclone-conf',
+        legacyPlist: '/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.sparsebundle/Info.plist',
       },
       populatedBands: Array.from(httpfsSessionState.populatedBands.values()).map((b) => ({
         bandHex: b.bandHex,
@@ -1631,6 +1716,7 @@ async function startServer() {
         setIndex: b.setIndex,
         blockIndex: b.blockIndex,
         faceLabel: b.faceLabel,
+        tierId: b.tierId,
         driveFileId: b.driveFileId,
         payloadBytesUsed: b.payloadBytesUsed,
         tailBitsUsed: b.tailBitsUsed,
@@ -1639,6 +1725,20 @@ async function startServer() {
       })),
       mountHistory: httpfsSessionState.mountHistory.slice(0, 12),
     });
+  });
+
+  app.get('/v1/sparsebundle/rclone-conf', (req: Request, res: Response) => {
+    const proto = String(req.headers['x-forwarded-proto'] || req.protocol || 'http');
+    const host = String(req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3000');
+    const originHost = `${proto}://${host}`;
+    const conf = buildSanitizedRcloneConf(
+      originHost,
+      httpfsSessionState.ownerEmail,
+      httpfsSessionState.rcloneRemotePath,
+      httpfsSessionState.driveFolderId
+    );
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.send(conf);
   });
 
   app.post('/v1/sparsebundle/httpfs/mount', requireGenesisSignature, async (req: Request, res: Response) => {
@@ -1655,6 +1755,14 @@ async function startServer() {
     const bandsFolderId = typeof body.bandsFolderId === 'string' && /^[a-zA-Z0-9_-]{8,128}$/.test(body.bandsFolderId)
       ? body.bandsFolderId
       : null;
+    const reqMode = body.mountMode === 'CLIP_PATH_SELECTIVE' ? 'CLIP_PATH_SELECTIVE' : 'ALL';
+    const reqTiers = Array.isArray(body.activeTiers)
+      ? body.activeTiers.map(String).filter((id) => ALL_FUSION_TIER_IDS.includes(id))
+      : [...ALL_FUSION_TIER_IDS];
+    const rclonePath = typeof body.rcloneRemotePath === 'string' && /^[\w.:/\- ]{3,160}$/.test(body.rcloneRemotePath)
+      ? body.rcloneRemotePath.trim()
+      : httpfsSessionState.rcloneRemotePath;
+
     const rawBands = Array.isArray(body.bands) ? body.bands.slice(0, 128) : [];
     const setRoots = Array.isArray(body.setRootsHex) && body.setRootsHex.length === 3
       ? [
@@ -1673,8 +1781,8 @@ async function startServer() {
         required: false,
         predicates: {
           authorization: { state: 'PASS', reason: `Verified Google Bearer identity: ${idCheck.email}` },
-          capacity: { state: 'PASS', reason: `HTTPFS 192 GiB (${TOTAL_SPARSE_BANDS} × 8 MiB sparse bands) addressable` },
-          verification: { state: 'PASS', reason: `Google Drive folder ${driveFolderId || 'VIRTUAL_SESSION'} bound` },
+          capacity: { state: 'PASS', reason: `HTTPFS 384 GiB (${TOTAL_SPARSE_BANDS} × 8 MiB sparse bands) · ${reqMode}` },
+          verification: { state: 'PASS', reason: `Google Drive folder ${driveFolderId || 'VIRTUAL_SESSION'} bound (${reqTiers.length}/8 tiers)` },
           boundary: { state: 'PASS', reason: 'Same-origin Genesis HMAC + bounded sparse slice cache' },
           provenancePrivacy: { state: 'PASS', reason: 'OAuth Bearer token verified in-memory only; never stored on disk' },
         },
@@ -1687,13 +1795,16 @@ async function startServer() {
         if (bandsFolderId) httpfsSessionState.bandsFolderId = bandsFolderId;
         httpfsSessionState.mountedAt = new Date().toISOString();
         httpfsSessionState.unmountedAt = null;
+        httpfsSessionState.mountMode = reqMode;
+        httpfsSessionState.activeTiers = reqMode === 'ALL' ? [...ALL_FUSION_TIER_IDS] : (reqTiers.length > 0 ? reqTiers : ['BIT_64']);
+        httpfsSessionState.rcloneRemotePath = rclonePath;
         httpfsSessionState.setRootsHex = setRoots;
 
         for (const item of rawBands) {
           if (!item || typeof item !== 'object') continue;
           const b = item as Record<string, unknown>;
           const bandHex = typeof b.bandHex === 'string' ? b.bandHex.toLowerCase() : '';
-          if (!/^[0-9a-f]{1,4}$/.test(bandHex)) continue;
+          if (!/^[0-9a-f]{1,5}$/.test(bandHex)) continue;
           const gIdx = parseInt(bandHex, 16);
           if (gIdx < 0 || gIdx >= TOTAL_SPARSE_BANDS) continue;
           const driveFileId = typeof b.driveFileId === 'string' && /^[a-zA-Z0-9_-]{8,128}$/.test(b.driveFileId)
@@ -1705,9 +1816,10 @@ async function startServer() {
           httpfsSessionState.populatedBands.set(bandHex, {
             bandHex,
             globalBandIndex: gIdx,
-            setIndex: Math.floor(gIdx / 8192),
-            blockIndex: gIdx % 8192,
+            setIndex: Math.floor(gIdx / BANDS_PER_SET),
+            blockIndex: gIdx % BANDS_PER_SET,
             faceLabel: typeof b.faceLabel === 'string' ? b.faceLabel.slice(0, 16) : 'TOP',
+            tierId: getFusionTierForGlobalBand(gIdx),
             driveFileId,
             payloadBytesUsed: Math.max(0, Math.min(SPARSE_PAYLOAD_PARTITION_BYTES, Number(b.payloadBytesUsed || payloadJson.length))),
             tailBitsUsed: Math.max(0, Math.min(SPARSE_TAIL_RESERVED_BITS, Number(b.tailBitsUsed || tailString.length * 8))),
@@ -1729,7 +1841,7 @@ async function startServer() {
           ts: httpfsSessionState.mountedAt,
           action: 'MOUNT',
           ownerEmail: httpfsSessionState.ownerEmail,
-          detail: `Mounted 192 GiB sparsebundle (${httpfsSessionState.populatedBands.size} active bands · folder=${driveFolderId || 'SESSION'})`,
+          detail: `Mounted ${getMountedLogicalGiBServer()}/384 GiB sparsebundle (${httpfsSessionState.mountMode}, ${httpfsSessionState.populatedBands.size} active bands)`,
         });
         if (httpfsSessionState.mountHistory.length > 32) httpfsSessionState.mountHistory.length = 32;
         return true;
@@ -1747,6 +1859,9 @@ async function startServer() {
       ownerEmail: httpfsSessionState.ownerEmail,
       driveFolderId: httpfsSessionState.driveFolderId,
       logicalVolumeBytes: LOGICAL_SPARSE_VOLUME_BYTES,
+      mountedLogicalGiB: getMountedLogicalGiBServer(),
+      mountMode: httpfsSessionState.mountMode,
+      activeTiers: httpfsSessionState.activeTiers,
       populatedBandCount: httpfsSessionState.populatedBands.size,
       mountedAt: httpfsSessionState.mountedAt,
       creed_evaluation: gated.evaluation,
@@ -1786,7 +1901,7 @@ async function startServer() {
           ts: httpfsSessionState.unmountedAt,
           action: 'UNMOUNT',
           ownerEmail: prevOwner,
-          detail: `Unmounted 192 GiB sparsebundle on exit/sign-out (released ${prevBands} cached bands)`,
+          detail: `Unmounted 384 GiB sparsebundle on exit/sign-out (released ${prevBands} cached bands)`,
         });
         if (httpfsSessionState.mountHistory.length > 32) httpfsSessionState.mountHistory.length = 32;
         return true;
@@ -1801,113 +1916,141 @@ async function startServer() {
     });
   });
 
-  app.head('/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.sparsebundle/Info.plist', (_req: Request, res: Response) => {
-    const xml = buildSparseBundlePlistXml();
-    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-    res.setHeader('Content-Length', String(Buffer.byteLength(xml, 'utf8')));
-    res.status(200).end();
-  });
+  for (const bundleName of ['GAIA_NEXUS_384GiB.sparsebundle', 'GAIA_NEXUS_192GiB.sparsebundle']) {
+    app.head(`/v1/sparsebundle/httpfs/${bundleName}/Info.plist`, (_req: Request, res: Response) => {
+      const xml = buildSparseBundlePlistXml();
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Content-Length', String(Buffer.byteLength(xml, 'utf8')));
+      res.status(200).end();
+    });
 
-  app.get('/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.sparsebundle/Info.plist', (_req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-    res.send(buildSparseBundlePlistXml());
-  });
+    app.get(`/v1/sparsebundle/httpfs/${bundleName}/Info.plist`, (_req: Request, res: Response) => {
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.send(buildSparseBundlePlistXml());
+    });
 
-  app.head('/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.sparsebundle/bands/:bandHex', (req: Request, res: Response) => {
-    const bandHex = String(req.params.bandHex || '').toLowerCase();
-    const gIdx = /^[0-9a-f]{1,4}$/.test(bandHex) ? parseInt(bandHex, 16) : -1;
-    if (gIdx < 0 || gIdx >= TOTAL_SPARSE_BANDS) {
-      res.status(404).end();
-      return;
-    }
-    res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Length', String(BAND_SIZE_BYTES));
-    res.status(200).end();
-  });
+    app.head(`/v1/sparsebundle/httpfs/${bundleName}/bands/:bandHex`, (req: Request, res: Response) => {
+      const bandHex = String(req.params.bandHex || '').toLowerCase();
+      const gIdx = /^[0-9a-f]{1,5}$/.test(bandHex) ? parseInt(bandHex, 16) : -1;
+      if (gIdx < 0 || gIdx >= TOTAL_SPARSE_BANDS) {
+        res.status(404).end();
+        return;
+      }
+      const clip = isBandPermittedByClipPath(gIdx);
+      if (!clip.ok) {
+        res.status(423).end();
+        return;
+      }
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Length', String(BAND_SIZE_BYTES));
+      res.status(200).end();
+    });
 
-  app.get('/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.sparsebundle/bands/:bandHex', (req: Request, res: Response) => {
-    const bandHex = String(req.params.bandHex || '').toLowerCase();
-    const gIdx = /^[0-9a-f]{1,4}$/.test(bandHex) ? parseInt(bandHex, 16) : -1;
-    if (gIdx < 0 || gIdx >= TOTAL_SPARSE_BANDS) {
-      res.status(404).json({ ok: false, error: 'Band index outside 0x0..0x5fff (24,576 bands)' });
-      return;
-    }
+    app.get(`/v1/sparsebundle/httpfs/${bundleName}/bands/:bandHex`, (req: Request, res: Response) => {
+      const bandHex = String(req.params.bandHex || '').toLowerCase();
+      const gIdx = /^[0-9a-f]{1,5}$/.test(bandHex) ? parseInt(bandHex, 16) : -1;
+      if (gIdx < 0 || gIdx >= TOTAL_SPARSE_BANDS) {
+        res.status(404).json({ ok: false, error: 'Band index outside 0x0..0xbfff (49,152 bands)' });
+        return;
+      }
 
-    const rangeHeader = String(req.headers.range || '');
-    let start = 0;
-    let end = BAND_SIZE_BYTES - 1;
-    let isPartial = false;
+      const clip = isBandPermittedByClipPath(gIdx);
+      if (!clip.ok) {
+        res.status(423).json({
+          ok: false,
+          error: `Tier ${clip.tierId} is currently unmounted by 8-Sparse-Fusion Clip-Path mask`,
+          tierId: clip.tierId,
+        });
+        return;
+      }
 
-    if (rangeHeader) {
+      const rangeHeader = String(req.headers.range || '');
+      let start = 0;
+      let end = BAND_SIZE_BYTES - 1;
+      let isPartial = false;
+
+      if (rangeHeader) {
+        const m = /^bytes=(\d+)-(\d*)$/.exec(rangeHeader.trim());
+        if (!m) {
+          res.status(416).setHeader('Content-Range', `bytes */${BAND_SIZE_BYTES}`).end();
+          return;
+        }
+        start = Number(m[1]);
+        end = m[2] ? Math.min(BAND_SIZE_BYTES - 1, Number(m[2])) : BAND_SIZE_BYTES - 1;
+        if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || start > end || start >= BAND_SIZE_BYTES) {
+          res.status(416).setHeader('Content-Range', `bytes */${BAND_SIZE_BYTES}`).end();
+          return;
+        }
+        isPartial = true;
+      }
+
+      const slice = renderSparseBandSlice(bandHex, start, end);
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Length', String(slice.length));
+      if (isPartial) {
+        res.setHeader('Content-Range', `bytes ${start}-${end}/${BAND_SIZE_BYTES}`);
+        res.status(206).send(slice);
+      } else {
+        res.status(200).send(slice);
+      }
+    });
+  }
+
+  for (const imgName of ['GAIA_NEXUS_384GiB.img', 'GAIA_NEXUS_192GiB.img']) {
+    app.head(`/v1/sparsebundle/httpfs/${imgName}`, (_req: Request, res: Response) => {
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Length', String(LOGICAL_SPARSE_VOLUME_BYTES));
+      res.status(200).end();
+    });
+
+    app.get(`/v1/sparsebundle/httpfs/${imgName}`, (req: Request, res: Response) => {
+      const rangeHeader = String(req.headers.range || '');
       const m = /^bytes=(\d+)-(\d*)$/.exec(rangeHeader.trim());
       if (!m) {
-        res.status(416).setHeader('Content-Range', `bytes */${BAND_SIZE_BYTES}`).end();
+        res.status(416)
+          .setHeader('Content-Range', `bytes */${LOGICAL_SPARSE_VOLUME_BYTES}`)
+          .json({ ok: false, error: 'HTTPFS requires a bounded Byte-Range header (max 8 MiB per request) on the 384 GiB virtual disk' });
         return;
       }
-      start = Number(m[1]);
-      end = m[2] ? Math.min(BAND_SIZE_BYTES - 1, Number(m[2])) : BAND_SIZE_BYTES - 1;
-      if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || start > end || start >= BAND_SIZE_BYTES) {
-        res.status(416).setHeader('Content-Range', `bytes */${BAND_SIZE_BYTES}`).end();
+      const start = Number(m[1]);
+      const requestedEnd = m[2] ? Number(m[2]) : start + Math.min(BAND_SIZE_BYTES - 1, LOGICAL_SPARSE_VOLUME_BYTES - 1 - start);
+      const end = Math.min(LOGICAL_SPARSE_VOLUME_BYTES - 1, requestedEnd, start + BAND_SIZE_BYTES - 1);
+      if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || start > end || start >= LOGICAL_SPARSE_VOLUME_BYTES) {
+        res.status(416).setHeader('Content-Range', `bytes */${LOGICAL_SPARSE_VOLUME_BYTES}`).end();
         return;
       }
-      isPartial = true;
-    }
 
-    const slice = renderSparseBandSlice(bandHex, start, end);
-    res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Length', String(slice.length));
-    if (isPartial) {
-      res.setHeader('Content-Range', `bytes ${start}-${end}/${BAND_SIZE_BYTES}`);
-      res.status(206).send(slice);
-    } else {
-      res.status(200).send(slice);
-    }
-  });
+      const totalLen = end - start + 1;
+      const chunks: Buffer[] = [];
+      let cursor = start;
+      while (cursor <= end) {
+        const bandIdx = Math.floor(cursor / BAND_SIZE_BYTES);
+        const clip = isBandPermittedByClipPath(bandIdx);
+        if (!clip.ok) {
+          res.status(423).json({
+            ok: false,
+            error: `Tier ${clip.tierId} masked out by 8-Sparse-Fusion Clip-Path`,
+            tierId: clip.tierId,
+          });
+          return;
+        }
+        const bandOffsetStart = cursor % BAND_SIZE_BYTES;
+        const bandOffsetEnd = Math.min(BAND_SIZE_BYTES - 1, bandOffsetStart + (end - cursor));
+        chunks.push(renderSparseBandSlice(bandIdx.toString(16), bandOffsetStart, bandOffsetEnd));
+        cursor += bandOffsetEnd - bandOffsetStart + 1;
+      }
 
-  app.head('/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.img', (_req: Request, res: Response) => {
-    res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Length', String(LOGICAL_SPARSE_VOLUME_BYTES));
-    res.status(200).end();
-  });
-
-  app.get('/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.img', (req: Request, res: Response) => {
-    const rangeHeader = String(req.headers.range || '');
-    const m = /^bytes=(\d+)-(\d*)$/.exec(rangeHeader.trim());
-    if (!m) {
-      res.status(416)
-        .setHeader('Content-Range', `bytes */${LOGICAL_SPARSE_VOLUME_BYTES}`)
-        .json({ ok: false, error: 'HTTPFS requires a bounded Byte-Range header (max 8 MiB per request) on the 192 GiB virtual disk' });
-      return;
-    }
-    const start = Number(m[1]);
-    const requestedEnd = m[2] ? Number(m[2]) : start + Math.min(BAND_SIZE_BYTES - 1, LOGICAL_SPARSE_VOLUME_BYTES - 1 - start);
-    const end = Math.min(LOGICAL_SPARSE_VOLUME_BYTES - 1, requestedEnd, start + BAND_SIZE_BYTES - 1);
-    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || start > end || start >= LOGICAL_SPARSE_VOLUME_BYTES) {
-      res.status(416).setHeader('Content-Range', `bytes */${LOGICAL_SPARSE_VOLUME_BYTES}`).end();
-      return;
-    }
-
-    const totalLen = end - start + 1;
-    const chunks: Buffer[] = [];
-    let cursor = start;
-    while (cursor <= end) {
-      const bandIdx = Math.floor(cursor / BAND_SIZE_BYTES);
-      const bandOffsetStart = cursor % BAND_SIZE_BYTES;
-      const bandOffsetEnd = Math.min(BAND_SIZE_BYTES - 1, bandOffsetStart + (end - cursor));
-      chunks.push(renderSparseBandSlice(bandIdx.toString(16), bandOffsetStart, bandOffsetEnd));
-      cursor += bandOffsetEnd - bandOffsetStart + 1;
-    }
-
-    const body = Buffer.concat(chunks, totalLen);
-    res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Length', String(body.length));
-    res.setHeader('Content-Range', `bytes ${start}-${end}/${LOGICAL_SPARSE_VOLUME_BYTES}`);
-    res.status(206).send(body);
-  });
+      const body = Buffer.concat(chunks, totalLen);
+      res.setHeader('Accept-Ranges', 'bytes');
+      res.setHeader('Content-Type', 'application/octet-stream');
+      res.setHeader('Content-Length', String(body.length));
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${LOGICAL_SPARSE_VOLUME_BYTES}`);
+      res.status(206).send(body);
+    });
+  }
 
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');

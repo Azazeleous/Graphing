@@ -431,7 +431,7 @@ export function initMerklePowD3Chart(): void {
         .attr('width', xBand.bandwidth())
         .attr('height', (d) => lh - yBar(d.ratio))
         .attr('rx', 1.5)
-        .attr('fill', (d) => (d.lvl === 13 ? '#facc15' : d.ratio > 0 ? '#38bdf8' : '#1e293b'));
+        .attr('fill', (d) => (d.lvl === 14 ? '#facc15' : d.ratio > 0 ? '#38bdf8' : '#1e293b'));
 
       lg.selectAll<SVGTextElement, (typeof levelData)[number]>('text.lvl-lbl')
         .data(levelData, (d) => d.lvl)
@@ -483,7 +483,7 @@ export function initMerklePowD3Chart(): void {
   if (zoomBtn) {
     zoomBtn.addEventListener('click', () => {
       zoomToActive = !zoomToActive;
-      zoomBtn.textContent = zoomToActive ? 'SCALE: ACTIVE' : 'SCALE: 8,192';
+      zoomBtn.textContent = zoomToActive ? 'SCALE: ACTIVE' : 'SCALE: 16,384';
       render();
     });
   }

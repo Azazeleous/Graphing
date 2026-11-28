@@ -1,12 +1,18 @@
 import {
   getDriveAccessToken,
   getDriveBridgeState,
+  fetchDriveQuotaAndProfile,
+  promptWorkspaceCapabilitiesUpgrade,
+  isMachackabookAccount,
+  type DriveQuotaSnapshot,
 } from './drivePackageBridge.ts';
 import {
   sparseBandEngine,
   SPARSE_BAND_TOTAL_BYTES,
   TOTAL_HYPER_BLOCKS,
   LOGICAL_VOLUME_BYTES,
+  SPARSE_FUSION_TIERS,
+  type SparseFusionTierId,
 } from './sparseBandCryptoEngine.ts';
 import { memoryFabric } from './memoryFabric.ts';
 import { refreshConvergenceState } from './livingSystemConvergence.ts';
@@ -24,21 +30,29 @@ export interface DriveSparseMountStatus {
   lifecycle: MountLifecycleState;
   signedIn: boolean;
   ownerEmail: string;
+  ownerDisplayName: string;
+  machackabookDetected: boolean;
   driveFolderId: string | null;
   bandsFolderId: string | null;
   manifestFileId: string | null;
   plistFileId: string | null;
   logicalVolumeBytes: number;
   logicalVolumeGiB: number;
+  mountedLogicalGiB: number;
   bandSizeBytes: number;
   totalSparseBands: number;
   uploadedDriveBands: number;
   httpfsMounted: boolean;
+  mountMode: 'ALL' | 'CLIP_PATH_SELECTIVE';
+  activeTiers: SparseFusionTierId[];
+  rcloneRemotePath: string;
+  quota: DriveQuotaSnapshot | null;
   lastSyncAt: string | null;
   message: string;
 }
 
-const SPARSEBUNDLE_FOLDER_NAME = 'GAIA_NEXUS_192GiB.sparsebundle';
+const SPARSEBUNDLE_FOLDER_NAME = 'GAIA_NEXUS_384GiB.sparsebundle';
+const LEGACY_SPARSEBUNDLE_FOLDER_NAME = 'GAIA_NEXUS_192GiB.sparsebundle';
 const MIME_FOLDER = 'application/vnd.google-apps.folder';
 
 let sessionHmacKeyHex: string | null = null;
@@ -99,30 +113,162 @@ async function buildSignedHeaders(
   };
 }
 
+function formatBytesHuman(bytes: number | null | undefined): string {
+  if (bytes === null || bytes === undefined || !Number.isFinite(bytes)) return 'Unlimited / Unknown';
+  const gib = bytes / (1024 * 1024 * 1024);
+  if (gib >= 1024) return `${(gib / 1024).toFixed(2)} TiB`;
+  if (gib >= 1) return `${gib.toFixed(1)} GiB`;
+  return `${(bytes / (1024 * 1024)).toFixed(0)} MiB`;
+}
+
+function utf8ToBase64Url(input: string): string {
+  const bytes = new TextEncoder().encode(input);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) {
+    bin += String.fromCharCode(bytes[i]);
+  }
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
 class DriveSparseMountController {
   private status: DriveSparseMountStatus = {
     lifecycle: 'UNMOUNTED',
     signedIn: false,
     ownerEmail: '',
+    ownerDisplayName: '',
+    machackabookDetected: false,
     driveFolderId: null,
     bandsFolderId: null,
     manifestFileId: null,
     plistFileId: null,
     logicalVolumeBytes: LOGICAL_VOLUME_BYTES,
-    logicalVolumeGiB: 192,
+    logicalVolumeGiB: 384,
+    mountedLogicalGiB: 384,
     bandSizeBytes: SPARSE_BAND_TOTAL_BYTES,
     totalSparseBands: TOTAL_HYPER_BLOCKS,
     uploadedDriveBands: 0,
     httpfsMounted: false,
+    mountMode: 'ALL',
+    activeTiers: SPARSE_FUSION_TIERS.map((t) => t.id),
+    rcloneRemotePath: `gdrive:${SPARSEBUNDLE_FOLDER_NAME}`,
+    quota: null,
     lastSyncAt: null,
-    message: 'Sign in with Google to attach your 192 GiB .sparsebundle & HTTPFS virtual disk.',
+    message: 'Sign in with Google (or Machackabook) to attach your 384 GiB 8-Sparse-Fusion Drive virtual disk.',
   };
 
   private pendingConfirmResolver: ((confirmed: boolean) => void) | null = null;
   private isHandlingAuth = false;
+  private postAuthBannerDismissed = false;
 
   public getStatus(): DriveSparseMountStatus {
     return { ...this.status };
+  }
+
+  private renderClipPathMatrix(): void {
+    const gridEl = document.getElementById('clip-path-tier-grid');
+    if (gridEl) {
+      gridEl.textContent = '';
+      for (const tier of SPARSE_FUSION_TIERS) {
+        const active =
+          this.status.mountMode === 'ALL' || this.status.activeTiers.includes(tier.id);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = active
+          ? 'text-left px-1.5 py-1 rounded border border-emerald-400/50 bg-emerald-500/15 text-emerald-100 space-y-0.5 transition'
+          : 'text-left px-1.5 py-1 rounded border border-slate-700 bg-slate-950/70 text-slate-400 space-y-0.5 opacity-75 transition';
+        btn.style.clipPath = active ? 'polygon(0 0, 100% 0, 96% 100%, 0 100%)' : 'polygon(4% 0, 100% 0, 96% 100%, 0 100%)';
+
+        const top = document.createElement('div');
+        top.className = 'flex justify-between items-center text-[8px] font-bold tabular-nums';
+        top.textContent = `${tier.bitWidth}b · ${tier.logicalGiB}G`;
+
+        const sub = document.createElement('div');
+        sub.className = 'text-[7px] truncate opacity-85';
+        sub.textContent = tier.label;
+
+        btn.appendChild(top);
+        btn.appendChild(sub);
+        btn.addEventListener('click', () => {
+          void this.toggleFusionTier(tier.id);
+        });
+        gridEl.appendChild(btn);
+      }
+    }
+
+    const svgOverlay = document.getElementById('clip-path-fusion-svg');
+    if (svgOverlay) {
+      for (const tier of SPARSE_FUSION_TIERS) {
+        const seg = svgOverlay.querySelector<SVGElement>(`[data-clip-tier="${tier.id}"]`);
+        if (seg) {
+          const active =
+            this.status.mountMode === 'ALL' || this.status.activeTiers.includes(tier.id);
+          seg.setAttribute('fill-opacity', active ? '0.68' : '0.12');
+          seg.setAttribute('stroke-opacity', active ? '0.95' : '0.25');
+        }
+      }
+    }
+
+    const modeUi = document.getElementById('clip-path-mode-ui');
+    if (modeUi) {
+      modeUi.textContent = `${this.status.mountMode} · ${this.status.mountedLogicalGiB} / 384 GiB (${this.status.activeTiers.length}/8 tiers)`;
+    }
+  }
+
+  private renderQuotaAndAccountBadges(): void {
+    const quotaEl = document.getElementById('drive-quota-summary-ui');
+    if (quotaEl) {
+      const q = this.status.quota;
+      if (!this.status.signedIn) {
+        quotaEl.className = 'text-[8px] text-slate-400 bg-slate-950 px-2 py-1 rounded border border-slate-800';
+        quotaEl.textContent = 'Google Drive Quota: Sign in to verify full 384 GiB capacity vs Clip-Path slice.';
+      } else if (!q || !q.quotaKnown) {
+        quotaEl.className = 'text-[8px] text-amber-300 bg-slate-950 px-2 py-1 rounded border border-amber-500/30';
+        quotaEl.textContent = `Checking live Drive storageQuota for ${this.status.ownerEmail}…`;
+      } else if (q.unlimitedDriveStorage) {
+        quotaEl.className = 'text-[8px] text-emerald-300 bg-slate-950 px-2 py-1 rounded border border-emerald-500/40';
+        quotaEl.textContent = `Drive Storage: Unlimited (${formatBytesHuman(q.usageBytes)} used) — Full 384 GiB DB permitted ✓`;
+      } else {
+        const fitsMsg = q.fitsFull384GiB
+          ? 'Fits Full 384 GiB Sparsebundle ✓'
+          : 'Below 384 GiB raw limit — Sparse bands & Clip-Path Selective recommended';
+        quotaEl.className = q.fitsFull384GiB
+          ? 'text-[8px] text-emerald-300 bg-slate-950 px-2 py-1 rounded border border-emerald-500/40 tabular-nums'
+          : 'text-[8px] text-amber-300 bg-slate-950 px-2 py-1 rounded border border-amber-500/40 tabular-nums';
+        quotaEl.textContent = `Drive Free: ${formatBytesHuman(q.freeBytes)} / ${formatBytesHuman(q.limitBytes)} — ${fitsMsg}`;
+      }
+    }
+
+    const mackBadge = document.getElementById('machackabook-account-badge');
+    if (mackBadge) {
+      mackBadge.classList.toggle('hidden', !this.status.machackabookDetected);
+      if (this.status.machackabookDetected) {
+        mackBadge.textContent = `MACHACKABOOK VERIFIED (${this.status.ownerEmail})`;
+      }
+    }
+
+    const postAuthBanner = document.getElementById('workspace-postauth-prompt');
+    if (postAuthBanner) {
+      const show = this.status.signedIn && !this.postAuthBannerDismissed;
+      postAuthBanner.classList.toggle('hidden', !show);
+      const acctSpan = document.getElementById('workspace-postauth-account');
+      if (acctSpan && this.status.signedIn) {
+        acctSpan.textContent = `${this.status.ownerDisplayName || this.status.ownerEmail} (${this.status.mountedLogicalGiB} GiB attached)`;
+      }
+    }
+  }
+
+  private async refreshRcloneConfPreview(forceOverwriteEditor = false): Promise<void> {
+    const editor = document.getElementById('rclone-conf-editor') as HTMLTextAreaElement | null;
+    if (!editor) return;
+    if (!forceOverwriteEditor && editor.value.trim().length > 20 && document.activeElement === editor) return;
+    try {
+      const res = await fetch('/v1/sparsebundle/rclone-conf');
+      if (res.ok) {
+        editor.value = await res.text();
+      }
+    } catch {
+      // ignore fetch error
+    }
   }
 
   private updateUI(): void {
@@ -138,14 +284,14 @@ class DriveSparseMountController {
           : 'text-slate-400';
 
     const summaryText = isMounted
-      ? `MOUNTED (DRIVE+HTTPFS) · 192 GiB · ${s.uploadedDriveBands} bands synced (${s.ownerEmail})`
+      ? `MOUNTED (DRIVE+HTTPFS) · ${s.mountedLogicalGiB}/384 GiB (${s.mountMode}) · ${s.uploadedDriveBands} bands synced (${s.ownerEmail})`
       : s.message;
 
     for (const id of ['drive-sparse-mount-badge', 'audit-drive-mount-badge']) {
       const el = document.getElementById(id);
       if (el) {
         el.className = `text-[8.5px] font-semibold tabular-nums truncate ${pillCls}`;
-        el.textContent = isMounted ? 'MOUNTED · 192 GiB HTTPFS' : s.lifecycle;
+        el.textContent = isMounted ? `MOUNTED · ${s.mountedLogicalGiB}G HTTPFS` : s.lifecycle;
       }
     }
 
@@ -157,8 +303,16 @@ class DriveSparseMountController {
     const rcloneBox = document.getElementById('drive-rclone-cmd-ui');
     if (rcloneBox) {
       const origin = window.location.origin;
-      rcloneBox.textContent = `rclone mount :http:/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.sparsebundle /mnt/gaia192 --http-url ${origin} --vfs-cache-mode full`;
+      rcloneBox.textContent = `rclone mount :http:/v1/sparsebundle/httpfs/${SPARSEBUNDLE_FOLDER_NAME} /mnt/gaia384 --http-url ${origin} --vfs-cache-mode full # path=${s.rcloneRemotePath}`;
     }
+
+    const pathInput = document.getElementById('rclone-remote-path-input') as HTMLInputElement | null;
+    if (pathInput && document.activeElement !== pathInput) {
+      pathInput.value = s.rcloneRemotePath;
+    }
+
+    this.renderClipPathMatrix();
+    this.renderQuotaAndAccountBadges();
   }
 
   private async requestExplicitModalConfirmation(opts: {
@@ -213,7 +367,7 @@ class DriveSparseMountController {
     });
     if (!res.ok) {
       const txt = await res.text().catch(() => '');
-      throw new Error(`Drive API HTTP ${res.status}: ${txt.slice(0, 140)}`);
+      throw new Error(`Google API HTTP ${res.status}: ${txt.slice(0, 140)}`);
     }
     if (res.status === 204) return {};
     return (await res.json()) as Record<string, unknown>;
@@ -317,6 +471,10 @@ class DriveSparseMountController {
       '  <string>com.apple.diskimage.sparsebundle</string>',
       '  <key>size</key>',
       `  <integer>${LOGICAL_VOLUME_BYTES}</integer>`,
+      '  <key>gaia-mounted-gib</key>',
+      `  <integer>${this.status.mountedLogicalGiB}</integer>`,
+      '  <key>gaia-fusion-mode</key>',
+      `  <string>${this.status.mountMode}</string>`,
       '</dict>',
       '</plist>',
     ].join('\n');
@@ -333,7 +491,7 @@ class DriveSparseMountController {
       latestLeafHex: d.latestLeafHex,
       tailString: d.orderedHashTailString.slice(0, 32000),
       payloadJson: JSON.stringify({
-        format: 'GAIA_SPARSEBAND_8MIB_V1',
+        format: 'GAIA_SPARSEBAND_8MIB_V2_384G',
         setIndex: d.setIndex,
         blockIndex: d.blockIndex,
         cells: sparseBandEngine.cells.filter((c) => c.setIndex === d.setIndex && c.blockIndex === d.blockIndex),
@@ -343,6 +501,9 @@ class DriveSparseMountController {
     const body = {
       driveFolderId: this.status.driveFolderId,
       bandsFolderId: this.status.bandsFolderId,
+      mountMode: this.status.mountMode,
+      activeTiers: this.status.activeTiers,
+      rcloneRemotePath: this.status.rcloneRemotePath,
       setRootsHex: summary.setRootsHex,
       bands: bandsPayload,
     };
@@ -358,11 +519,99 @@ class DriveSparseMountController {
       throw new Error(errJson.error || `HTTPFS mount failed (HTTP ${res.status})`);
     }
     this.status.httpfsMounted = true;
+    await this.refreshRcloneConfPreview(true);
+  }
+
+  public async toggleFusionTier(tierId: SparseFusionTierId): Promise<void> {
+    sparseBandEngine.toggleClipPathTier(tierId);
+    const next = sparseBandEngine.getClipPathMountState();
+    this.status.mountMode = next.mountMode;
+    this.status.activeTiers = next.activeTiers;
+    this.status.mountedLogicalGiB = sparseBandEngine.getMountedLogicalGiB();
+    this.updateUI();
+
+    const token = getDriveAccessToken();
+    if (token && this.status.httpfsMounted) {
+      try {
+        await this.mountBandsToHttpfsGateway(token);
+      } catch {
+        // leave UI updated even if HTTPFS update deferred
+      }
+    }
+  }
+
+  public async mountAllFusionTiers(): Promise<void> {
+    sparseBandEngine.mountAllFusionTiers();
+    const next = sparseBandEngine.getClipPathMountState();
+    this.status.mountMode = next.mountMode;
+    this.status.activeTiers = next.activeTiers;
+    this.status.mountedLogicalGiB = 384;
+    this.updateUI();
+
+    const token = getDriveAccessToken();
+    if (token && this.status.signedIn) {
+      await this.mountBandsToHttpfsGateway(token).catch(() => {});
+    }
+  }
+
+  public parseAndApplyRcloneConf(rawConf: string): { ok: boolean; message: string } {
+    const sanitizedLines: string[] = [];
+    let detectedRemote = '';
+    let detectedPath = '';
+    let detectedFolderId = '';
+    let tokenRedacted = false;
+
+    for (const line of rawConf.replace(/\r/g, '').split('\n')) {
+      const trimmed = line.trim();
+      const secMatch = /^\[([^\]]+)\]$/.exec(trimmed);
+      if (secMatch && !detectedRemote) {
+        detectedRemote = secMatch[1];
+      }
+      if (/^token\s*=/.test(trimmed) && !trimmed.includes('<SUPPLIED_AT_RUNTIME')) {
+        sanitizedLines.push('token = <SUPPLIED_AT_RUNTIME_FROM_GDRIVE_SESSION>');
+        tokenRedacted = true;
+        continue;
+      }
+      const dbMatch = /^(?:database_path|mount_path|path)\s*=\s*(.+)$/i.exec(trimmed);
+      if (dbMatch && dbMatch[1].trim()) {
+        detectedPath = dbMatch[1].trim();
+      }
+      const folderMatch = /^root_folder_id\s*=\s*([a-zA-Z0-9_-]{8,128})$/i.exec(trimmed);
+      if (folderMatch) {
+        detectedFolderId = folderMatch[1].trim();
+      }
+      sanitizedLines.push(line);
+    }
+
+    if (detectedPath) {
+      this.status.rcloneRemotePath = detectedPath;
+    } else if (detectedRemote) {
+      this.status.rcloneRemotePath = `${detectedRemote}:${SPARSEBUNDLE_FOLDER_NAME}`;
+    }
+    if (detectedFolderId) {
+      this.status.driveFolderId = detectedFolderId;
+    }
+
+    const editor = document.getElementById('rclone-conf-editor') as HTMLTextAreaElement | null;
+    if (editor && tokenRedacted) {
+      editor.value = sanitizedLines.join('\n');
+    }
+
+    this.updateUI();
+    const token = getDriveAccessToken();
+    if (token && this.status.httpfsMounted) {
+      void this.mountBandsToHttpfsGateway(token);
+    }
+
+    return {
+      ok: true,
+      message: `Loaded rclone.conf -> path="${this.status.rcloneRemotePath}"${tokenRedacted ? ' (embedded token sanitized for security)' : ''}`,
+    };
   }
 
   /**
    * Read-only discovery triggered automatically when the user signs in with Google.
-   * Hydrates existing Google Drive .sparsebundle manifest + attaches HTTPFS volume cleanly.
+   * Checks storageQuota, detects Machackabook, locates existing .sparsebundle & attaches HTTPFS.
    */
   public async discoverAndAttachOnLogin(): Promise<void> {
     if (this.isHandlingAuth) return;
@@ -374,20 +623,41 @@ class DriveSparseMountController {
     }
 
     this.isHandlingAuth = true;
+    this.postAuthBannerDismissed = false;
     this.status.signedIn = true;
     this.status.ownerEmail = bridge.email;
+    this.status.ownerDisplayName = bridge.displayName || bridge.email;
+    this.status.machackabookDetected = isMachackabookAccount(bridge.email, bridge.displayName);
     this.status.lifecycle = 'DISCOVERING_DRIVE';
-    this.status.message = `Signed in as ${bridge.email} — scanning Google Drive for 192 GiB sparsebundle…`;
+    this.status.message = `Signed in as ${bridge.email} — checking Google Drive quota & 384 GiB sparsebundle…`;
     this.updateUI();
 
     try {
-      const rootFolder = await this.findDriveFile(token, SPARSEBUNDLE_FOLDER_NAME, null, MIME_FOLDER);
+      const quota = bridge.quota || (await fetchDriveQuotaAndProfile(token));
+      this.status.quota = quota;
+
+      // Auto-tune selective clip-path mask if Drive quota has a finite ceiling under 384 GiB
+      if (quota && quota.quotaKnown && !quota.unlimitedDriveStorage && !quota.fitsFull384GiB) {
+        sparseBandEngine.setClipPathMountTiers(['BIT_64', 'BIT_128', 'SOLVENT_EQUATOR', 'ELGAMAL_L10']);
+      } else {
+        sparseBandEngine.mountAllFusionTiers();
+      }
+      const cp = sparseBandEngine.getClipPathMountState();
+      this.status.mountMode = cp.mountMode;
+      this.status.activeTiers = cp.activeTiers;
+      this.status.mountedLogicalGiB = sparseBandEngine.getMountedLogicalGiB();
+
+      let rootFolder = await this.findDriveFile(token, SPARSEBUNDLE_FOLDER_NAME, null, MIME_FOLDER);
+      if (!rootFolder) {
+        rootFolder = await this.findDriveFile(token, LEGACY_SPARSEBUNDLE_FOLDER_NAME, null, MIME_FOLDER);
+      }
+
       if (!rootFolder) {
         await this.mountBandsToHttpfsGateway(token);
         this.status.lifecycle = 'NEEDS_DRIVE_INIT';
         this.status.driveFolderId = null;
         this.status.bandsFolderId = null;
-        this.status.message = `HTTPFS attached (192 GiB). Click SYNC 192GiB TO DRIVE to save bands to ${bridge.email}'s Drive.`;
+        this.status.message = `HTTPFS attached (${this.status.mountedLogicalGiB}/384 GiB). Click SYNC 384GiB TO DRIVE to save sparse bands to ${bridge.email}'s Drive.`;
         this.updateUI();
         return;
       }
@@ -435,7 +705,7 @@ class DriveSparseMountController {
       this.status.uploadedDriveBands = remoteBandCount;
       this.status.lifecycle = 'MOUNTED_DRIVE_HTTPFS';
       this.status.lastSyncAt = new Date().toISOString();
-      this.status.message = `Attached ${SPARSEBUNDLE_FOLDER_NAME} from ${bridge.email} (${remoteBandCount} Drive bands, +${hydratedCount} hydrated cells).`;
+      this.status.message = `Attached ${rootFolder.name} from ${bridge.email} (${remoteBandCount} Drive bands, +${hydratedCount} hydrated cells, ${this.status.mountedLogicalGiB}/384 GiB).`;
 
       const sum = sparseBandEngine.getSummary();
       const firstCell = sparseBandEngine.cells[0];
@@ -467,34 +737,35 @@ class DriveSparseMountController {
     }
   }
 
-  /**
-   * Creates or updates the 192 GiB .sparsebundle on the signed-in user's Google Drive
-   * ONLY after explicit confirmation via the in-app confirmation modal.
-   */
   public async syncSparseBundleToDrive(): Promise<boolean> {
     const bridge = getDriveBridgeState();
     const token = getDriveAccessToken();
     if (!bridge.signedIn || !token) {
       this.status.lifecycle = 'ERROR';
-      this.status.message = 'Sign in with Google first to sync your sparsebundle to Google Drive.';
+      this.status.message = 'Sign in with Google first to sync your 384 GiB sparsebundle to Google Drive.';
       this.updateUI();
       return false;
     }
 
     const descriptors = sparseBandEngine.getPopulatedBandDescriptors().slice(0, 4);
+    const qNote = this.status.quota?.fitsFull384GiB
+      ? 'Google Drive quota verified sufficient for sparse volume metadata & bands.'
+      : 'Note: Using sparse allocation + 8-Sparse-Fusion Clip-Path bands to fit within Drive quota.';
+
     const affectedItems = [
+      qNote,
       `${SPARSEBUNDLE_FOLDER_NAME}/ (Google Drive root folder)`,
-      `Info.plist (192 GiB = ${LOGICAL_VOLUME_BYTES.toLocaleString()} B sparsebundle descriptor)`,
-      'mount.token.json (signed-in session attach lease)',
+      `Info.plist (384 GiB = ${LOGICAL_VOLUME_BYTES.toLocaleString()} B · Mode ${this.status.mountMode})`,
+      'mount.token.json (signed-in session attach lease, zero secrets)',
       `GAIA_MANIFEST.json (${sparseBandEngine.cells.length} verified BLAKE2b+SHA256d cells)`,
       ...descriptors.map(
-        (d) => `bands/${d.bandHex} (real 8,388,608-byte 8 MiB sparse band · Set ${d.setIndex + 1} Blk #${d.blockIndex})`
+        (d) => `bands/${d.bandHex} (8,388,608-byte 8 MiB sparse band · Set ${d.setIndex + 1} Blk #${d.blockIndex})`
       ),
     ];
 
     const confirmed = await this.requestExplicitModalConfirmation({
-      title: 'Confirm Google Drive 192 GiB Sparsebundle Sync',
-      description: `Upload and update ${affectedItems.length} items inside Google Drive for ${bridge.email}? Existing files in ${SPARSEBUNDLE_FOLDER_NAME} will be updated.`,
+      title: 'Confirm Google Drive 384 GiB Sparsebundle Sync',
+      description: `Upload and update ${affectedItems.length} items inside Google Drive for ${bridge.email}?`,
       items: affectedItems,
       confirmLabel: 'CONFIRM DRIVE UPLOAD',
     });
@@ -538,7 +809,10 @@ class DriveSparseMountController {
           status: 'MOUNTED',
           ownerEmail: bridge.email,
           logicalVolumeBytes: LOGICAL_VOLUME_BYTES,
-          logicalVolumeGiB: 192,
+          logicalVolumeGiB: 384,
+          mountedLogicalGiB: this.status.mountedLogicalGiB,
+          mountMode: this.status.mountMode,
+          activeTiers: this.status.activeTiers,
           bandSizeBytes: SPARSE_BAND_TOTAL_BYTES,
           totalSparseBands: TOTAL_HYPER_BLOCKS,
           setRootsHex: sparseBandEngine.getSummary().setRootsHex,
@@ -557,7 +831,7 @@ class DriveSparseMountController {
       });
 
       const manifestDoc = JSON.stringify({
-        schema: 'GAIA_192GIB_SPARSEBUNDLE_V1',
+        schema: 'GAIA_384GIB_SPARSEBUNDLE_V2',
         updatedAt: new Date().toISOString(),
         summary: sparseBandEngine.getSummary(),
         cells: sparseBandEngine.cells.slice(-512).map((c) => ({
@@ -568,6 +842,8 @@ class DriveSparseMountController {
           deweyAddress: c.deweyAddress,
           blake2b128Hex: c.blake2b128Hex,
           sha256dHex: c.sha256dHex,
+          receiptWord: c.receiptWord,
+          prismRgbHex: c.prismRgbHex,
         })),
       });
       const existingManifest = await this.findDriveFile(token, 'GAIA_MANIFEST.json', folderId);
@@ -610,7 +886,7 @@ class DriveSparseMountController {
         required: false,
         predicates: {
           authorization: { state: 'PASS', reason: `Explicitly confirmed Drive upload for ${bridge.email}` },
-          capacity: { state: 'PASS', reason: `${uploadedCount} real 8 MiB bands + 192 GiB Info.plist synced` },
+          capacity: { state: 'PASS', reason: `${uploadedCount} × 8 MiB bands + 384 GiB Info.plist synced` },
           verification: { state: 'PASS', reason: `Folder ${folderId} bound to HTTPFS gateway` },
           boundary: { state: 'PASS', reason: 'Capped per-sync band batch with in-memory Bearer auth' },
           provenancePrivacy: { state: 'PASS', reason: 'User confirmation enforced prior to Drive mutation' },
@@ -639,10 +915,13 @@ class DriveSparseMountController {
     this.status.httpfsMounted = false;
     this.status.signedIn = bridge.signedIn;
     this.status.ownerEmail = bridge.email;
+    this.status.ownerDisplayName = bridge.displayName || bridge.email;
+    this.status.machackabookDetected = bridge.machackabookDetected;
+    this.status.quota = bridge.quota;
     this.status.lifecycle = 'UNMOUNTED';
     this.status.message = bridge.signedIn
       ? `HTTPFS unmounted cleanly for ${bridge.email}.`
-      : 'Signed out — virtual 192 GiB HTTPFS mount released.';
+      : 'Signed out — virtual 384 GiB HTTPFS mount released.';
     this.updateUI();
   }
 
@@ -650,28 +929,45 @@ class DriveSparseMountController {
     const origin = window.location.origin;
     const scriptText = [
       '#!/usr/bin/env bash',
-      '# GAIA NEXUS 192 GiB Sparsebundle HTTPFS & Google Drive rclone Mount Helper',
-      `# Volume Size: 192 GiB (${LOGICAL_VOLUME_BYTES} bytes = ${TOTAL_HYPER_BLOCKS} x 8 MiB sparse bands)`,
+      '# GAIA NEXUS 384 GiB 8-Sparse-Fusion HTTPFS & Google Drive rclone Mount Helper',
+      `# Volume Size: 384 GiB (${LOGICAL_VOLUME_BYTES} bytes = ${TOTAL_HYPER_BLOCKS} x 8 MiB sparse bands)`,
+      `# Clip-Path Mode: ${this.status.mountMode} (${this.status.mountedLogicalGiB} GiB)`,
       'set -euo pipefail',
       '',
-      'MOUNT_POINT="${1:-$HOME/mnt/gaia_192gib}"',
+      'MOUNT_POINT="${1:-$HOME/mnt/gaia_384gib}"',
       'mkdir -p "$MOUNT_POINT"',
       '',
-      '# Option A: Mount live HTTPFS virtual 192 GiB disk served by this app:',
-      `rclone mount :http:/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.sparsebundle "$MOUNT_POINT" \\`,
+      '# Option A: Mount live HTTPFS virtual 384 GiB disk served by this app:',
+      `rclone mount :http:/v1/sparsebundle/httpfs/${SPARSEBUNDLE_FOLDER_NAME} "$MOUNT_POINT" \\`,
       `  --http-url "${origin}" \\`,
       '  --vfs-cache-mode full \\',
       '  --read-only',
       '',
-      '# Option B: Mount directly from your Google Drive remote (after configuring "rclone config" drive remote "gdrive"):',
-      `# rclone mount gdrive:${SPARSEBUNDLE_FOLDER_NAME} "$MOUNT_POINT" --vfs-cache-mode writes`,
+      '# Option B: Mount directly using your sanitized rclone.conf remote:',
+      `# rclone mount --config ./rclone.conf "${this.status.rcloneRemotePath}" "$MOUNT_POINT" --vfs-cache-mode writes`,
       '',
     ].join('\n');
 
     const blob = new Blob([scriptText], { type: 'text/x-shellscript' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'mount_192gib_sparsebundle.sh';
+    a.download = 'mount_384gib_sparsebundle.sh';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+  }
+
+  public async downloadSanitizedRcloneConf(): Promise<void> {
+    const editor = document.getElementById('rclone-conf-editor') as HTMLTextAreaElement | null;
+    let text = editor?.value?.trim() || '';
+    if (!text) {
+      const res = await fetch('/v1/sparsebundle/rclone-conf');
+      text = res.ok ? await res.text() : '';
+    }
+    const clean = text.replace(/^token\s*=.*$/gm, 'token = <SUPPLIED_AT_RUNTIME_FROM_GDRIVE_SESSION>');
+    const blob = new Blob([clean], { type: 'text/plain;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'rclone.conf';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1500);
   }
@@ -696,7 +992,7 @@ class DriveSparseMountController {
       body.textContent = item.text;
       row.appendChild(head);
       row.appendChild(body);
-      if (item.url && /^https:\/\/meet\.google\.com\/|^https:\/\/docs\.google\.com\//.test(item.url)) {
+      if (item.url && /^https:\/\/(meet|docs|sheets|slides|calendar|mail)\.google\.com\//.test(item.url)) {
         const a = document.createElement('a');
         a.href = item.url;
         a.target = '_blank';
@@ -755,7 +1051,7 @@ class DriveSparseMountController {
       this.renderWorkspaceOutput([
         {
           label: `DOC READ & INDEXED (${docsList.length} Docs found)`,
-          text: `"${docJson.title || firstDoc.name}" -> ${ingested.insertedCells.length} BLAKE2b+SHA256d cells packed into 8 MiB sparseband (Dewey ${ingested.insertedCells[0]?.deweyAddress ?? '--'}).`,
+          text: `"${docJson.title || firstDoc.name}" -> ${ingested.insertedCells.length} BLAKE2b+SHA256d cells packed (Dewey ${ingested.insertedCells[0]?.deweyAddress ?? '--'}).`,
           url: firstDoc.webViewLink,
           tone: 'ok',
         },
@@ -777,10 +1073,10 @@ class DriveSparseMountController {
     }
 
     const summary = sparseBandEngine.getSummary();
-    const docTitle = `GAIA 192GiB Sparsebundle Audit (${new Date().toISOString().slice(0, 16)})`;
+    const docTitle = `GAIA 384GiB Sparsebundle Audit (${new Date().toISOString().slice(0, 16)})`;
     const confirmed = await this.requestExplicitModalConfirmation({
       title: 'Confirm Google Doc Creation',
-      description: `Create a new Google Doc in ${bridge.email}'s account summarizing live 192 GiB sparsebundle Merkle roots and Dewey cells?`,
+      description: `Create a new Google Doc in ${bridge.email}'s account summarizing live 384 GiB sparsebundle Merkle roots and Dewey cells?`,
       items: [
         `Document Title: ${docTitle}`,
         `Set1/2/3 Merkle Roots (${summary.populatedCellsCount} indexed cells)`,
@@ -800,13 +1096,13 @@ class DriveSparseMountController {
       })) as { documentId: string; title: string };
 
       const contentText = [
-        `GAIA NEXUS 192 GiB Sparsebundle & BLAKE2b Merkle Receipt`,
+        `GAIA NEXUS 384 GiB 8-Sparse-Fusion & BLAKE2b Merkle Receipt`,
         `Signed-in Owner: ${bridge.email}`,
-        `Logical Capacity: 192 GiB (${LOGICAL_VOLUME_BYTES.toLocaleString()} bytes across ${TOTAL_HYPER_BLOCKS.toLocaleString()} x 8 MiB bands)`,
+        `Logical Capacity: 384 GiB (${LOGICAL_VOLUME_BYTES.toLocaleString()} bytes across ${TOTAL_HYPER_BLOCKS.toLocaleString()} x 8 MiB bands)`,
         `Set 1 Merkle Root: ${summary.setRootsHex[0]}`,
         `Set 2 Merkle Root: ${summary.setRootsHex[1]}`,
         `Set 3 Merkle Root: ${summary.setRootsHex[2]}`,
-        `Indexed Cells: ${summary.populatedCellsCount} | Populated Bands: ${summary.populatedBandsCount}`,
+        `Cyclic Phase: ${summary.cyclicPhaseMode} | Indexed Cells: ${summary.populatedCellsCount}`,
         '',
       ].join('\n');
 
@@ -847,7 +1143,7 @@ class DriveSparseMountController {
 
     const confirmed = await this.requestExplicitModalConfirmation({
       title: 'Confirm Google Meet Space Creation',
-      description: `Create a new Google Meet conference space under ${bridge.email} with Open access settings?`,
+      description: `Create a new Google Meet conference space under ${bridge.email}?`,
       items: ['New Google Meet room (meet.googleapis.com/v2/spaces)', `Attached session: ${this.status.lifecycle}`],
       confirmLabel: 'CREATE MEET SPACE',
     });
@@ -909,6 +1205,443 @@ class DriveSparseMountController {
     }
   }
 
+  public async exportSparseBandsToGoogleSheet(): Promise<void> {
+    const bridge = getDriveBridgeState();
+    const token = getDriveAccessToken();
+    if (!bridge.signedIn || !token) {
+      this.renderWorkspaceOutput([{ label: 'GOOGLE SHEETS', text: 'Sign in with Google to export Sparseband ledger to Sheets.', tone: 'warn' }]);
+      return;
+    }
+
+    const title = `GAIA 384GiB Solvent Matrix (${new Date().toISOString().slice(0, 16)})`;
+    const rows = sparseBandEngine.cells.slice(-30).map((c) => [
+      `Set${c.setIndex + 1}`,
+      String(c.blockIndex),
+      c.deweyAddress,
+      c.receiptWord,
+      c.prismRgbHex,
+      c.blake2b128Hex,
+      c.sha256dHex.slice(0, 24),
+    ]);
+
+    const confirmed = await this.requestExplicitModalConfirmation({
+      title: 'Confirm Google Sheets Export',
+      description: `Create a new Google Sheet "${title}" and append ${rows.length} verified Solvent/Sparseband rows?`,
+      items: ['sheets.googleapis.com/v4/spreadsheets', `Rows to write: ${rows.length} (Header + Solvent hue/word receipts)`],
+      confirmLabel: 'EXPORT TO SHEETS',
+    });
+    if (!confirmed) return;
+
+    try {
+      const sheet = (await this.driveJsonFetch('https://sheets.googleapis.com/v4/spreadsheets', token, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ properties: { title } }),
+      })) as { spreadsheetId: string; spreadsheetUrl?: string };
+
+      const values = [
+        ['Set', 'BlockIndex', 'DeweyAddress', 'SolventWord', 'PrismHex', 'BLAKE2b_128', 'SHA256d_Prefix'],
+        ...rows,
+      ];
+      await this.driveJsonFetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(sheet.spreadsheetId)}/values/A1:G${values.length}:append?valueInputOption=USER_ENTERED`,
+        token,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ values }),
+        }
+      );
+
+      this.renderWorkspaceOutput([
+        {
+          label: 'GOOGLE SHEET EXPORTED',
+          text: `Saved ${rows.length} Sparseband + Solvent receipts to "${title}".`,
+          url: sheet.spreadsheetUrl,
+          tone: 'ok',
+        },
+      ]);
+    } catch (err) {
+      this.renderWorkspaceOutput([
+        { label: 'GOOGLE SHEETS ERROR', text: err instanceof Error ? err.message : 'Unable to export Sheet', tone: 'err' },
+      ]);
+    }
+  }
+
+  public async readAndIngestGoogleSheet(): Promise<void> {
+    const bridge = getDriveBridgeState();
+    const token = getDriveAccessToken();
+    if (!bridge.signedIn || !token) {
+      this.renderWorkspaceOutput([{ label: 'GOOGLE SHEETS', text: 'Sign in with Google to ingest a Sheet into Sparseband Prisms.', tone: 'warn' }]);
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        q: "mimeType = 'application/vnd.google-apps.spreadsheet' and trashed = false",
+        pageSize: '5',
+        fields: 'files(id,name,webViewLink)',
+      });
+      const listData = await this.driveJsonFetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, token);
+      const sheets = Array.isArray(listData.files)
+        ? (listData.files as Array<{ id: string; name: string; webViewLink?: string }>)
+        : [];
+      if (sheets.length === 0) {
+        this.renderWorkspaceOutput([{ label: 'GOOGLE SHEETS', text: `No Google Sheets found for ${bridge.email}.`, tone: 'warn' }]);
+        return;
+      }
+      const target = sheets[0];
+      const valData = (await this.driveJsonFetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(target.id)}/values/A1:H25`,
+        token
+      )) as { values?: string[][] };
+      const csvRows = (valData.values || [])
+        .map((r) => r.map((c) => String(c || '').replace(/,/g, ';')).join(','))
+        .filter(Boolean);
+      const csv = csvRows.length > 0 ? csvRows.join('\n') : `${target.name},EMPTY_SHEET`;
+      const ingested = sparseBandEngine.ingestSpreadsheetDocument(`GSHEET_${target.name}`, csv);
+
+      this.renderWorkspaceOutput([
+        {
+          label: `GOOGLE SHEET INGESTED (${sheets.length} Sheets)`,
+          text: `"${target.name}" -> ${ingested.insertedCells.length} cells hashed into 8 MiB bands.`,
+          url: target.webViewLink,
+          tone: 'ok',
+        },
+      ]);
+      refreshConvergenceState(true);
+    } catch (err) {
+      this.renderWorkspaceOutput([
+        { label: 'GOOGLE SHEETS ERROR', text: err instanceof Error ? err.message : 'Sheet ingest failed', tone: 'err' },
+      ]);
+    }
+  }
+
+  public async listRecentGmailThreads(): Promise<void> {
+    const bridge = getDriveBridgeState();
+    const token = getDriveAccessToken();
+    if (!bridge.signedIn || !token) {
+      this.renderWorkspaceOutput([{ label: 'GMAIL', text: 'Sign in with Google to read recent Gmail headers.', tone: 'warn' }]);
+      return;
+    }
+
+    try {
+      const listData = (await this.driveJsonFetch(
+        'https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=4',
+        token
+      )) as { messages?: Array<{ id: string }> };
+      const msgs = listData.messages || [];
+      if (msgs.length === 0) {
+        this.renderWorkspaceOutput([{ label: 'GMAIL INBOX', text: 'No messages returned.', tone: 'warn' }]);
+        return;
+      }
+      const snippets: Array<{ label: string; text: string; tone: 'ok' }> = [];
+      for (const m of msgs.slice(0, 3)) {
+        const msgData = (await this.driveJsonFetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${encodeURIComponent(m.id)}?format=metadata&metadataHeaders=Subject&metadataHeaders=From`,
+          token
+        )) as { snippet?: string; payload?: { headers?: Array<{ name: string; value: string }> } };
+        const subj = msgData.payload?.headers?.find((h) => h.name === 'Subject')?.value || '(No Subject)';
+        const from = msgData.payload?.headers?.find((h) => h.name === 'From')?.value || '';
+        snippets.push({
+          label: `GMAIL: ${subj.slice(0, 42)}`,
+          text: `${from} — ${(msgData.snippet || '').slice(0, 90)}`,
+          tone: 'ok',
+        });
+      }
+      this.renderWorkspaceOutput(snippets);
+    } catch (err) {
+      this.renderWorkspaceOutput([
+        { label: 'GMAIL ERROR', text: err instanceof Error ? err.message : 'Gmail read failed', tone: 'err' },
+      ]);
+    }
+  }
+
+  public async createAuditGmailDraft(): Promise<void> {
+    const bridge = getDriveBridgeState();
+    const token = getDriveAccessToken();
+    if (!bridge.signedIn || !token) {
+      this.renderWorkspaceOutput([{ label: 'GMAIL', text: 'Sign in with Google to compose an audit draft.', tone: 'warn' }]);
+      return;
+    }
+
+    const summary = sparseBandEngine.getSummary();
+    const confirmed = await this.requestExplicitModalConfirmation({
+      title: 'Confirm Gmail Audit Draft Creation',
+      description: `Create a draft email inside ${bridge.email}'s Gmail containing the current 384 GiB Merkle & Solvent summary?`,
+      items: [`To: ${bridge.email}`, `Set1 Root: ${summary.setRootsHex[0].slice(0, 24)}…`],
+      confirmLabel: 'CREATE GMAIL DRAFT',
+    });
+    if (!confirmed) return;
+
+    try {
+      const mime = [
+        `To: ${bridge.email}`,
+        `Subject: GAIA 384 GiB Sparsebundle Verification Receipt`,
+        'Content-Type: text/plain; charset="UTF-8"',
+        '',
+        `Account: ${bridge.email}`,
+        `Mounted Volume: ${this.status.mountedLogicalGiB} / 384 GiB (${this.status.mountMode})`,
+        `Cyclic Solvent Phase: ${summary.cyclicPhaseMode}`,
+        `Set 1 Merkle Root: ${summary.setRootsHex[0]}`,
+        `Set 2 Merkle Root: ${summary.setRootsHex[1]}`,
+        `Set 3 Merkle Root: ${summary.setRootsHex[2]}`,
+      ].join('\r\n');
+
+      await this.driveJsonFetch('https://gmail.googleapis.com/gmail/v1/users/me/drafts', token, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: { raw: utf8ToBase64Url(mime) } }),
+      });
+
+      this.renderWorkspaceOutput([
+        {
+          label: 'GMAIL DRAFT CREATED',
+          text: `Saved verification receipt draft in ${bridge.email}'s Drafts folder.`,
+          url: 'https://mail.google.com/#drafts',
+          tone: 'ok',
+        },
+      ]);
+    } catch (err) {
+      this.renderWorkspaceOutput([
+        { label: 'GMAIL DRAFT ERROR', text: err instanceof Error ? err.message : 'Unable to create draft', tone: 'err' },
+      ]);
+    }
+  }
+
+  public async listCalendarEvents(): Promise<void> {
+    const bridge = getDriveBridgeState();
+    const token = getDriveAccessToken();
+    if (!bridge.signedIn || !token) {
+      this.renderWorkspaceOutput([{ label: 'CALENDAR', text: 'Sign in with Google to view Calendar events.', tone: 'warn' }]);
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        maxResults: '5',
+        singleEvents: 'true',
+        orderBy: 'startTime',
+        timeMin: new Date(Date.now() - 86400_000).toISOString(),
+      });
+      const data = (await this.driveJsonFetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params.toString()}`,
+        token
+      )) as { items?: Array<{ summary?: string; start?: { dateTime?: string; date?: string } }> };
+      const items = data.items || [];
+      if (items.length === 0) {
+        this.renderWorkspaceOutput([{ label: 'GOOGLE CALENDAR', text: 'No upcoming primary events found.', tone: 'warn' }]);
+        return;
+      }
+      this.renderWorkspaceOutput(
+        items.map((ev) => ({
+          label: `CALENDAR: ${ev.summary || '(Untitled Event)'}`,
+          text: `Start: ${ev.start?.dateTime || ev.start?.date || '--'}`,
+          tone: 'ok' as const,
+        }))
+      );
+    } catch (err) {
+      this.renderWorkspaceOutput([
+        { label: 'CALENDAR ERROR', text: err instanceof Error ? err.message : 'Calendar list failed', tone: 'err' },
+      ]);
+    }
+  }
+
+  public async createMerkleCheckpointCalendarEvent(): Promise<void> {
+    const bridge = getDriveBridgeState();
+    const token = getDriveAccessToken();
+    if (!bridge.signedIn || !token) {
+      this.renderWorkspaceOutput([{ label: 'CALENDAR', text: 'Sign in with Google to schedule a Merkle checkpoint.', tone: 'warn' }]);
+      return;
+    }
+
+    const summary = sparseBandEngine.getSummary();
+    const startIso = new Date(Date.now() + 60_000).toISOString();
+    const endIso = new Date(Date.now() + 15 * 60_000).toISOString();
+
+    const confirmed = await this.requestExplicitModalConfirmation({
+      title: 'Confirm Google Calendar Checkpoint Event',
+      description: `Schedule a 15-minute Merkle Checkpoint event on ${bridge.email}'s primary calendar?`,
+      items: [
+        'Summary: GAIA 384 GiB Merkle & Reverse Verification Checkpoint',
+        `Set1 Root: ${summary.setRootsHex[0].slice(0, 24)}…`,
+      ],
+      confirmLabel: 'SCHEDULE CHECKPOINT',
+    });
+    if (!confirmed) return;
+
+    try {
+      const created = (await this.driveJsonFetch(
+        'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+        token,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            summary: 'GAIA 384 GiB Merkle & Osmosis Verification Checkpoint',
+            description: `Owner: ${bridge.email}\nMounted: ${this.status.mountedLogicalGiB}/384 GiB\nSet1 Root: ${summary.setRootsHex[0]}`,
+            start: { dateTime: startIso },
+            end: { dateTime: endIso },
+          }),
+        }
+      )) as { htmlLink?: string; summary?: string };
+
+      this.renderWorkspaceOutput([
+        {
+          label: 'CALENDAR CHECKPOINT CREATED',
+          text: created.summary || 'Scheduled GAIA Merkle checkpoint.',
+          url: created.htmlLink,
+          tone: 'ok',
+        },
+      ]);
+    } catch (err) {
+      this.renderWorkspaceOutput([
+        { label: 'CALENDAR ERROR', text: err instanceof Error ? err.message : 'Failed to create event', tone: 'err' },
+      ]);
+    }
+  }
+
+  public async createVerificationGoogleTask(): Promise<void> {
+    const bridge = getDriveBridgeState();
+    const token = getDriveAccessToken();
+    if (!bridge.signedIn || !token) {
+      this.renderWorkspaceOutput([{ label: 'GOOGLE TASKS', text: 'Sign in with Google to create verification tasks.', tone: 'warn' }]);
+      return;
+    }
+
+    const summary = sparseBandEngine.getSummary();
+    const confirmed = await this.requestExplicitModalConfirmation({
+      title: 'Confirm Google Task Creation',
+      description: `Add a GAIA Reverse Verification follow-up task in ${bridge.email}'s default Google Tasks list?`,
+      items: ['Task: Verify 384 GiB Reverse Sequence (16,383 -> 0)', `Root: ${summary.setRootsHex[0].slice(0, 20)}…`],
+      confirmLabel: 'CREATE TASK',
+    });
+    if (!confirmed) return;
+
+    try {
+      const task = (await this.driveJsonFetch(
+        'https://tasks.googleapis.com/tasks/v1/lists/@default/tasks',
+        token,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: `Verify 384 GiB Reverse Sequence (${this.status.mountedLogicalGiB}G)`,
+            notes: `Cyclic Phase: ${summary.cyclicPhaseMode} · Set1: ${summary.setRootsHex[0]}`,
+          }),
+        }
+      )) as { title?: string; id?: string };
+
+      this.renderWorkspaceOutput([
+        {
+          label: 'GOOGLE TASK SAVED',
+          text: `Created task "${task.title || 'Verification'}" in @default list.`,
+          tone: 'ok',
+        },
+      ]);
+    } catch (err) {
+      this.renderWorkspaceOutput([
+        { label: 'GOOGLE TASKS ERROR', text: err instanceof Error ? err.message : 'Task creation failed', tone: 'err' },
+      ]);
+    }
+  }
+
+  public async createAuditGoogleSlidesDeck(): Promise<void> {
+    const bridge = getDriveBridgeState();
+    const token = getDriveAccessToken();
+    if (!bridge.signedIn || !token) {
+      this.renderWorkspaceOutput([{ label: 'GOOGLE SLIDES', text: 'Sign in with Google to create a Slides audit deck.', tone: 'warn' }]);
+      return;
+    }
+
+    const title = `GAIA 384 GiB Osmosis Brief (${new Date().toISOString().slice(0, 16)})`;
+    const confirmed = await this.requestExplicitModalConfirmation({
+      title: 'Confirm Google Slides Presentation Creation',
+      description: `Create a new Google Slides deck "${title}" in ${bridge.email}'s Drive?`,
+      items: ['slides.googleapis.com/v1/presentations', `Title: ${title}`],
+      confirmLabel: 'CREATE SLIDES DECK',
+    });
+    if (!confirmed) return;
+
+    try {
+      const pres = (await this.driveJsonFetch('https://slides.googleapis.com/v1/presentations', token, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title }),
+      })) as { presentationId: string; title?: string };
+
+      this.renderWorkspaceOutput([
+        {
+          label: 'GOOGLE SLIDES CREATED',
+          text: `Created presentation "${pres.title || title}".`,
+          url: `https://docs.google.com/presentation/d/${encodeURIComponent(pres.presentationId)}/edit`,
+          tone: 'ok',
+        },
+      ]);
+    } catch (err) {
+      this.renderWorkspaceOutput([
+        { label: 'GOOGLE SLIDES ERROR', text: err instanceof Error ? err.message : 'Slides creation failed', tone: 'err' },
+      ]);
+    }
+  }
+
+  public async listAndInspectGoogleForms(): Promise<void> {
+    const bridge = getDriveBridgeState();
+    const token = getDriveAccessToken();
+    if (!bridge.signedIn || !token) {
+      this.renderWorkspaceOutput([{ label: 'GOOGLE FORMS', text: 'Sign in with Google to inspect Google Forms.', tone: 'warn' }]);
+      return;
+    }
+
+    try {
+      const params = new URLSearchParams({
+        q: "mimeType = 'application/vnd.google-apps.form' and trashed = false",
+        pageSize: '5',
+        fields: 'files(id,name,webViewLink)',
+      });
+      const listData = await this.driveJsonFetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, token);
+      const forms = Array.isArray(listData.files)
+        ? (listData.files as Array<{ id: string; name: string; webViewLink?: string }>)
+        : [];
+      if (forms.length === 0) {
+        this.renderWorkspaceOutput([{ label: 'GOOGLE FORMS', text: `No Google Forms found for ${bridge.email}.`, tone: 'warn' }]);
+        return;
+      }
+      const f = forms[0];
+      const formDoc = (await this.driveJsonFetch(
+        `https://forms.googleapis.com/v1/forms/${encodeURIComponent(f.id)}`,
+        token
+      )) as { info?: { title?: string }; items?: unknown[] };
+
+      this.renderWorkspaceOutput([
+        {
+          label: `GOOGLE FORM INSPECTED (${forms.length} Forms)`,
+          text: `"${formDoc.info?.title || f.name}" · ${(formDoc.items || []).length} questions/items ready.`,
+          url: f.webViewLink,
+          tone: 'ok',
+        },
+      ]);
+    } catch (err) {
+      this.renderWorkspaceOutput([
+        { label: 'GOOGLE FORMS ERROR', text: err instanceof Error ? err.message : 'Forms read failed', tone: 'err' },
+      ]);
+    }
+  }
+
+  public async triggerPostAuthWorkspacePrompt(): Promise<void> {
+    const bridge = getDriveBridgeState();
+    const res = await promptWorkspaceCapabilitiesUpgrade(bridge.email || undefined);
+    this.postAuthBannerDismissed = true;
+    this.updateUI();
+    this.renderWorkspaceOutput([
+      {
+        label: 'WORKSPACE AUTHORIZED',
+        text: `Full Workspace capabilities active for ${res.email} (Drive, Docs, Meet, Sheets, Gmail, Calendar, Tasks, Slides, Forms).`,
+        tone: 'ok',
+      },
+    ]);
+  }
+
   public init(): void {
     window.addEventListener('gaia-drive-auth-changed', (ev: Event) => {
       const detail = (ev as CustomEvent<{ signedIn: boolean; email: string }>).detail;
@@ -948,6 +1681,36 @@ class DriveSparseMountController {
     document.getElementById('btn-drive-export-rclone')?.addEventListener('click', () => {
       this.downloadRcloneHelperBundle();
     });
+    document.getElementById('btn-rclone-download-conf')?.addEventListener('click', () => {
+      void this.downloadSanitizedRcloneConf();
+    });
+    document.getElementById('btn-rclone-apply-conf')?.addEventListener('click', () => {
+      const editor = document.getElementById('rclone-conf-editor') as HTMLTextAreaElement | null;
+      const out = this.parseAndApplyRcloneConf(editor?.value || '');
+      this.renderWorkspaceOutput([{ label: 'RCLONE.CONF', text: out.message, tone: 'ok' }]);
+    });
+    document.getElementById('rclone-conf-file-input')?.addEventListener('change', async (ev: Event) => {
+      const input = ev.target as HTMLInputElement;
+      const file = input.files?.[0];
+      if (!file) return;
+      const txt = await file.text();
+      const editor = document.getElementById('rclone-conf-editor') as HTMLTextAreaElement | null;
+      if (editor) editor.value = txt;
+      const out = this.parseAndApplyRcloneConf(txt);
+      this.renderWorkspaceOutput([{ label: `RCLONE FILE (${file.name})`, text: out.message, tone: 'ok' }]);
+    });
+
+    document.getElementById('btn-clip-mount-all')?.addEventListener('click', () => {
+      void this.mountAllFusionTiers();
+    });
+    document.getElementById('btn-workspace-postauth-upgrade')?.addEventListener('click', () => {
+      void this.triggerPostAuthWorkspacePrompt();
+    });
+    document.getElementById('btn-workspace-postauth-dismiss')?.addEventListener('click', () => {
+      this.postAuthBannerDismissed = true;
+      this.updateUI();
+    });
+
     document.getElementById('btn-docs-list-ingest')?.addEventListener('click', () => {
       void this.readAndIngestGoogleDocs();
     });
@@ -960,12 +1723,40 @@ class DriveSparseMountController {
     document.getElementById('btn-meet-list-records')?.addEventListener('click', () => {
       void this.listMeetConferenceRecords();
     });
+    document.getElementById('btn-sheets-export')?.addEventListener('click', () => {
+      void this.exportSparseBandsToGoogleSheet();
+    });
+    document.getElementById('btn-sheets-ingest')?.addEventListener('click', () => {
+      void this.readAndIngestGoogleSheet();
+    });
+    document.getElementById('btn-gmail-list')?.addEventListener('click', () => {
+      void this.listRecentGmailThreads();
+    });
+    document.getElementById('btn-gmail-draft')?.addEventListener('click', () => {
+      void this.createAuditGmailDraft();
+    });
+    document.getElementById('btn-calendar-list')?.addEventListener('click', () => {
+      void this.listCalendarEvents();
+    });
+    document.getElementById('btn-calendar-create')?.addEventListener('click', () => {
+      void this.createMerkleCheckpointCalendarEvent();
+    });
+    document.getElementById('btn-tasks-create')?.addEventListener('click', () => {
+      void this.createVerificationGoogleTask();
+    });
+    document.getElementById('btn-slides-create')?.addEventListener('click', () => {
+      void this.createAuditGoogleSlidesDeck();
+    });
+    document.getElementById('btn-forms-inspect')?.addEventListener('click', () => {
+      void this.listAndInspectGoogleForms();
+    });
 
     const st = getDriveBridgeState();
     if (st.signedIn) {
       void this.discoverAndAttachOnLogin();
     } else {
       this.updateUI();
+      void this.refreshRcloneConfPreview(true);
     }
   }
 }
@@ -979,10 +1770,23 @@ export function initDriveSparseMount(): void {
     syncToDrive: () => driveSparseMount.syncSparseBundleToDrive(),
     attachFromDrive: () => driveSparseMount.discoverAndAttachOnLogin(),
     unmount: () => driveSparseMount.unmountOnExit(false),
+    toggleFusionTier: (tierId: SparseFusionTierId) => driveSparseMount.toggleFusionTier(tierId),
+    mountAllFusionTiers: () => driveSparseMount.mountAllFusionTiers(),
     downloadRcloneScript: () => driveSparseMount.downloadRcloneHelperBundle(),
+    downloadSanitizedRcloneConf: () => driveSparseMount.downloadSanitizedRcloneConf(),
+    parseAndApplyRcloneConf: (txt: string) => driveSparseMount.parseAndApplyRcloneConf(txt),
     readAndIngestGoogleDocs: () => driveSparseMount.readAndIngestGoogleDocs(),
     createAuditReceiptGoogleDoc: () => driveSparseMount.createAuditReceiptGoogleDoc(),
     createVerifiedMeetSpace: () => driveSparseMount.createVerifiedMeetSpace(),
     listMeetConferenceRecords: () => driveSparseMount.listMeetConferenceRecords(),
+    exportSparseBandsToGoogleSheet: () => driveSparseMount.exportSparseBandsToGoogleSheet(),
+    readAndIngestGoogleSheet: () => driveSparseMount.readAndIngestGoogleSheet(),
+    listRecentGmailThreads: () => driveSparseMount.listRecentGmailThreads(),
+    createAuditGmailDraft: () => driveSparseMount.createAuditGmailDraft(),
+    listCalendarEvents: () => driveSparseMount.listCalendarEvents(),
+    createMerkleCheckpointCalendarEvent: () => driveSparseMount.createMerkleCheckpointCalendarEvent(),
+    createVerificationGoogleTask: () => driveSparseMount.createVerificationGoogleTask(),
+    createAuditGoogleSlidesDeck: () => driveSparseMount.createAuditGoogleSlidesDeck(),
+    listAndInspectGoogleForms: () => driveSparseMount.listAndInspectGoogleForms(),
   };
 }

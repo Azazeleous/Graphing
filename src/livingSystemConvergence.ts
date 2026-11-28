@@ -12,7 +12,7 @@ import {
   type Verdict,
 } from './creedAdmittance.ts';
 import { LIVING_SYSTEM_SOURCE_REGISTRY } from './livingSystemRegistry.ts';
-import { hamiltonianEngine, type CoreWorkingSetState } from './hamiltonianCore.ts';
+import { hamiltonianEngine, type CoreWorkingSetState, type ElGamalLevel10StraddleState } from './hamiltonianCore.ts';
 import { adlScheduler } from './adlScheduler.ts';
 import { memoryFabric, type MemoryFabricMetrics } from './memoryFabric.ts';
 import { canonicalErrorRegistry } from './canonicalErrorRegistry.ts';
@@ -45,6 +45,7 @@ export interface ConvergenceStateSnapshot {
   memoryMetrics: MemoryFabricMetrics;
   coreState: CoreWorkingSetState;
   sparseBandSummary: SparseBandEngineSummary;
+  elgamalStraddle: ElGamalLevel10StraddleState | null;
   updatedAt: string;
 }
 
@@ -54,6 +55,12 @@ export function buildConvergenceStateSnapshot(): ConvergenceStateSnapshot {
   const errSummary = canonicalErrorRegistry.getSummary();
   const miningBranchVerdict = creedAdmittanceService.getBranchResult('BRANCH-MINING')?.verdict ?? 'YELLOW';
   const faultInjection = creedAdmittanceService.getFaultInjection();
+  const straddle =
+    hamiltonianEngine.lastElGamalStraddle ??
+    hamiltonianEngine.computeElGamalLevel10StraddleStep(
+      memMetrics.acceptedCandidateCount,
+      memMetrics.latestBlockHash || coreState.registryAggregateDigestHex
+    );
 
   return {
     acceptedBlocksCount: memMetrics.acceptedCandidateCount,
@@ -82,6 +89,7 @@ export function buildConvergenceStateSnapshot(): ConvergenceStateSnapshot {
     memoryMetrics: memMetrics,
     coreState,
     sparseBandSummary: sparseBandEngine.getSummary(),
+    elgamalStraddle: straddle,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -119,8 +127,8 @@ export function initLivingSystemConvergence() {
     'creed.rootInit',
     { state: 'PASS', reason: 'Local convergence kernel authorized' },
     {
-      state: hamiltonianEngine.nodes.length === 625 && adlScheduler.lanes.length === 6 ? 'PASS' : 'INCOMPLETE',
-      reason: `V5=${hamiltonianEngine.nodes.length}/625, ADL=${adlScheduler.lanes.length}/6 lanes`,
+      state: hamiltonianEngine.nodes.length === 1250 && adlScheduler.lanes.length === 6 ? 'PASS' : 'INCOMPLETE',
+      reason: `V5=${hamiltonianEngine.nodes.length}/1250 (2×625), ADL=${adlScheduler.lanes.length}/6 lanes`,
     },
     {
       state: memoryFabric.events.length > 0 ? 'PASS' : 'INCOMPLETE',
@@ -164,7 +172,7 @@ export function initLivingSystemConvergence() {
   console.log(`[HAMILTONIAN] V5 Lattice generated with ${hamiltonianEngine.nodes.length} nodes and ${hamiltonianEngine.totalEdges} edges. Reversibility=${revCheck.verdict}`);
   console.log(`[ADL] Initialized ${adlScheduler.lanes.length} execution lanes. Step=${adlCheck.verdict}`);
   console.log(`[MEMORY] Initialized immutable event ledger with ${memoryFabric.events.length} records.`);
-  console.log(`[SPARSEBAND] Doubled 8,192 x 3 Merkle sets (16,383 nodes/tree), BLAKE2b+SHA256d, 64 coprime lanes ready.`);
+  console.log(`[SPARSEBAND] Expanded 16,384 × 3 Merkle sets (32,767 nodes/tree), 8-Sparse-Fusion, BLAKE2b+SHA256d & Hue-Word Solvent ready.`);
   console.log(`[ERROR REGISTRY] Synchronized canonical error registry: ${canonicalErrorRegistry.getErrorCount()} errors, ${canonicalErrorRegistry.getLogCount()} logs.`);
 
   // Expose canonical services & live convergence snapshot to window for cockpit telemetry & inline engine enforcement

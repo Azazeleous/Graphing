@@ -17,7 +17,36 @@ export const DRIVE_SCOPES = [
   'https://www.googleapis.com/auth/meetings.space.created',
   'https://www.googleapis.com/auth/meetings.space.readonly',
   'https://www.googleapis.com/auth/meetings.space.settings',
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/spreadsheets.readonly',
+  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.compose',
+  'https://www.googleapis.com/auth/calendar.events',
+  'https://www.googleapis.com/auth/calendar.readonly',
+  'https://www.googleapis.com/auth/tasks',
+  'https://www.googleapis.com/auth/presentations',
+  'https://www.googleapis.com/auth/forms.body.readonly',
+  'https://www.googleapis.com/auth/userinfo.profile',
+  'https://www.googleapis.com/auth/userinfo.email',
 ] as const;
+
+export interface DriveQuotaSnapshot {
+  limitBytes: number | null;
+  usageBytes: number;
+  freeBytes: number | null;
+  unlimitedDriveStorage: boolean;
+  fitsFull384GiB: boolean;
+  fitsLegacy192GiB: boolean;
+  quotaKnown: boolean;
+  email: string;
+  displayName: string;
+  checkedAt: string;
+}
+
+export function isMachackabookAccount(email: string, displayName = ''): boolean {
+  const hay = `${email} ${displayName}`.toLowerCase();
+  return hay.includes('machackabook');
+}
 
 export type ProviderKey = 'GEMINI' | 'IBM_GRANITE' | 'GPT' | 'KERNEL_LOCAL';
 
@@ -90,10 +119,6 @@ export const PROVIDER_SPECS: Record<ProviderKey, ProviderSpec> = {
 const app = initializeApp(firebaseConfig as Record<string, string>);
 const auth = getAuth(app);
 
-const provider = new GoogleAuthProvider();
-DRIVE_SCOPES.forEach((scope) => provider.addScope(scope));
-provider.setCustomParameters({ prompt: 'select_account' });
-
 export interface UserSessionProfile {
   uid: string;
   email: string;
@@ -101,7 +126,12 @@ export interface UserSessionProfile {
   photoURL?: string;
   accessToken: string;
   signedInAt: string;
+  machackabookMatched?: boolean;
+  quota?: DriveQuotaSnapshot | null;
 }
+
+const LOGICAL_384_GIB_BYTES = 49_152 * 8_388_608; // 412,316,860,416 B
+const LOGICAL_192_GIB_BYTES = 24_576 * 8_388_608; // 206,158,430,208 B
 
 // In-memory multi-user sessions cache ONLY — never persisted to localStorage or sessionStorage
 const userSessions = new Map<string, UserSessionProfile>();
@@ -131,7 +161,7 @@ export function switchActiveUser(uid: string): boolean {
   if (!session) return false;
   activeUid = uid;
   cachedAccessToken = session.accessToken;
-  currentUser = session.user as unknown as User;
+  currentUser = (session as unknown as { user?: User }).user || currentUser;
   emitAuthState();
   return true;
 }
@@ -143,7 +173,7 @@ export function removeUserSession(uid: string): void {
     if (next) {
       activeUid = next.uid;
       cachedAccessToken = next.accessToken;
-      currentUser = next.user as unknown as User;
+      currentUser = (next as unknown as { user?: User }).user || null;
     } else {
       activeUid = null;
       cachedAccessToken = null;
@@ -155,18 +185,71 @@ export function removeUserSession(uid: string): void {
 
 export function getDriveBridgeState() {
   const sessions = getAllUserSessions();
+  const activeSession = activeUid ? userSessions.get(activeUid) || null : null;
+  const email = activeSession?.email || currentUser?.email || '';
+  const displayName = activeSession?.displayName || currentUser?.displayName || '';
   return {
     signedIn: Boolean(currentUser && cachedAccessToken),
     hasFirebaseUser: Boolean(currentUser),
     hasToken: Boolean(cachedAccessToken),
     activeUid: activeUid || currentUser?.uid || '',
-    email: currentUser?.email || '',
-    displayName: currentUser?.displayName || '',
-    photoURL: currentUser?.photoURL || '',
+    email,
+    displayName,
+    photoURL: activeSession?.photoURL || currentUser?.photoURL || '',
+    machackabookDetected: isMachackabookAccount(email, displayName),
+    quota: activeSession?.quota || null,
     sessions,
     totalUsers: sessions.length,
     scopes: [...DRIVE_SCOPES],
   };
+}
+
+export async function fetchDriveQuotaAndProfile(tokenOverride?: string): Promise<DriveQuotaSnapshot | null> {
+  const token = tokenOverride || cachedAccessToken;
+  if (!token) return null;
+  try {
+    const res = await fetch(
+      'https://www.googleapis.com/drive/v3/about?fields=storageQuota,user(emailAddress,displayName)',
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      storageQuota?: { limit?: string; usage?: string; usageInDrive?: string };
+      user?: { emailAddress?: string; displayName?: string };
+    };
+    const sq = data.storageQuota || {};
+    const limitParsed = sq.limit !== undefined ? Number(sq.limit) : NaN;
+    const usageParsed = Number(sq.usage ?? sq.usageInDrive ?? 0);
+    const unlimitedDriveStorage = sq.limit === undefined || !Number.isFinite(limitParsed) || limitParsed <= 0;
+    const limitBytes = unlimitedDriveStorage ? null : limitParsed;
+    const usageBytes = Number.isFinite(usageParsed) ? usageParsed : 0;
+    const freeBytes = limitBytes !== null ? Math.max(0, limitBytes - usageBytes) : null;
+    const email = String(data.user?.emailAddress || currentUser?.email || '');
+    const displayName = String(data.user?.displayName || currentUser?.displayName || email);
+
+    const snapshot: DriveQuotaSnapshot = {
+      limitBytes,
+      usageBytes,
+      freeBytes,
+      unlimitedDriveStorage,
+      fitsFull384GiB: unlimitedDriveStorage || (freeBytes !== null && freeBytes >= LOGICAL_384_GIB_BYTES),
+      fitsLegacy192GiB: unlimitedDriveStorage || (freeBytes !== null && freeBytes >= LOGICAL_192_GIB_BYTES),
+      quotaKnown: true,
+      email,
+      displayName,
+      checkedAt: new Date().toISOString(),
+    };
+
+    if (activeUid && userSessions.has(activeUid)) {
+      const sess = userSessions.get(activeUid)!;
+      sess.quota = snapshot;
+      sess.machackabookMatched = isMachackabookAccount(email, displayName);
+    }
+    emitAuthState();
+    return snapshot;
+  } catch {
+    return null;
+  }
 }
 
 export function initGaiaDriveBridge(): () => void {
@@ -193,6 +276,9 @@ export function initGaiaDriveBridge(): () => void {
     signIn: googleDriveSignIn,
     signOut: googleDriveSignOut,
     signOutAll: googleDriveSignOutAll,
+    promptWorkspaceCapabilitiesUpgrade,
+    fetchDriveQuotaAndProfile,
+    isMachackabookAccount,
     scanExactProviderPackages,
   };
 
@@ -200,21 +286,36 @@ export function initGaiaDriveBridge(): () => void {
   return unsub;
 }
 
-export async function googleDriveSignIn() {
+export async function googleDriveSignIn(loginHint?: string) {
   isSigningIn = true;
   try {
-    const result = await signInWithPopup(auth, provider);
+    const activeProvider = new GoogleAuthProvider();
+    DRIVE_SCOPES.forEach((scope) => activeProvider.addScope(scope));
+    const params: Record<string, string> = {
+      prompt: 'select_account',
+      include_granted_scopes: 'true',
+    };
+    if (loginHint && loginHint.trim()) {
+      params.login_hint = loginHint.trim();
+    }
+    activeProvider.setCustomParameters(params);
+
+    const result = await signInWithPopup(auth, activeProvider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
     if (!credential?.accessToken) {
       throw new Error('Google Workspace access token was not returned. Retry Sign in with Google.');
     }
+    const email = result.user.email || 'unknown@google.com';
+    const displayName = result.user.displayName || email;
     const session: UserSessionProfile = {
       uid: result.user.uid,
-      email: result.user.email || 'unknown@google.com',
-      displayName: result.user.displayName || result.user.email || 'Google User',
+      email,
+      displayName,
       photoURL: result.user.photoURL || undefined,
       accessToken: credential.accessToken,
       signedInAt: new Date().toISOString(),
+      machackabookMatched: isMachackabookAccount(email, displayName),
+      quota: null,
     };
     (session as unknown as Record<string, unknown>).user = result.user;
     userSessions.set(session.uid, session);
@@ -222,6 +323,50 @@ export async function googleDriveSignIn() {
     currentUser = result.user;
     cachedAccessToken = credential.accessToken;
     emitAuthState();
+    await fetchDriveQuotaAndProfile(credential.accessToken);
+    return getDriveBridgeState();
+  } finally {
+    isSigningIn = false;
+  }
+}
+
+export async function promptWorkspaceCapabilitiesUpgrade(loginHint?: string) {
+  isSigningIn = true;
+  try {
+    const upgradeProvider = new GoogleAuthProvider();
+    DRIVE_SCOPES.forEach((scope) => upgradeProvider.addScope(scope));
+    const activeHint = loginHint || currentUser?.email || '';
+    const params: Record<string, string> = {
+      prompt: 'consent select_account',
+      include_granted_scopes: 'true',
+    };
+    if (activeHint) params.login_hint = activeHint;
+    upgradeProvider.setCustomParameters(params);
+
+    const result = await signInWithPopup(auth, upgradeProvider);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    if (!credential?.accessToken) {
+      throw new Error('Google Workspace upgrade token was not returned.');
+    }
+    const email = result.user.email || activeHint || 'unknown@google.com';
+    const displayName = result.user.displayName || email;
+    const session: UserSessionProfile = {
+      uid: result.user.uid,
+      email,
+      displayName,
+      photoURL: result.user.photoURL || undefined,
+      accessToken: credential.accessToken,
+      signedInAt: new Date().toISOString(),
+      machackabookMatched: isMachackabookAccount(email, displayName),
+      quota: null,
+    };
+    (session as unknown as Record<string, unknown>).user = result.user;
+    userSessions.set(session.uid, session);
+    activeUid = session.uid;
+    currentUser = result.user;
+    cachedAccessToken = credential.accessToken;
+    emitAuthState();
+    await fetchDriveQuotaAndProfile(credential.accessToken);
     return getDriveBridgeState();
   } finally {
     isSigningIn = false;

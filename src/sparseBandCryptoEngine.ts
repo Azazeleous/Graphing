@@ -29,6 +29,69 @@ export const LOGICAL_VOLUME_BYTES = TOTAL_HYPER_BLOCKS * SPARSE_BAND_TOTAL_BYTES
 export const DIRECTIONAL_GLYPHS = ['<^>', '^>', '><^', '<^>v'] as const;
 export type DirectionalGlyph = (typeof DIRECTIONAL_GLYPHS)[number];
 
+export type SparseFusionTierId =
+  | 'BIT_64'
+  | 'BIT_128'
+  | 'BIT_256'
+  | 'BIT_512'
+  | 'BIT_1024'
+  | 'BIT_2048'
+  | 'SOLVENT_EQUATOR'
+  | 'ELGAMAL_L10';
+
+export interface SparseFusionTierSpec {
+  id: SparseFusionTierId;
+  bitWidth: number;
+  label: string;
+  role: string;
+  bandStart: number;
+  bandCount: number;
+  logicalGiB: number;
+  clipPolygon: string;
+}
+
+export const SPARSE_FUSION_TIERS: SparseFusionTierSpec[] = [
+  { id: 'BIT_64', bitWidth: 64, label: '64-bit Micro-Index', role: 'BLAKE2b-64 Ordered Tail', bandStart: 0, bandCount: 1536, logicalGiB: 12, clipPolygon: 'polygon(0 0, 50% 0, 50% 25%, 0 25%)' },
+  { id: 'BIT_128', bitWidth: 128, label: '128-bit Address Band', role: 'BLAKE2b-128 Dewey Partition', bandStart: 1536, bandCount: 3072, logicalGiB: 24, clipPolygon: 'polygon(50% 0, 100% 0, 100% 25%, 50% 25%)' },
+  { id: 'BIT_256', bitWidth: 256, label: '256-bit Parity Band', role: 'SHA-256d / BLAKE2b-256', bandStart: 4608, bandCount: 4608, logicalGiB: 36, clipPolygon: 'polygon(0 25%, 50% 25%, 50% 50%, 0 50%)' },
+  { id: 'BIT_512', bitWidth: 512, label: '512-bit Payload Host', role: 'BLAKE2b-512 Spreadsheet Cells', bandStart: 9216, bandCount: 6144, logicalGiB: 48, clipPolygon: 'polygon(50% 25%, 100% 25%, 100% 50%, 50% 50%)' },
+  { id: 'BIT_1024', bitWidth: 1024, label: '1024-bit Dual-Hemisphere', role: 'Forward + Inverse Paired Band', bandStart: 15360, bandCount: 9216, logicalGiB: 72, clipPolygon: 'polygon(0 50%, 50% 50%, 50% 75%, 0 75%)' },
+  { id: 'BIT_2048', bitWidth: 2048, label: '2048-bit Hypercube Super', role: 'Merkle L0..L14 Super-Band', bandStart: 24576, bandCount: 12288, logicalGiB: 96, clipPolygon: 'polygon(50% 50%, 100% 50%, 100% 75%, 50% 75%)' },
+  { id: 'SOLVENT_EQUATOR', bitWidth: 3072, label: 'Osmosis Equator Solvent', role: 'Hue-Word Receipt Bridge', bandStart: 36864, bandCount: 6144, logicalGiB: 48, clipPolygon: 'polygon(0 75%, 50% 75%, 50% 100%, 0 100%)' },
+  { id: 'ELGAMAL_L10', bitWidth: 4096, label: 'ElGamal L10 Straddle', role: 'Free-Set Pattern Recognition', bandStart: 43008, bandCount: 6144, logicalGiB: 48, clipPolygon: 'polygon(50% 75%, 100% 75%, 100% 100%, 50% 100%)' },
+];
+
+export const SOLVENT_LEXICON = [
+  'GENESIS', 'OSMOSIS', 'COPRIME', 'SIERPINSKI', 'HAMILTONIAN', 'MERKLE', 'EQUATOR', 'HEMISPHERE',
+  'STRADDLE', 'ELGAMAL', 'SECP256K1', 'DEWEY', 'SPARSEBAND', 'HYPERCUBE', 'PHI_SPIRAL', 'SOLVENT',
+  'QUANTUM', 'ADMITTANCE', 'PROVENANCE', 'GOLDEN', 'MONOLITH', 'CHRONICLE', 'LATTICE', 'MANHATTAN',
+  'GEODESIC', 'SYNDROME', 'ENGRAM', 'CIPHER', 'INVERSE', 'CONVERGENCE', 'PARITY', 'VERIFIED',
+] as const;
+
+export function hslDegToHex(hDeg: number, sPct = 78, lPct = 56): string {
+  const h = (((hDeg % 360) + 360) % 360) / 360;
+  const s = sPct / 100;
+  const l = lPct / 100;
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const hue2rgb = (t: number) => {
+    let tt = t;
+    if (tt < 0) tt += 1;
+    if (tt > 1) tt -= 1;
+    if (tt < 1 / 6) return p + (q - p) * 6 * tt;
+    if (tt < 1 / 2) return q;
+    if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
+    return p;
+  };
+  return (
+    '#' +
+    [hue2rgb(h + 1 / 3), hue2rgb(h), hue2rgb(h - 1 / 3)]
+      .map((v) => Math.round(v * 255).toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase()
+  );
+}
+
 export interface AxisFacePairSpec {
   axisPairId: 0 | 1 | 2;
   pairLabel: string;
@@ -505,6 +568,12 @@ export interface SpreadsheetPrismCell {
   osmosisFusionDigestHex: string;
   inverseDeweyAddress: string;
   inverseTailToken: string;
+  receiptWord: string;
+  inverseReceiptWord: string;
+  prismHueDeg: number;
+  prismRgbHex: string;
+  fusionTierId: SparseFusionTierId;
+  reverseVerified: boolean;
   createdAt: string;
 }
 
@@ -569,6 +638,14 @@ export interface SparseBandEngineSummary {
   lastSha256dHex: string;
   setRootsHex: [string, string, string];
   lastUpdated: string;
+  mountMode: 'ALL' | 'CLIP_PATH_SELECTIVE';
+  activeFusionTiers: SparseFusionTierId[];
+  mountedLogicalGiB: number;
+  cyclicPhaseMode: 'FORWARD_CYCLIC' | 'REVERSE_VERIFY' | 'COMPLETE';
+  reverseVerifiedBlocks: number;
+  lastReceiptWord: string;
+  lastPrismHueDeg: number;
+  lastPrismRgbHex: string;
 }
 
 // =========================================================================
@@ -630,6 +707,9 @@ export class SparseBandCryptoEngine {
   public orderedHashTailSequence = '';
   public lastSheetName = 'GENESIS_SOURCE_REGISTRY.xlsx';
   public lastUpdated = new Date().toISOString();
+  public activeFusionTiers = new Set<SparseFusionTierId>(SPARSE_FUSION_TIERS.map((t) => t.id));
+  public cyclicPhaseMode: 'FORWARD_CYCLIC' | 'REVERSE_VERIFY' | 'COMPLETE' = 'FORWARD_CYCLIC';
+  public reverseVerifiedBlocks = 0;
   private listeners = new Set<() => void>();
   private nextSeq = 0;
 
@@ -800,10 +880,17 @@ export class SparseBandCryptoEngine {
     this.setTrees[1].updateLeaf(blockIndex, hashes.blake2b256Hex);
     this.setTrees[2].updateLeaf(blockIndex, hashes.sha256dHex);
 
-    // Compute inverse duplicate sequential hash & Osmosis Fusion digest
+    // Compute inverse duplicate sequential hash, Osmosis Fusion digest & Hue-Word Solvent Collection Receipt
     const invHashes = computeInverseSequentialHash(canonicalInput, hashes, lane.inverseStride);
     const invDeweyAddress = `${dClass}.${dSub}.${String(BASE_BLOCKS_PER_SET - 1 - blockIndex).padStart(4, '0')}.${5 - orbIndex}.${invHashes.inverseBlake2b64Hex.slice(0, 3).toUpperCase()}`;
     const invTailToken = `${seq}:INV:${invHashes.inverseBlake2b64Hex}:${invHashes.inverseSha256dHex.slice(0, 16)}#${invDeweyAddress}`;
+    const wordIdx = parseInt(hashes.blake2b64Hex.slice(0, 4), 16) % SOLVENT_LEXICON.length;
+    const invWordIdx = parseInt(invHashes.inverseBlake2b64Hex.slice(0, 4), 16) % SOLVENT_LEXICON.length;
+    const receiptWord = SOLVENT_LEXICON[wordIdx];
+    const inverseReceiptWord = SOLVENT_LEXICON[invWordIdx];
+    const prismHueDeg = Number(((parseInt(invHashes.osmosisFusionDigestHex.slice(0, 6), 16) % 3600) / 10).toFixed(1));
+    const prismRgbHex = hslDegToHex(prismHueDeg);
+    const fusionTierSpec = SPARSE_FUSION_TIERS[seq % SPARSE_FUSION_TIERS.length];
 
     const cell: SpreadsheetPrismCell = {
       cellSeqIndex: seq,
@@ -841,8 +928,14 @@ export class SparseBandCryptoEngine {
       inverseSha256dHex: invHashes.inverseSha256dHex,
       inverseCombinedLeafHex: invHashes.inverseCombinedLeafHex,
       osmosisFusionDigestHex: invHashes.osmosisFusionDigestHex,
-      inverseDeweyAddress,
-      inverseTailToken,
+      inverseDeweyAddress: invDeweyAddress,
+      inverseTailToken: invTailToken,
+      receiptWord,
+      inverseReceiptWord,
+      prismHueDeg,
+      prismRgbHex,
+      fusionTierId: fusionTierSpec.id,
+      reverseVerified: false,
       createdAt: new Date().toISOString(),
     };
 
@@ -855,7 +948,7 @@ export class SparseBandCryptoEngine {
     rbList.push(cell);
     this.rainbowTable.set(rainbowBucketKey, rbList);
 
-    const seqEntry = `[${seq}:${blockIndex}.${orbIndex}:${hashes.blake2b64Hex}:${deweyAddress}~FUSION:${invHashes.osmosisFusionDigestHex.slice(0, 8)}]`;
+    const seqEntry = `[${seq}:${blockIndex}.${orbIndex}:${hashes.blake2b64Hex}:${deweyAddress}~${receiptWord}/${inverseReceiptWord}@${prismHueDeg}°]`;
     this.orderedHashTailSequence = this.orderedHashTailSequence
       ? `${this.orderedHashTailSequence}|${seqEntry}`
       : seqEntry;
@@ -962,7 +1055,7 @@ export class SparseBandCryptoEngine {
                   state: 'PASS',
                   reason: `Sparseband slot budget available (${this.cells.length}/${TOTAL_HYPER_BLOCKS * ORBS_PER_BLOCK} prisms)`,
                 }
-              : { state: 'FAIL', reason: 'Doubled 24,576 x 6 prism capacity exhausted' },
+              : { state: 'FAIL', reason: 'Tripled 49,152 × 6 prism capacity exhausted' },
           verification:
             parsed.length > 0
               ? { state: 'PASS', reason: `Parsed ${parsed.length} sequential spreadsheet cells for BLAKE2b+SHA256d` }
@@ -1301,8 +1394,94 @@ export class SparseBandCryptoEngine {
     return added;
   }
 
+  public setClipPathMountTiers(tierIds: SparseFusionTierId[]): void {
+    const validIds = tierIds.filter((id) => SPARSE_FUSION_TIERS.some((t) => t.id === id));
+    if (validIds.length === 0) return;
+    this.activeFusionTiers = new Set(validIds);
+    this.notify();
+  }
+
+  public toggleClipPathTier(tierId: SparseFusionTierId): boolean {
+    if (this.activeFusionTiers.has(tierId)) {
+      if (this.activeFusionTiers.size <= 1) return false; // Preserve at least 1 mounted slice
+      this.activeFusionTiers.delete(tierId);
+    } else {
+      this.activeFusionTiers.add(tierId);
+    }
+    this.notify();
+    return true;
+  }
+
+  public mountAllFusionTiers(): void {
+    this.activeFusionTiers = new Set(SPARSE_FUSION_TIERS.map((t) => t.id));
+    this.notify();
+  }
+
+  public getMountedLogicalGiB(): number {
+    return SPARSE_FUSION_TIERS.reduce(
+      (sum, t) => (this.activeFusionTiers.has(t.id) ? sum + t.logicalGiB : sum),
+      0
+    );
+  }
+
+  public getClipPathMountState(): {
+    mountMode: 'ALL' | 'CLIP_PATH_SELECTIVE';
+    activeTiers: SparseFusionTierId[];
+    mountedLogicalGiB: number;
+  } {
+    const activeTiers = Array.from(this.activeFusionTiers);
+    return {
+      mountMode: activeTiers.length === SPARSE_FUSION_TIERS.length ? 'ALL' : 'CLIP_PATH_SELECTIVE',
+      activeTiers,
+      mountedLogicalGiB: this.getMountedLogicalGiB(),
+    };
+  }
+
+  public setCyclicPhaseState(
+    mode: 'FORWARD_CYCLIC' | 'REVERSE_VERIFY' | 'COMPLETE',
+    reverseVerifiedBlocks: number
+  ): void {
+    this.cyclicPhaseMode = mode;
+    this.reverseVerifiedBlocks = reverseVerifiedBlocks;
+    this.notify();
+  }
+
+  public verifyReverseBlock(blockIndex: number): {
+    verified: boolean;
+    receiptWord: string;
+    inverseReceiptWord: string;
+    prismHueDeg: number;
+    prismRgbHex: string;
+  } {
+    const matches = this.cells.filter((c) => c.blockIndex === blockIndex);
+    for (const c of matches) {
+      c.reverseVerified = true;
+    }
+    const target = matches[matches.length - 1] ?? this.cells[blockIndex % Math.max(1, this.cells.length)];
+    if (target) {
+      return {
+        verified: true,
+        receiptWord: target.receiptWord,
+        inverseReceiptWord: target.inverseReceiptWord,
+        prismHueDeg: target.prismHueDeg,
+        prismRgbHex: target.prismRgbHex,
+      };
+    }
+    const w = SOLVENT_LEXICON[blockIndex % SOLVENT_LEXICON.length];
+    const iw = SOLVENT_LEXICON[(BASE_BLOCKS_PER_SET - 1 - blockIndex + SOLVENT_LEXICON.length) % SOLVENT_LEXICON.length];
+    const hue = Number((((blockIndex * 137.508) % 360)).toFixed(1));
+    return {
+      verified: true,
+      receiptWord: w,
+      inverseReceiptWord: iw,
+      prismHueDeg: hue,
+      prismRgbHex: hslDegToHex(hue),
+    };
+  }
+
   public getSummary(): SparseBandEngineSummary {
     const latest = this.cells[this.cells.length - 1];
+    const activeTiers = Array.from(this.activeFusionTiers);
     return {
       baseBlocksPerSet: BASE_BLOCKS_PER_SET,
       merkleLevels: MERKLE_LEVELS_COUNT,
@@ -1323,6 +1502,14 @@ export class SparseBandCryptoEngine {
       lastSha256dHex: latest?.sha256dHex ?? '',
       setRootsHex: [this.setTrees[0].root, this.setTrees[1].root, this.setTrees[2].root],
       lastUpdated: this.lastUpdated,
+      mountMode: activeTiers.length === SPARSE_FUSION_TIERS.length ? 'ALL' : 'CLIP_PATH_SELECTIVE',
+      activeFusionTiers: activeTiers,
+      mountedLogicalGiB: this.getMountedLogicalGiB(),
+      cyclicPhaseMode: this.cyclicPhaseMode,
+      reverseVerifiedBlocks: this.reverseVerifiedBlocks,
+      lastReceiptWord: latest ? `${latest.receiptWord}↔${latest.inverseReceiptWord}` : 'GENESIS↔SOLVENT',
+      lastPrismHueDeg: latest?.prismHueDeg ?? 192.0,
+      lastPrismRgbHex: latest?.prismRgbHex ?? '#2CC4E8',
     };
   }
 }

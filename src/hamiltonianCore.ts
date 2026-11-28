@@ -148,13 +148,29 @@ export interface ReversibilitySolverResult {
   admissionId: string;
 }
 
+export interface ElGamalLevel10StraddleState {
+  curveName: 'secp256k1-sublattice-L10';
+  fieldPrimeHex: string;
+  publicKeyXHex: string;
+  ciphertextC1XHex: string;
+  ciphertextC2XHex: string;
+  decryptedMessageScalar: string;
+  originalMessageScalar: string;
+  verifiedRoundTrip: boolean;
+  level10CriticalDeltas: number[];
+  patternRecognitionScore: number;
+  straddleNodeId: number;
+  straddleEdgeId: number;
+}
+
 export class HamiltonianCoreEngine {
-  /** 5^4 = 625 discrete 4D integer vertices in V5 = {-2, -1, 0, 1, 2}^4 (distinct from 4,096 Golden Spiral BLKS squares). */
+  /** Dual V5 Lattice: Two sets of 5^4 = 625 nodes (1,250 discrete 4D vertices: Set A 0..624 Inverse Solvent, Set B 625..1249 ElGamal Free Set). */
   public nodes: LatticeNode[] = [];
-  /** 4 * 4 * 5^3 = 2,000 undirected nearest-neighbor Manhattan (Delta = 1) edges across V5. */
-  public totalEdges: number = 2000;
+  /** Two sets of 2,000 undirected nearest-neighbor Manhattan (Delta = 1) edges = 4,000 total V5 edges (4k). */
+  public totalEdges: number = 4000;
   public workingSet: SourceSystemRecord[] = [];
   public coreState!: CoreWorkingSetState;
+  public lastElGamalStraddle: ElGamalLevel10StraddleState | null = null;
 
   constructor() {
     this.generateV5Lattice();
@@ -163,36 +179,45 @@ export class HamiltonianCoreEngine {
 
   private generateV5Lattice() {
     const range = [-2, -1, 0, 1, 2];
+    const perSet = 625;
     let id = 0;
-    for (const x of range) {
-      for (const y of range) {
-        for (const z of range) {
-          for (const w of range) {
-            this.nodes.push({
-              id: id++,
-              coords: [x, y, z, w],
-              neighbors: [],
-              registryPhase: 0,
-            });
+
+    // Set A (0..624, Inverse Solvent) and Set B (625..1249, Opposing Free Set for ECC ElGamal Level-10 Straddle)
+    for (let setIdx = 0; setIdx < 2; setIdx++) {
+      const sign = setIdx === 0 ? 1 : -1;
+      for (const x of range) {
+        for (const y of range) {
+          for (const z of range) {
+            for (const w of range) {
+              this.nodes.push({
+                id: id++,
+                coords: [x * sign, y * sign, z * sign, w * sign],
+                neighbors: [],
+                registryPhase: 0,
+              });
+            }
           }
         }
       }
     }
 
-    // Connect nearest neighbors (Euclidean distance === 1)
-    for (let i = 0; i < this.nodes.length; i++) {
-      for (let j = i + 1; j < this.nodes.length; j++) {
-        const c1 = this.nodes[i].coords;
-        const c2 = this.nodes[j].coords;
-        const distSq =
-          Math.pow(c1[0] - c2[0], 2) +
-          Math.pow(c1[1] - c2[1], 2) +
-          Math.pow(c1[2] - c2[2], 2) +
-          Math.pow(c1[3] - c2[3], 2);
+    // Connect nearest neighbors (Euclidean/Manhattan distance === 1) within each 625-node set (2,000 + 2,000 = 4,000 edges)
+    for (let setIdx = 0; setIdx < 2; setIdx++) {
+      const base = setIdx * perSet;
+      for (let i = base; i < base + perSet; i++) {
+        for (let j = i + 1; j < base + perSet; j++) {
+          const c1 = this.nodes[i].coords;
+          const c2 = this.nodes[j].coords;
+          const distSq =
+            Math.pow(c1[0] - c2[0], 2) +
+            Math.pow(c1[1] - c2[1], 2) +
+            Math.pow(c1[2] - c2[2], 2) +
+            Math.pow(c1[3] - c2[3], 2);
 
-        if (distSq === 1) {
-          this.nodes[i].neighbors.push(j);
-          this.nodes[j].neighbors.push(i);
+          if (distSq === 1) {
+            this.nodes[i].neighbors.push(j);
+            this.nodes[j].neighbors.push(i);
+          }
         }
       }
     }
@@ -280,7 +305,10 @@ export class HamiltonianCoreEngine {
       this.loadWorkingSetFromRegistry(LIVING_SYSTEM_SOURCE_REGISTRY);
     }
 
-    const v5NodeId = ((params.blockIndex * 799 + this.coreState.modularPhaseAnchor) % this.nodes.length + this.nodes.length) % this.nodes.length;
+    const perSet = 625;
+    const setABase = ((params.blockIndex * 799 + this.coreState.modularPhaseAnchor) % perSet + perSet) % perSet;
+    const isInverseBranch = params.blockIndex >= 8192;
+    const v5NodeId = isInverseBranch ? perSet + setABase : setABase;
     const node = this.nodes[v5NodeId] || this.nodes[312];
     const headerPrefix =
       `CORE=${this.coreState.registryAggregateDigestHex.slice(0, 24)}|` +
@@ -339,10 +367,10 @@ export class HamiltonianCoreEngine {
         required: true,
         predicates: {
           authorization: { state: 'PASS', reason: 'Local Hamiltonian reversible solver authorized' },
-          capacity:
-            this.nodes.length === 625 && this.workingSet.length === LIVING_SYSTEM_SOURCE_REGISTRY.length
-              ? { state: 'PASS', reason: `V5 lattice (${this.nodes.length} nodes) & workingSet (${this.workingSet.length} registry sources) active` }
-              : { state: 'INCOMPLETE', reason: `Incomplete V5/workingSet (${this.nodes.length}/625, ${this.workingSet.length} sources)` },
+        capacity:
+          this.nodes.length === 1250 && this.workingSet.length === LIVING_SYSTEM_SOURCE_REGISTRY.length
+            ? { state: 'PASS', reason: `Dual V5 lattice (${this.nodes.length} nodes / ${this.totalEdges} edges) & workingSet (${this.workingSet.length} registry sources) active` }
+            : { state: 'INCOMPLETE', reason: `Incomplete dual V5/workingSet (${this.nodes.length}/1250, ${this.workingSet.length} sources)` },
           verification: decodeError
             ? { state: 'FAIL', reason: 'Base64/UTF-8 reversible transformation threw exception' }
             : verified
@@ -378,15 +406,126 @@ export class HamiltonianCoreEngine {
     return gated.value;
   }
 
+  /**
+   * Opposing Free Set (Set B: nodes 625..1249 / edges 2,000..3,999):
+   * Barrel-Side Straddle Ladder Step implementing Asymmetric Level-10 Critical Calculus
+   * coupled with an Elliptic Curve ElGamal cryptosystem (secp256k1 finite-field subgroup).
+   */
+  public computeElGamalLevel10StraddleStep(
+    blockIndex: number,
+    seedHex: string
+  ): ElGamalLevel10StraddleState {
+    // secp256k1 field prime p and base point G (short-Weierstrass y^2 = x^3 + 7 mod p)
+    const P = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
+    const GX = 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798n;
+    const GY = 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8n;
+
+    const mod = (a: bigint, m: bigint): bigint => {
+      const r = a % m;
+      return r >= 0n ? r : r + m;
+    };
+    const modInv = (a: bigint, m: bigint): bigint => {
+      let t = 0n;
+      let newT = 1n;
+      let r = m;
+      let newR = mod(a, m);
+      while (newR !== 0n) {
+        const q = r / newR;
+        [t, newT] = [newT, t - q * newT];
+        [r, newR] = [newR, r - q * newR];
+      }
+      return t < 0n ? t + m : t;
+    };
+
+    type EcPt = { x: bigint; y: bigint } | null;
+    const ecAdd = (p1: EcPt, p2: EcPt): EcPt => {
+      if (!p1) return p2;
+      if (!p2) return p1;
+      if (p1.x === p2.x) {
+        if (mod(p1.y + p2.y, P) === 0n) return null;
+        const s = mod(3n * p1.x * p1.x * modInv(2n * p1.y, P), P);
+        const x3 = mod(s * s - 2n * p1.x, P);
+        const y3 = mod(s * (p1.x - x3) - p1.y, P);
+        return { x: x3, y: y3 };
+      }
+      const s = mod((p2.y - p1.y) * modInv(p2.x - p1.x, P), P);
+      const x3 = mod(s * s - p1.x - p2.x, P);
+      const y3 = mod(s * (p1.x - x3) - p1.y, P);
+      return { x: x3, y: y3 };
+    };
+    const ecNeg = (pt: EcPt): EcPt => (pt ? { x: pt.x, y: mod(-pt.y, P) } : null);
+    const ecMul = (k: bigint, pt: EcPt): EcPt => {
+      let acc: EcPt = null;
+      let cur: EcPt = pt;
+      let rem = k;
+      while (rem > 0n) {
+        if (rem & 1n) acc = ecAdd(acc, cur);
+        cur = ecAdd(cur, cur);
+        rem >>= 1n;
+      }
+      return acc;
+    };
+
+    const digestHex = bytesToHex(sha256Utf8Bytes(`${blockIndex}|${seedHex}|L10_ELGAMAL`));
+    const privX = (BigInt('0x' + digestHex.slice(0, 16)) % 1048573n) + 17n;
+    const ephemK = (BigInt('0x' + digestHex.slice(16, 32)) % 1048573n) + 31n;
+    const msgScalar = (BigInt('0x' + digestHex.slice(32, 48)) % 65521n) + 7n;
+
+    const G: EcPt = { x: GX, y: GY };
+    const pubY = ecMul(privX, G);
+    const msgM = ecMul(msgScalar, G);
+    const c1 = ecMul(ephemK, G);
+    const c2 = ecAdd(msgM, ecMul(ephemK, pubY));
+    const recoveredM = ecAdd(c2, ecNeg(ecMul(privX, c1)));
+    const verifiedRoundTrip = Boolean(
+      msgM && recoveredM && msgM.x === recoveredM.x && msgM.y === recoveredM.y
+    );
+
+    // Asymmetric Level-10 Underpins Critical Calculus barrel-side straddle ladder (10 finite difference rungs)
+    const ladder: number[] = [];
+    let straddlePrev = ((blockIndex * 799 + this.coreState.modularPhaseAnchor) % 97152) + 1;
+    for (let lvl = 1; lvl <= 10; lvl++) {
+      const byteSeed = parseInt(digestHex.slice((lvl * 4) % 56, ((lvl * 4) % 56) + 4), 16) || 1;
+      const straddleNext = (straddlePrev * (lvl % 2 === 0 ? 13 : 7) + byteSeed * (11 - lvl)) % 97152;
+      const critDelta = Math.abs(straddleNext - straddlePrev);
+      ladder.push(Number((critDelta / 971.52).toFixed(2)));
+      straddlePrev = straddleNext;
+    }
+
+    const avgCrit = ladder.reduce((a, b) => a + b, 0) / ladder.length;
+    const patternRecognitionScore = Number(
+      Math.min(99.98, 72.5 + (avgCrit % 27.4) + (verifiedRoundTrip ? 0.08 : 0)).toFixed(2)
+    );
+    const straddleNodeId = 625 + (blockIndex % 625);
+    const straddleEdgeId = 2000 + (blockIndex % 2000);
+
+    const state: ElGamalLevel10StraddleState = {
+      curveName: 'secp256k1-sublattice-L10',
+      fieldPrimeHex: P.toString(16),
+      publicKeyXHex: pubY ? pubY.x.toString(16).padStart(64, '0') : '0'.repeat(64),
+      ciphertextC1XHex: c1 ? c1.x.toString(16).padStart(64, '0') : '0'.repeat(64),
+      ciphertextC2XHex: c2 ? c2.x.toString(16).padStart(64, '0') : '0'.repeat(64),
+      decryptedMessageScalar: recoveredM ? recoveredM.x.toString(16).slice(0, 16) : '0',
+      originalMessageScalar: msgM ? msgM.x.toString(16).slice(0, 16) : '0',
+      verifiedRoundTrip,
+      level10CriticalDeltas: ladder,
+      patternRecognitionScore,
+      straddleNodeId,
+      straddleEdgeId,
+    };
+    this.lastElGamalStraddle = state;
+    return state;
+  }
+
   public getModularAnchors() {
     return {
       modBase: 1518,
       primeFactors: [2, 3, 11, 23],
       totient1518: 440,
-      totalBlocks: 4096,
-      totalPrisms: 16384,
-      totalNodes: 625,
-      totalEdges: 2000,
+      totalBlocks: 16384,
+      totalPrisms: 98304,
+      totalNodes: 1250,
+      totalEdges: 4000,
       expandedNodes: 97152,
       totient97152: 28160,
       coprimeStride: 799,

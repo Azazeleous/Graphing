@@ -178,12 +178,12 @@
       <!-- TAB 1: MINING & SPIRAL LATTICE -->
       <section id="tab-mining" class="tab-panel space-y-3">
         <div class="rounded-xl bg-slate-900/75 border border-sky-500/20 p-3 space-y-1.5 mono text-[11px]">
-          <div class="flex justify-between"><span class="text-slate-400">BLOCKS MINED (MEM):</span><span id="mine-count" class="text-emerald-400 font-semibold tabular-nums">0 / 8,192</span></div>
-          <div class="flex justify-between"><span class="text-slate-400">PRISMS ENCODED (MEM):</span><span id="prism-count" class="text-cyan-300 tabular-nums">0 / 32,768</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">BLOCKS MINED (MEM):</span><span id="mine-count" class="text-emerald-400 font-semibold tabular-nums">0 / 16,384</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">PRISMS ENCODED (MEM):</span><span id="prism-count" class="text-cyan-300 tabular-nums">0 / 65,536</span></div>
           <div class="flex justify-between"><span class="text-slate-400">THROUGHPUT:</span><span id="mine-rate" class="text-amber-300">0 H/s</span></div>
           <div class="flex justify-between"><span class="text-slate-400">WORKER POOL:</span><span id="worker-pool-ui" class="text-purple-300">INIT…</span></div>
-          <div class="flex justify-between"><span class="text-slate-400">MERKLE ROOT (L13):</span><span id="merkle-root-ui" class="text-rose-300 truncate max-w-[180px]">0x0000…0000</span></div>
-          <div class="flex justify-between"><span class="text-slate-400">ACTIVE MERKLE NODES:</span><span id="merkle-nodes-ui" class="text-sky-300">0 / 16,383</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">MERKLE ROOT (L14):</span><span id="merkle-root-ui" class="text-rose-300 truncate max-w-[180px]">0x0000…0000</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">ACTIVE MERKLE NODES:</span><span id="merkle-nodes-ui" class="text-sky-300">0 / 32,767</span></div>
           <div class="pt-1 border-t border-slate-800/80 space-y-1 text-[9.5px] tabular-nums">
             <div class="flex justify-between items-center gap-1">
               <span class="text-slate-400">CREED PATH GATE:</span>
@@ -194,14 +194,17 @@
             </div>
             <div class="flex justify-between gap-1"><span class="text-slate-400">LAST MEMORY EVT:</span><span id="mine-memory-event-ui" class="text-emerald-300 truncate max-w-[190px]">NONE</span></div>
             <div class="flex justify-between gap-1"><span class="text-slate-400">HDR FIRST 32B:</span><span id="mine-header-hex-ui" class="text-cyan-300 truncate max-w-[190px]">AWAITING CORE…</span></div>
+            <div class="flex justify-between gap-1"><span class="text-slate-400">SOLVENT RECEIPT (HUE):</span><span id="mining-solvent-receipt-ui" class="text-amber-300 truncate max-w-[190px]">FORWARD_CYCLIC · #2CC4E8 · BOOT</span></div>
+            <div class="flex justify-between gap-1"><span class="text-slate-400">ELGAMAL L10 STRADDLE:</span><span id="mining-elgamal-straddle-ui" class="text-purple-300 truncate max-w-[190px]">SET_B #625 · PAT --% · INIT</span></div>
           </div>
           <div class="pt-1">
             <div class="flex justify-between text-[10px]"><span class="text-slate-400">PoW DIFFICULTY (ZERO BITS):</span><span id="lbl-pow-diff" class="text-amber-300">8 bits</span></div>
             <input id="rng-pow-diff" type="range" min="4" max="16" step="1" value="8" class="w-full">
           </div>
-          <div class="flex gap-2 pt-1.5">
+          <div class="flex gap-1.5 pt-1.5">
             <button id="btn-mine-toggle" class="flex-1 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-semibold">PAUSE MINER</button>
             <button id="btn-mine-burst" class="flex-1 py-1.5 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/40 font-semibold">+32 PoW BURST</button>
+            <button id="btn-cyclic-reverse-test" class="px-2 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 font-semibold text-[10px]" title="Run/step reverse verification sweep 16383->0 across Osmosis Equator">REV VERIFY</button>
           </div>
         </div>
 
@@ -445,7 +448,7 @@
             <span id="d3-stream-events-cnt" class="text-emerald-300 text-[8.5px] font-semibold tabular-nums">1 EVTS</span>
           </div>
           <div id="d3-stream-capacity-meta" class="text-[8px] text-slate-400 tabular-nums">
-            8,192×3 (24,576) BLKS · 16,383 NODES/SET · BLAKE2b + SHA-256d
+            16,384×3 (49,152) BLKS · 32,767 NODES/SET · BLAKE2b + SHA-256d
           </div>
           <div class="flex flex-wrap items-center justify-between gap-1">
             <div class="flex items-center gap-1">
@@ -498,17 +501,17 @@
             <div id="sparse-cells-list" class="space-y-1 max-h-40 overflow-y-auto custom-scroll"></div>
           </div>
 
-          <!-- 192 GiB Google Drive Sparsebundle + HTTPFS Virtual Mount Status -->
+          <!-- 384 GiB / 8-Sparse-Fusion Google Drive Sparsebundle + HTTPFS Virtual Mount Status -->
           <div class="pt-1.5 border-t border-slate-800 space-y-1.5">
             <div class="flex justify-between items-center gap-1">
-              <span class="text-sky-300 font-semibold uppercase text-[8.5px]">192 GiB Drive Sparsebundle (HTTPFS)</span>
+              <span class="text-sky-300 font-semibold uppercase text-[8.5px]">384 GiB Drive Sparsebundle (8-Sparse-Fusion)</span>
               <span id="audit-drive-mount-badge" class="text-[8.5px] font-semibold text-slate-400 tabular-nums">UNMOUNTED</span>
             </div>
             <div id="audit-drive-mount-detail" class="text-[8px] text-slate-300 leading-snug break-words">
-              Sign in with Google in MATH tab (or below) to auto-attach 24,576 × 8 MiB sparse bands from Google Drive.
+              Sign in with Google in MATH tab (or below) to auto-attach 49,152 × 8 MiB sparse bands (64–2048b tiers) from Google Drive.
             </div>
             <div class="grid grid-cols-3 gap-1 text-[8px]">
-              <button id="btn-audit-drive-mount-sync" type="button" class="py-1 px-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-semibold">SYNC 192GiB</button>
+              <button id="btn-audit-drive-mount-sync" type="button" class="py-1 px-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-semibold">SYNC 384GiB</button>
               <button id="btn-audit-drive-mount-pull" type="button" class="py-1 px-1 rounded bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/40 font-semibold">ATTACH</button>
               <button id="btn-audit-drive-unmount" type="button" class="py-1 px-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 font-semibold">UNMOUNT</button>
             </div>
@@ -521,7 +524,7 @@
             <span class="text-cyan-300 font-semibold uppercase tracking-wider">Memory Fabric → Convergence State</span>
             <span id="audit-conv-creed-badge" class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 border border-amber-400/40 text-[8px] font-semibold whitespace-nowrap">CREED: BOOT</span>
           </div>
-          <div class="flex justify-between"><span class="text-slate-400">ACCEPTED BLOCKS (MEMORY):</span><span id="audit-conv-blocks" class="text-emerald-300 font-semibold">0 / 8,192</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">ACCEPTED BLOCKS (MEMORY):</span><span id="audit-conv-blocks" class="text-emerald-300 font-semibold">0 / 16,384</span></div>
           <div class="flex justify-between"><span class="text-slate-400">MEMORY EVENTS / BLOCKED:</span><span id="audit-conv-events" class="text-cyan-300">0 / 0</span></div>
           <div class="flex justify-between"><span class="text-slate-400">LATEST MEMORY EVENT:</span><span id="audit-conv-latest-evt" class="text-emerald-300 truncate max-w-[180px]">NONE</span></div>
           <div class="flex justify-between"><span class="text-slate-400">CORE REGISTRY ANCHOR:</span><span id="audit-conv-reg-anchor" class="text-purple-300 truncate max-w-[180px]">INIT…</span></div>
@@ -603,15 +606,15 @@
             <button id="btn-d3-zoom-mode" type="button" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-200 border border-cyan-500/35 text-[8.5px] whitespace-nowrap">SCALE: ACTIVE</button>
           </div>
           <div id="audit-d3-kpis" class="grid grid-cols-2 gap-1 text-[9px] tabular-nums">
-            <div class="bg-slate-950 px-2 py-1 rounded border border-slate-800 flex justify-between"><span class="text-slate-400">NODES:</span><span id="d3-kpi-nodes" class="text-cyan-300">0 / 16,383</span></div>
-            <div class="bg-slate-950 px-2 py-1 rounded border border-slate-800 flex justify-between"><span class="text-slate-400">MINED:</span><span id="d3-kpi-blocks" class="text-emerald-300">0 / 8,192</span></div>
+            <div class="bg-slate-950 px-2 py-1 rounded border border-slate-800 flex justify-between"><span class="text-slate-400">NODES:</span><span id="d3-kpi-nodes" class="text-cyan-300">0 / 32,767</span></div>
+            <div class="bg-slate-950 px-2 py-1 rounded border border-slate-800 flex justify-between"><span class="text-slate-400">MINED:</span><span id="d3-kpi-blocks" class="text-emerald-300">0 / 16,384</span></div>
             <div class="bg-slate-950 px-2 py-1 rounded border border-slate-800 flex justify-between"><span class="text-slate-400">TREE FILL:</span><span id="d3-kpi-fill" class="text-amber-300">0.0%</span></div>
             <div class="bg-slate-950 px-2 py-1 rounded border border-slate-800 flex justify-between"><span class="text-slate-400">THEORY Δ:</span><span id="d3-kpi-delta" class="text-slate-300">Δ 0 EXACT</span></div>
           </div>
           <div id="audit-d3-merkle-pow" class="w-full rounded bg-slate-950 border border-slate-800 p-1"></div>
           <div id="d3-chart-tooltip" class="hidden text-[8.5px] text-amber-300 bg-slate-950 px-2 py-1 rounded border border-amber-500/35 tabular-nums"></div>
           <div class="space-y-0.5">
-            <div class="text-[8.5px] text-slate-400 uppercase">14-Level Merkle Pyramid Saturation (L0 Base → L13 Apex)</div>
+            <div class="text-[8.5px] text-slate-400 uppercase">15-Level Merkle Pyramid Saturation (L0 Base → L14 Apex)</div>
             <div id="audit-d3-levels" class="w-full rounded bg-slate-950 border border-slate-800 px-1 py-0.5"></div>
           </div>
         </div>
@@ -622,9 +625,9 @@
             <span class="text-amber-300 font-semibold uppercase tracking-wider">Pasted-Text Osmosis Atlas</span>
             <span id="osmosis-status-ui" class="text-emerald-300 text-[8.5px] tabular-nums">BOOTING ATLAS…</span>
           </div>
-          <textarea id="osmosis-custom-input" rows="2" placeholder="Paste custom text or load Nov 26 Nexus Omni paste to inject into all 32,768 prisms, L0..L13 Merkle plates &amp; Golden Spiral intersections…" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-[9px] text-cyan-100 outline-none"></textarea>
+          <textarea id="osmosis-custom-input" rows="2" placeholder="Paste custom text or load Nov 26 Nexus Omni paste to inject into all 65,536 prisms, L0..L14 Merkle plates &amp; Osmosis Equator…" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-[9px] text-cyan-100 outline-none"></textarea>
           <div class="grid grid-cols-2 gap-1 text-[8.5px]">
-            <button id="btn-osmosis-apply" type="button" class="py-1 px-1.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 font-semibold whitespace-nowrap">APPLY TO PRISMS + L0..13</button>
+            <button id="btn-osmosis-apply" type="button" class="py-1 px-1.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 font-semibold whitespace-nowrap">APPLY TO PRISMS + L0..14</button>
             <button id="btn-osmosis-reload" type="button" class="py-1 px-1.5 rounded bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/40 font-semibold whitespace-nowrap">LOAD PASTE NOV 26</button>
           </div>
         </div>
@@ -716,15 +719,16 @@
             </div>
           </div>
           <div class="flex gap-1.5 items-center">
-            <input id="void-start" type="number" min="0" max="624" value="312" class="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white">
+            <input id="void-start" type="number" min="0" max="1249" value="312" class="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white">
             <span>→</span>
-            <input id="void-end" type="number" min="0" max="624" value="624" class="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white">
+            <input id="void-end" type="number" min="0" max="1249" value="624" class="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-white">
             <button id="btn-void-path" class="flex-1 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-semibold">L₁ PATH</button>
           </div>
           <div id="void-path-readout" class="text-emerald-300">312→624 (8 hops = L₁:8 ✓)</div>
           <div class="bg-slate-950 p-2 rounded border border-sky-500/25 space-y-0.5 text-[9px] tabular-nums">
             <div class="flex justify-between gap-1"><span class="text-slate-400">V₅ GPU CULL (A/B):</span><span id="v5-cull-stats-ui" class="text-cyan-300">A:625/625 · B:625/625 · SKIP 0/s</span></div>
-            <div class="flex justify-between gap-1"><span class="text-slate-400">64-HUE ROSE + PIN:</span><span id="v5-eigen-readout" class="text-amber-300">64 HUES · #312+L₁ PINNED · TETHERS ON</span></div>
+            <div class="flex justify-between gap-1"><span class="text-slate-400">64-HUE ROSE + PIN:</span><span id="v5-eigen-readout" class="text-amber-300">64 HUES · #312+#937+L₁ PINNED · 4,000 EDGES</span></div>
+            <div class="flex justify-between gap-1"><span class="text-slate-400">ELGAMAL L10 CRIT:</span><span id="audit-v5-elgamal-ui" class="text-purple-300 truncate max-w-[190px]">secp256k1 · Free Set B (625..1249)</span></div>
           </div>
           <pre id="void-schema-output" class="max-h-24 overflow-y-auto custom-scroll bg-slate-950 p-2 rounded border border-slate-800 text-[9.5px] text-slate-300"></pre>
         </div>
@@ -968,6 +972,10 @@
                 <span class="gsi-material-button-contents">Sign in with Google</span>
               </div>
             </button>
+            <button id="btn-signin-machackabook" type="button" class="w-full py-1 px-2 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 border border-amber-400/40 font-semibold text-[9px]">SIGN IN AS MACHACKABOOK (GOOGLE)</button>
+          </div>
+          <div id="machackabook-account-badge" class="hidden px-2 py-1 rounded bg-emerald-500/15 border border-emerald-400/40 text-emerald-200 text-[8.5px] font-semibold">
+            MACHACKABOOK VERIFIED · FULL 384 GiB DRIVE + RCLONE ARMED
           </div>
           <!-- Multi-User Account Selector & Switcher -->
           <div id="drive-multi-user-controls" class="hidden space-y-1 bg-slate-950/80 p-1.5 rounded border border-slate-800">
@@ -976,6 +984,23 @@
               <button id="btn-add-google-account" type="button" class="py-0.5 px-1.5 rounded bg-sky-500/20 hover:bg-sky-500/30 text-sky-200 border border-sky-400/40 font-semibold text-[8px] whitespace-nowrap">+ ADD ACCOUNT</button>
             </div>
             <select id="drive-user-selector" class="w-full bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-slate-200 text-[8.5px] outline-none truncate"></select>
+          </div>
+          <div id="drive-quota-summary-ui" class="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-[8.5px] text-slate-400 tabular-nums">
+            Drive Storage Quota: Sign in to verify 384 GiB / 192 GiB capacity.
+          </div>
+          <!-- Post-Auth / g.co Redirect Workspace Capabilities Prompt -->
+          <div id="workspace-postauth-prompt" class="hidden bg-sky-950/55 border border-sky-400/45 rounded p-2 space-y-1 text-[8.5px]">
+            <div class="flex justify-between items-center gap-1">
+              <span class="text-sky-200 font-semibold uppercase">Workspace Capabilities Prompt</span>
+              <span id="workspace-postauth-account" class="text-emerald-300 truncate max-w-[140px]">Signed In</span>
+            </div>
+            <div class="text-slate-300 leading-snug">
+              Enable all 19 Workspace scopes (Drive, Docs, Meet, Sheets, Gmail, Calendar, Tasks, Slides, Forms) and auto-mount database?
+            </div>
+            <div class="flex gap-1">
+              <button id="btn-workspace-postauth-upgrade" type="button" class="flex-1 py-1 px-1.5 rounded bg-emerald-500/25 hover:bg-emerald-500/35 text-emerald-200 border border-emerald-400/40 font-semibold">GRANT WORKSPACE SCOPES</button>
+              <button id="btn-workspace-postauth-dismiss" type="button" class="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 font-semibold">DISMISS</button>
+            </div>
           </div>
           <div class="flex gap-1.5 items-center">
             <select id="drive-provider-filter" class="bg-slate-950 border border-slate-700 rounded px-1.5 py-1 text-sky-300 text-[9.5px] outline-none">
@@ -995,14 +1020,14 @@
             <div class="text-slate-500 p-1">Sign in with Google and click SCAN DRIVE to match exact per-provider packages.</div>
           </div>
 
-          <!-- 384 GiB / 192 GiB Drive Sparsebundle + HTTPFS Virtual Mount + Docs & Meet Workspace -->
+          <!-- 384 GiB 8-Sparse-Fusion Virtual Disk + Clip-Path Selective Mount + rclone.conf -->
           <div class="pt-2 border-t border-slate-800 space-y-1.5">
             <div class="flex justify-between items-center gap-1">
-              <span class="text-emerald-300 font-semibold uppercase text-[9px]">384 GiB / 192 GiB Virtual Disk &amp; HTTPFS</span>
+              <span class="text-emerald-300 font-semibold uppercase text-[9px]">384 GiB 8-Sparse-Fusion &amp; HTTPFS</span>
               <span id="drive-sparse-mount-badge" class="text-[8.5px] font-semibold text-slate-400 tabular-nums">UNMOUNTED</span>
             </div>
             <div id="drive-sparse-mount-detail" class="bg-slate-950 p-1.5 rounded border border-slate-800 text-[8.5px] text-slate-300 leading-snug break-words">
-              Sign in with Google to attach 384 GiB (49,152 × 8 MiB bands) / 192 GiB sparsebundle on load &amp; release on unload.
+              Sign in with Google to verify Drive storage, attach 384 GiB (49,152 × 8 MiB bands) or Clip-Path tiers via HTTPFS + rclone.conf.
             </div>
             <div class="grid grid-cols-2 gap-1 text-[8.5px]">
               <button id="btn-drive-mount-sync" type="button" class="py-1 px-1.5 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 font-semibold">SYNC 384GiB TO DRIVE</button>
@@ -1011,18 +1036,69 @@
               <button id="btn-drive-export-rclone" type="button" class="py-1 px-1.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 font-semibold">EXPORT RCLONE.SH</button>
             </div>
             <div id="drive-rclone-cmd-ui" class="bg-slate-950 px-2 py-1 rounded border border-slate-800 text-[7.5px] text-cyan-300 break-all select-all">
-              rclone mount :http:/v1/sparsebundle/httpfs/GAIA_NEXUS_192GiB.sparsebundle /mnt/gaia192
+              rclone mount :http:/v1/sparsebundle/httpfs/GAIA_NEXUS_384GiB.sparsebundle /mnt/gaia384
             </div>
 
-            <div class="pt-1 border-t border-slate-800/80 space-y-1">
-              <div class="text-[8.5px] text-purple-300 font-semibold uppercase">Google Docs &amp; Google Meet Sync</div>
+            <!-- 8-Sparse-Fusion Clip-Path Selective Mount Matrix -->
+            <div class="pt-1.5 border-t border-slate-800/80 space-y-1.5">
+              <div class="flex justify-between items-center gap-1">
+                <span id="clip-path-mode-ui" class="text-[8.5px] text-cyan-300 font-semibold uppercase">MODE: ALL · 384 GiB (8 TIERS)</span>
+                <button id="btn-clip-mount-all" type="button" class="px-1.5 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-200 border border-cyan-400/40 text-[8px] font-semibold">MOUNT ALL (384GiB)</button>
+              </div>
+              <svg id="clip-path-fusion-svg" viewBox="0 0 200 100" class="w-full h-24 rounded bg-slate-950 border border-slate-800 cursor-pointer">
+                <rect x="0" y="0" width="100" height="25" data-clip-tier="BIT_64" fill="rgba(56,189,248,0.22)" stroke="#38bdf8" stroke-width="0.8"></rect>
+                <text x="6" y="15" fill="#bae6fd" font-size="7" font-family="monospace" pointer-events="none">64b · 12G</text>
+                <rect x="100" y="0" width="100" height="25" data-clip-tier="BIT_128" fill="rgba(56,189,248,0.22)" stroke="#38bdf8" stroke-width="0.8"></rect>
+                <text x="106" y="15" fill="#bae6fd" font-size="7" font-family="monospace" pointer-events="none">128b · 24G</text>
+                <rect x="0" y="25" width="100" height="25" data-clip-tier="BIT_256" fill="rgba(56,189,248,0.22)" stroke="#38bdf8" stroke-width="0.8"></rect>
+                <text x="6" y="40" fill="#bae6fd" font-size="7" font-family="monospace" pointer-events="none">256b · 36G</text>
+                <rect x="100" y="25" width="100" height="25" data-clip-tier="BIT_512" fill="rgba(56,189,248,0.22)" stroke="#38bdf8" stroke-width="0.8"></rect>
+                <text x="106" y="40" fill="#bae6fd" font-size="7" font-family="monospace" pointer-events="none">512b · 48G</text>
+                <rect x="0" y="50" width="100" height="25" data-clip-tier="BIT_1024" fill="rgba(56,189,248,0.22)" stroke="#38bdf8" stroke-width="0.8"></rect>
+                <text x="6" y="65" fill="#bae6fd" font-size="7" font-family="monospace" pointer-events="none">1024b · 72G</text>
+                <rect x="100" y="50" width="100" height="25" data-clip-tier="BIT_2048" fill="rgba(56,189,248,0.22)" stroke="#38bdf8" stroke-width="0.8"></rect>
+                <text x="106" y="65" fill="#bae6fd" font-size="7" font-family="monospace" pointer-events="none">2048b · 96G</text>
+                <rect x="0" y="75" width="100" height="25" data-clip-tier="SOLVENT_EQUATOR" fill="rgba(250,204,21,0.2)" stroke="#facc15" stroke-width="0.8"></rect>
+                <text x="6" y="90" fill="#fde047" font-size="7" font-family="monospace" pointer-events="none">SOLVENT · 48G</text>
+                <rect x="100" y="75" width="100" height="25" data-clip-tier="ELGAMAL_L10" fill="rgba(192,132,252,0.22)" stroke="#c084fc" stroke-width="0.8"></rect>
+                <text x="106" y="90" fill="#e9d5ff" font-size="7" font-family="monospace" pointer-events="none">ELGAMAL · 48G</text>
+              </svg>
+              <div id="clip-path-tier-grid" class="grid grid-cols-2 gap-1 text-[8px]"></div>
+            </div>
+
+            <!-- rclone.conf Path Manager -->
+            <div class="pt-1.5 border-t border-slate-800/80 space-y-1">
+              <div class="flex justify-between items-center gap-1">
+                <span class="text-[8.5px] text-amber-300 font-semibold uppercase">rclone.conf Path Config</span>
+                <button id="btn-rclone-download-conf" type="button" class="px-1.5 py-0.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-[8px] font-semibold">DOWNLOAD .CONF</button>
+              </div>
+              <input id="rclone-remote-path-input" type="text" value="gdrive:/GAIA_NEXUS/GAIA_NEXUS_384GiB.sparsebundle" placeholder="rclone remote path (e.g. gdrive:/GAIA_NEXUS/...)" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-[8.5px] text-cyan-200 outline-none">
+              <div class="flex items-center gap-1">
+                <input id="rclone-conf-file-input" type="file" accept=".conf,.ini,.txt" class="flex-1 text-[8px] text-slate-300 file:mr-1.5 file:py-0.5 file:px-1.5 file:rounded file:border file:border-amber-500/40 file:bg-slate-800 file:text-amber-200 file:text-[8px]">
+                <button id="btn-rclone-apply-conf" type="button" class="px-2 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 text-[8px] font-semibold whitespace-nowrap">APPLY CONF</button>
+              </div>
+              <textarea id="rclone-conf-editor" rows="3" placeholder="Paste or load rclone.conf sections [gaia-gdrive] and [gaia-httpfs] (raw tokens automatically stripped)…" class="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-[8px] text-slate-300 outline-none"></textarea>
+            </div>
+
+            <!-- Full Google Workspace Integrations -->
+            <div class="pt-1.5 border-t border-slate-800/80 space-y-1">
+              <div class="text-[8.5px] text-purple-300 font-semibold uppercase">Full Google Workspace Suite</div>
               <div class="grid grid-cols-2 gap-1 text-[8px]">
                 <button id="btn-docs-list-ingest" type="button" class="py-1 px-1.5 rounded bg-sky-500/15 hover:bg-sky-500/25 text-sky-200 border border-sky-400/35 font-semibold">READ DOCS → PRISMS</button>
                 <button id="btn-docs-create-audit" type="button" class="py-1 px-1.5 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 border border-emerald-400/35 font-semibold">EXPORT AUDIT DOC</button>
+                <button id="btn-sheets-export" type="button" class="py-1 px-1.5 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 border border-emerald-400/35 font-semibold">EXPORT SHEETS</button>
+                <button id="btn-sheets-ingest" type="button" class="py-1 px-1.5 rounded bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-200 border border-cyan-400/35 font-semibold">SHEETS → PRISMS</button>
+                <button id="btn-gmail-list" type="button" class="py-1 px-1.5 rounded bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 border border-rose-400/35 font-semibold">LIST GMAIL INBOX</button>
+                <button id="btn-gmail-draft" type="button" class="py-1 px-1.5 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 border border-amber-400/35 font-semibold">CREATE GMAIL DRAFT</button>
+                <button id="btn-calendar-list" type="button" class="py-1 px-1.5 rounded bg-sky-500/15 hover:bg-sky-500/25 text-sky-200 border border-sky-400/35 font-semibold">LIST CALENDAR</button>
+                <button id="btn-calendar-create" type="button" class="py-1 px-1.5 rounded bg-purple-500/15 hover:bg-purple-500/25 text-purple-200 border border-purple-400/35 font-semibold">ADD CHECKPOINT EVT</button>
                 <button id="btn-meet-create-space" type="button" class="py-1 px-1.5 rounded bg-purple-500/20 hover:bg-purple-500/30 text-purple-200 border border-purple-400/40 font-semibold">NEW MEET SPACE</button>
                 <button id="btn-meet-list-records" type="button" class="py-1 px-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 font-semibold">MEET RECORDS</button>
+                <button id="btn-tasks-create" type="button" class="py-1 px-1.5 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-200 border border-emerald-400/35 font-semibold">NEW GOOGLE TASK</button>
+                <button id="btn-slides-create" type="button" class="py-1 px-1.5 rounded bg-amber-500/15 hover:bg-amber-500/25 text-amber-200 border border-amber-400/35 font-semibold">NEW SLIDES DECK</button>
+                <button id="btn-forms-inspect" type="button" class="col-span-2 py-1 px-1.5 rounded bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-200 border border-cyan-400/35 font-semibold">INSPECT GOOGLE FORMS SCHEMA</button>
               </div>
-              <div id="workspace-docs-meet-output" class="space-y-1 max-h-28 overflow-y-auto custom-scroll"></div>
+              <div id="workspace-docs-meet-output" class="space-y-1 max-h-32 overflow-y-auto custom-scroll"></div>
             </div>
           </div>
         </div>
@@ -3091,8 +3167,8 @@
             'Project: The Nexus Generation: GaiaSSoul | SERIES: The Nexus of Gaia',
             'ID: 137451921129154222|040592|433855274',
             'ADMIT(x) = A ∧ C ∧ V ∧ B ∧ P | U(97152) Stride s=799 s^-1=22639 mod 28160',
-            'MERKLE PYRAMID L0..L13 (16,383 NODES) ↔ 8,192 BLOCKS × 3 SETS ↔ 32,768 PRISMS',
-            'GOLDEN SPIRAL OSMOSIS AMALGAMATION · Δt=t2-t1 · s^2 = c^2Δt^2 - d_space^2',
+            'MERKLE PYRAMID L0..L14 (32,767 NODES) ↔ 16,384 BLOCKS × 3 SETS ↔ 65,536 PRISMS',
+            'GOLDEN SPIRAL OSMOSIS EQUATOR AMALGAMATION · Δt=t2-t1 · s^2 = c^2Δt^2 - d_space^2',
             'GENESIS-3 / SHADOW-LEDGER / SYNCHRONIZED-REPLAY · ZERO FABRICATED OUTCOMES'
           ].join('\n');
 
@@ -3140,7 +3216,7 @@
 
                 ctx.fillStyle = `hsl(${hueDeg}, 95%, 72%)`;
                 ctx.font = 'bold 9px monospace';
-                ctx.fillText(`S#${String(tile).padStart(2, '0')} L${tile % 13} U(97152)`, x0 + 6, y0 + 14);
+                ctx.fillText(`S#${String(tile).padStart(2, '0')} L${tile % 15} U(97152)`, x0 + 6, y0 + 14);
                 ctx.fillStyle = '#facc15';
                 ctx.font = '7.5px monospace';
                 ctx.fillText(signatureHeader.slice(0, 21), x0 + 6, y0 + 25);
@@ -3156,7 +3232,7 @@
                 }
                 this.slices.push({
                   tile,
-                  merkleLevel: tile % 13,
+                  merkleLevel: tile % 15,
                   preview: sliceLines.slice(0, 3).join(' | ')
                 });
               }
@@ -3164,7 +3240,7 @@
               if (this.texture) this.texture.needsUpdate = true;
               const stEl = document.getElementById('osmosis-status-ui');
               if (stEl) {
-                stEl.textContent = `${label} · ${cleanText.length.toLocaleString()} B · 64 TILES → 32,768 PRISMS + L0..13`;
+                stEl.textContent = `${label} · ${cleanText.length.toLocaleString()} B · 64 TILES → 65,536 PRISMS + L0..14`;
               }
             },
             async loadPasteAsset() {
@@ -3481,13 +3557,14 @@
             const stepSeq = isFwd ? idx : (idx - HALF_SQUARES);
             const pairedInverseSqId = isFwd ? (idx + HALF_SQUARES) : (idx - HALF_SQUARES);
             const normT = stepSeq / HALF_SQUARES;
-            const r = 0.65 + 6.4 * Math.pow(normT, 0.58);
+            const r = 0.72 + 6.35 * Math.pow(1.0 - normT * 0.78, 0.75);
             const dirSign = isFwd ? 1.0 : -1.0;
             const theta = dirSign * stepSeq * GOLDEN_ANGLE;
 
+            // Mirrored Inverse Hemisphere Merged Along Equator (North +Y vs South -Y meeting at y=0)
             const x = r * Math.cos(theta);
-            const y = r * Math.sin(theta);
-            const z = dirSign * (normT - 0.5) * 4.2 + Math.sin(theta * 0.5) * 0.25;
+            const z = r * Math.sin(theta);
+            const y = dirSign * (0.06 + Math.pow(normT, 0.72) * 3.85 + Math.sin(theta * 0.5) * 0.12);
             const w = dirSign * (0.15 + normT * 1.85);
 
             const kStep = (stepSeq * 13) % M_TOTIENT;
@@ -3500,7 +3577,7 @@
             const activeUnit = isFwd ? fUnit : rUnit;
             const sqScale = 0.13 + 0.06 * (1.0 - normT * 0.45);
             const rotZ = theta + (isFwd ? Math.PI * 0.25 : -Math.PI * 0.25);
-            const rotX = dirSign * 0.22 * Math.sin(normT * Math.PI);
+            const rotX = dirSign * (Math.PI * 0.38 * (1.0 - normT * 0.65));
 
             dummySq.position.set(x, y, z);
             dummySq.rotation.set(rotX, 0, rotZ);
@@ -3519,7 +3596,8 @@
             squareRecords.push({
               id: idx, branch: isFwd ? 'FORWARD_FK' : 'BACKWARD_RK', stepSeq,
               x, y, z, w, sqScale, rotX, rotZ, kStep, fUnit, rUnit, activeUnit,
-              pairedInverseSqId, dewey: sqDewey, mined: false, blockHash: null
+              pairedInverseSqId, dewey: sqDewey, mined: false, blockHash: null,
+              reverseVerified: false, solventHueHex: null, solventReceipt: null
             });
 
             for (let p = 0; p < PRISMS_PER_SQUARE; p++) {
@@ -3547,6 +3625,7 @@
                 branch: isFwd ? 'FORWARD_FK' : 'BACKWARD_RK', stepSeq,
                 x: px, y: py, z: pz, w, kStep, fUnit, rUnit, activeUnit,
                 hexHash, dewey: prismDewey, pairedInverseSqId, pairedInversePrismId,
+                solventHueHex: null,
                 encodedPayload: 'Awaiting PoW worker commitment…'
               });
             }
@@ -3589,11 +3668,10 @@
           inverseBeacon.visible = false;
           spiralSystemGroup.add(inverseBeacon);
 
-          // Osmosis Fusion Continuum & Inverse Duplicate Bridges
+          // Osmosis Fusion Continuum: Mirrored Inverse Hemispheres + Equatorial Fresnel Membrane
           const osmosisFusionGroup = new THREE.Group();
           spiralSystemGroup.add(osmosisFusionGroup);
 
-          // Pulsating Osmosis Fusion Core at center
           const osmosisCoreMesh = new THREE.Mesh(
             new THREE.IcosahedronGeometry(0.75, 2),
             new THREE.MeshBasicMaterial({
@@ -3605,6 +3683,88 @@
             })
           );
           osmosisFusionGroup.add(osmosisCoreMesh);
+
+          // North Forward & South Mirrored Inverse Wireframe Hemispheres meeting at Equator y=0
+          const northHemiShell = new THREE.Mesh(
+            new THREE.SphereGeometry(6.85, 32, 12, 0, Math.PI * 2, 0, Math.PI * 0.5),
+            new THREE.MeshBasicMaterial({ color: 0x22d3ee, wireframe: true, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending })
+          );
+          northHemiShell.scale.set(1.0, 0.58, 1.0);
+          osmosisFusionGroup.add(northHemiShell);
+
+          const southHemiShell = new THREE.Mesh(
+            new THREE.SphereGeometry(6.85, 32, 12, 0, Math.PI * 2, Math.PI * 0.5, Math.PI * 0.5),
+            new THREE.MeshBasicMaterial({ color: 0xf43f5e, wireframe: true, transparent: true, opacity: 0.08, blending: THREE.AdditiveBlending })
+          );
+          southHemiShell.scale.set(1.0, 0.58, 1.0);
+          osmosisFusionGroup.add(southHemiShell);
+
+          const osmosisEquatorUniforms = {
+            uTime: shared4DUniforms.uTime,
+            uSolventHueRgb: { value: new THREE.Color(0x22d3ee) },
+            uReverseMode: { value: 0.0 },
+            uFusionFlux: { value: 0.72 }
+          };
+          const osmosisEquatorRing = new THREE.Mesh(
+            new THREE.RingGeometry(0.75, 7.15, 96, 4),
+            new THREE.ShaderMaterial({
+              uniforms: osmosisEquatorUniforms,
+              side: THREE.DoubleSide,
+              transparent: true,
+              depthWrite: false,
+              blending: THREE.AdditiveBlending,
+              vertexShader: `
+                varying vec2 vUv;
+                varying vec3 vPos;
+                void main() {
+                  vUv = uv;
+                  vPos = position;
+                  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+              `,
+              fragmentShader: `
+                precision mediump float;
+                uniform float uTime;
+                uniform vec3 uSolventHueRgb;
+                uniform float uReverseMode;
+                uniform float uFusionFlux;
+                varying vec2 vUv;
+                varying vec3 vPos;
+                void main() {
+                  float r = length(vPos.xy);
+                  float theta = atan(vPos.y, vPos.x);
+                  float outerEdge = smoothstep(7.15, 6.2, r);
+                  float innerEdge = smoothstep(0.72, 1.4, r);
+                  float fresnelRim = smoothstep(6.2, 7.05, r) * outerEdge;
+                  float dir = uReverseMode > 0.5 ? -1.0 : 1.0;
+                  float wave = 0.5 + 0.5 * sin(r * 4.5 - uTime * 3.2 * dir + theta * 8.0);
+                  vec3 fwdCol = mix(vec3(0.08, 0.72, 0.94), uSolventHueRgb, 0.65);
+                  vec3 revCol = mix(vec3(0.96, 0.35, 0.58), uSolventHueRgb, 0.55);
+                  vec3 col = mix(fwdCol, revCol, uReverseMode);
+                  col = mix(col, vec3(0.98, 0.82, 0.22), fresnelRim * 0.7);
+                  float alpha = (0.09 + 0.22 * wave + 0.32 * fresnelRim) * outerEdge * innerEdge * uFusionFlux;
+                  gl_FragColor = vec4(col, alpha);
+                }
+              `
+            })
+          );
+          osmosisEquatorRing.rotation.x = -Math.PI * 0.5;
+          osmosisFusionGroup.add(osmosisEquatorRing);
+
+          // 64 Cross-Equator Osmosis Conduits bridging Forward (+Y) & Inverse (-Y) hemisphere orbits
+          const conduitPts = [];
+          for (let c = 0; c < 64; c++) {
+            const idxF = Math.floor((c / 64) * (HALF_SQUARES - 1));
+            const sqF = squareRecords[idxF];
+            const sqI = squareRecords[sqF.pairedInverseSqId];
+            conduitPts.push(sqF.x, sqF.y, sqF.z, sqI.x, sqI.y, sqI.z);
+          }
+          const conduitGeo = new THREE.BufferGeometry();
+          conduitGeo.setAttribute('position', new THREE.Float32BufferAttribute(conduitPts, 3));
+          osmosisFusionGroup.add(new THREE.LineSegments(
+            conduitGeo,
+            new THREE.LineBasicMaterial({ color: 0xfacc15, transparent: true, opacity: 0.20, blending: THREE.AdditiveBlending })
+          ));
 
           // 15-Level Binary Merkle Pyramid (32,767 nodes per tree x 3 synchronized sets)
           const merkleStructureGroup = new THREE.Group();
@@ -3662,14 +3822,14 @@
             new THREE.PointsMaterial({ size: 0.14, vertexColors: true, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending })
           ));
 
-          // All 14 Merkle Level (L0..L13) Pasted-Text Osmosis Plates + Golden-Spiral Thread
+          // All 15 Merkle Level (L0..L14) Pasted-Text Osmosis Plates + Golden-Spiral Thread
           const merkleOsmosisGroup = new THREE.Group();
           merkleStructureGroup.add(merkleOsmosisGroup);
           const merkleLevelPlates = [];
           const merkleSpiralWaypoints = [];
           for (let lvl = 0; lvl < MERKLE_LEVEL_COUNTS.length; lvl++) {
             const cPt = merkleLevelCentroids[lvl];
-            const plateRadius = Math.max(0.28, 1.15 - lvl * 0.068);
+            const plateRadius = Math.max(0.24, 1.15 - lvl * 0.06);
             const tileGeo = new THREE.PlaneGeometry(plateRadius, plateRadius);
             const uvAttr = tileGeo.attributes.uv;
             const colTile = lvl % 8;
@@ -3713,7 +3873,7 @@
             merkleLevelPlates.push({ plate, reticleRing, lvl });
 
             const spAngle = lvl * GOLDEN_ANGLE;
-            const spRad = (12 - lvl) * 0.08;
+            const spRad = (14 - lvl) * 0.075;
             merkleSpiralWaypoints.push(new THREE.Vector3(
               cPt.x + Math.cos(spAngle) * spRad,
               cPt.y + Math.sin(spAngle) * spRad,
@@ -3735,7 +3895,7 @@
           merkleProofPathLine.visible = false;
           merkleStructureGroup.add(merkleProofPathLine);
 
-          // Opposing Dual 13-Level Merkle Pyramid (Mirrored across 0.0.0.0 Side-B Polarity)
+          // Opposing Dual 15-Level Merkle Pyramid (Mirrored across Equator Side-B Polarity)
           const dualMerklePtsPos = new Float32Array(merkleNodeCoords.length * 3);
           const dualMerklePtsCol = new Float32Array(merkleNodeCoords.length * 3);
           for (let i = 0; i < merkleNodeCoords.length; i++) {
@@ -3982,6 +4142,11 @@
           const miningEngine = {
             running: true,
             cursor: 0,
+            cyclicPhase: 'FORWARD_FILL',
+            reverseCursor: TOTAL_SQUARES - 1,
+            reverseVerifiedCount: 0,
+            lastSolventReceipt: null,
+            lastElGamalStraddle: null,
             difficultyBits: 8,
             totalHashes: 0,
             cpuHashRate: 0,
@@ -4286,6 +4451,19 @@
                     v5NodeId: v5.id,
                     eventId: `BLK-${idx}-N${nonce}`,
                   });
+                  const elgStraddle = window.LivingSystemConvergence?.hamiltonian?.computeElGamalLevel10StraddleStep?.(idx, blkHash) ?? null;
+                  this.lastElGamalStraddle = elgStraddle;
+                  if (b2512) {
+                    this.lastSolventReceipt = {
+                      wordPair: `${b2512.receiptWord}↔${b2512.inverseReceiptWord}`,
+                      hueDeg: b2512.prismHueDeg,
+                      rgbHex: b2512.prismRgbHex,
+                      blockIndex: idx
+                    };
+                    if (b2512.prismRgbHex && typeof osmosisEquatorUniforms !== 'undefined') {
+                      osmosisEquatorUniforms.uSolventHueRgb.value.set(b2512.prismRgbHex);
+                    }
+                  }
 
                   // MINER -> MEMORY: Write every accepted candidate through memoryFabric with its receipt
                   const memRecord = memLedger.recordAcceptedCandidate({
@@ -4328,6 +4506,13 @@
                   sq.ivcAcc = ivcAcc;
                   sq.memoryEventId = memRecord.eventId;
                   sq.headerFirst32BytesHex = first32Hex;
+                  sq.solventHueHex = b2512?.prismRgbHex || '#2CC4E8';
+                  sq.solventReceipt = b2512 ? `${b2512.receiptWord}↔${b2512.inverseReceiptWord}` : 'GENESIS↔SOLVENT';
+                  const invSqObj = squareRecords[sq.pairedInverseSqId];
+                  if (invSqObj && !invSqObj.solventHueHex) {
+                    invSqObj.solventHueHex = sq.solventHueHex;
+                    invSqObj.solventReceipt = sq.solventReceipt;
+                  }
 
                   miningPoolState.sharesAccepted++;
                   miningPoolState.lastVfProof = sha256Hex(`ZK_VRF_SHARE|${idx}|${nonce}|${blkHash}`);
@@ -4338,12 +4523,23 @@
                   const adl = ADL_WORDS[idx % ADL_WORDS.length];
                   for (let p = 0; p < PRISMS_PER_SQUARE; p++) {
                     const pr = prismRecords[idx * PRISMS_PER_SQUARE + p];
+                    const invPr = prismRecords[pr.pairedInversePrismId];
+                    pr.solventHueHex = sq.solventHueHex;
+                    if (invPr && !invPr.solventHueHex) invPr.solventHueHex = sq.solventHueHex;
                     if (p === 0) pr.encodedPayload = `R3 PoW(${zeroBits}b) SHA256d: 0x${blkHash.slice(0, 20)}…`;
-                    else if (p === 1) pr.encodedPayload = `R4 Nonce=${nonce} · EVT=${memRecord.eventId} · BLAKE2b=${b2512?.blake2b64Hex ?? 'SYNC'}`;
-                    else if (p === 2) pr.encodedPayload = `R2+R6 ADL(${adl.pos},L${adl.lane},d=${adl.dir}) · Dewey=${b2512?.deweyAddress ?? sq.dewey} · V₅#${v5.id}`;
+                    else if (p === 1) pr.encodedPayload = `R4 Solvent=${sq.solventReceipt} (${sq.solventHueHex}) · BLAKE2b=${b2512?.blake2b64Hex ?? 'SYNC'}`;
+                    else if (p === 2) pr.encodedPayload = `R2+R6 ADL(${adl.pos},L${adl.lane},d=${adl.dir}) · ElGamal L10=${elgStraddle?.patternRecognitionScore ?? '--'}% · V₅#${v5.id}`;
                     else pr.encodedPayload = `IVC Acc 0x${ivcAcc.slice(0, 12)}… · Merkle L0[${idx}] · Orb#${b2512?.orbIndex ?? 0}`;
                   }
                   this.cursor = idx + 1;
+                  if (this.cursor >= TOTAL_SQUARES && this.cyclicPhase === 'FORWARD_FILL') {
+                    this.cyclicPhase = 'REVERSE_VERIFY';
+                    this.reverseCursor = TOTAL_SQUARES - 1;
+                    this.reverseVerifiedCount = 0;
+                    window.LivingSystemConvergence?.sparseBand?.setCyclicPhaseState?.('REVERSE_VERIFY', 0);
+                    if (typeof osmosisEquatorUniforms !== 'undefined') osmosisEquatorUniforms.uReverseMode.value = 1.0;
+                    appendAuditLog('CYCLIC FORWARD FILL COMPLETE (16,384/16,384) -> ENTERING INVERSE SOLVENT REVERSE VERIFICATION (16,383->0)');
+                  }
                   engramStakeState.onBlockMined(idx, zeroBits);
                   syncMerkleStructureGeometry(this.cursor);
                   zkFoldEngine.updateUI();
@@ -4389,7 +4585,7 @@
                       ? { state: 'PASS', reason: `PoW target ${this.difficultyBits}b with Core header ready` }
                       : { state: 'INCOMPLETE', reason: !coreMat ? 'Awaiting Core header state' : `Invalid difficultyBits=${this.difficultyBits}` },
                     boundary: idx >= 0 && idx < TOTAL_SQUARES
-                      ? { state: 'PASS', reason: `Cursor ${idx} within 0..4095` }
+                      ? { state: 'PASS', reason: `Cursor ${idx} within 0..${TOTAL_SQUARES - 1}` }
                       : { state: 'FAIL', reason: 'Cursor out of bounds' },
                     provenancePrivacy: coreMat
                       ? { state: 'PASS', reason: `Core anchor ${coreMat.primarySourceId} attached` }
@@ -4423,6 +4619,63 @@
               return gated.value;
             },
 
+            stepReverseVerificationSweep(batch = 24) {
+              if (this.cursor === 0) return false;
+              if (this.cyclicPhase === 'FORWARD_FILL') {
+                this.cyclicPhase = 'REVERSE_VERIFY';
+                this.reverseCursor = this.cursor - 1;
+                window.LivingSystemConvergence?.sparseBand?.setCyclicPhaseState?.('REVERSE_VERIFY', this.reverseVerifiedCount);
+                if (typeof osmosisEquatorUniforms !== 'undefined') osmosisEquatorUniforms.uReverseMode.value = 1.0;
+              }
+              const sparse = window.LivingSystemConvergence?.sparseBand;
+              const ham = window.LivingSystemConvergence?.hamiltonian;
+              let processed = 0;
+              while (processed < batch && this.reverseCursor >= 0) {
+                const revIdx = this.reverseCursor;
+                const sq = squareRecords[revIdx];
+                if (sq && sq.mined && !sq.reverseVerified) {
+                  sq.reverseVerified = true;
+                  this.reverseVerifiedCount++;
+                  const vRes = sparse?.verifyReverseBlock?.(revIdx);
+                  if (vRes) {
+                    this.lastSolventReceipt = {
+                      wordPair: `${vRes.receiptWord}↔${vRes.inverseReceiptWord}`,
+                      hueDeg: vRes.prismHueDeg,
+                      rgbHex: vRes.prismRgbHex,
+                      blockIndex: revIdx
+                    };
+                    if (typeof osmosisEquatorUniforms !== 'undefined') {
+                      osmosisEquatorUniforms.uSolventHueRgb.value.set(vRes.prismRgbHex);
+                    }
+                  }
+                  if (revIdx % 16 === 0 && ham?.computeElGamalLevel10StraddleStep) {
+                    this.lastElGamalStraddle = ham.computeElGamalLevel10StraddleStep(revIdx, sq.blockHash || '0'.repeat(64));
+                  }
+                }
+                this.reverseCursor--;
+                processed++;
+              }
+              if (this.reverseCursor < 0) {
+                if (this.cursor >= TOTAL_SQUARES) {
+                  this.cyclicPhase = 'COMPLETE';
+                  sparse?.setCyclicPhaseState?.('COMPLETE', this.reverseVerifiedCount);
+                  appendAuditLog(`REVERSE VERIFICATION COMPLETE: ${this.reverseVerifiedCount.toLocaleString()} blocks & inverse solvent receipts matched ✓`);
+                } else {
+                  // Partial test sweep finished -> return cleanly to forward fill
+                  this.cyclicPhase = 'FORWARD_FILL';
+                  this.reverseCursor = TOTAL_SQUARES - 1;
+                  sparse?.setCyclicPhaseState?.('FORWARD_CYCLIC', this.reverseVerifiedCount);
+                  if (typeof osmosisEquatorUniforms !== 'undefined') osmosisEquatorUniforms.uReverseMode.value = 0.0;
+                  appendAuditLog(`CYCLIC REVERSE SWEEP CHECKED (${this.reverseVerifiedCount} mined blocks verified) -> Resuming Forward Cyclic Fill.`);
+                }
+              } else {
+                sparse?.setCyclicPhaseState?.('REVERSE_VERIFY', this.reverseVerifiedCount);
+              }
+              lastFrontier = -1;
+              this.updateUI();
+              return processed > 0;
+            },
+
             updateRateAndUI() {
               const now = performance.now();
               if (now - this.lastRateTime >= 350) {
@@ -4438,6 +4691,10 @@
             },
 
             runBoundedTick(budgetMs = 3.5) {
+              if (this.cyclicPhase === 'REVERSE_VERIFY') {
+                this.stepReverseVerificationSweep(16);
+                return;
+              }
               if (!this.running || this.cursor >= TOTAL_SQUARES) return;
               if (window.__creedAdmittance?.isMiningHalted?.()) {
                 this.haltedByCreed = true;
@@ -4473,6 +4730,9 @@
               const evtEl = document.getElementById('mine-memory-event-ui');
               const hdrEl = document.getElementById('mine-header-hex-ui');
               const faultBtn = document.getElementById('btn-creed-fault-toggle');
+              const solvEl = document.getElementById('mining-solvent-receipt-ui');
+              const elgEl = document.getElementById('mining-elgamal-straddle-ui');
+              const auditElgEl = document.getElementById('audit-v5-elgamal-ui');
 
               if (conv) {
                 if (mc) mc.textContent = `${conv.acceptedBlocksCount.toLocaleString()} / 16,384`;
@@ -4488,6 +4748,21 @@
                   const shownHdr = conv.latestHeaderFirst32BytesHex || this.lastHeaderFirst32BytesHex;
                   hdrEl.textContent = shownHdr ? `0x${shownHdr.slice(0, 24)}…` : 'AWAITING CORE…';
                 }
+                const sSum = conv.sparseBandSummary;
+                if (solvEl) {
+                  const word = this.lastSolventReceipt?.wordPair || sSum?.lastReceiptWord || 'GENESIS↔SOLVENT';
+                  const hex = this.lastSolventReceipt?.rgbHex || sSum?.lastPrismRgbHex || '#2CC4E8';
+                  const revTag = this.cyclicPhase === 'REVERSE_VERIFY'
+                    ? `REV ${Math.max(0, this.reverseCursor)}`
+                    : (this.cyclicPhase === 'COMPLETE' ? `VERIFIED ${this.reverseVerifiedCount}` : 'FWD_CYCLIC');
+                  solvEl.textContent = `${revTag} · ${hex} · ${word}`;
+                }
+                const elg = this.lastElGamalStraddle || conv.elgamalStraddle;
+                const elgTxt = elg
+                  ? `SET_B #${elg.straddleNodeId}/E${elg.straddleEdgeId} · PAT ${elg.patternRecognitionScore}% · ${elg.verifiedRoundTrip ? 'ECC OK' : 'ERR'}`
+                  : 'SET_B #625 · PAT --% · INIT';
+                if (elgEl) elgEl.textContent = elgTxt;
+                if (auditElgEl) auditElgEl.textContent = elgTxt;
                 if (gateEl) {
                   const isFault = Boolean(conv.faultInjection?.active);
                   const v = conv.miningBranchVerdict;
@@ -4540,7 +4815,7 @@
           };
 
           // =========================================================================
-          // 8. AE.VOIDMATRIX.CRYPTIC — FINITE Z^4 LATTICE V_5 (625 NODES, 2,000 EDGES)
+          // 8. AE.VOIDMATRIX.CRYPTIC — FINITE Z^4 LATTICE V_5 (2 SETS × 625 = 1,250 NODES, 4,000 EDGES)
           // =========================================================================
           const voidMatrixGroup = new THREE.Group();
           masterGroup.add(voidMatrixGroup);
@@ -4708,6 +4983,7 @@
             uTime: shared4DUniforms.uTime,
             uTSlice: { value: 99.0 },
             uSideSign: { value: 1.0 },
+            uIsSideB: { value: 0.0 },
             uFnvOffset: { value: 0.0 },
             uEigenCoherence: { value: state.roseCoherence },
             uPointScale: { value: 13.5 },
@@ -4719,15 +4995,16 @@
             uRp4H: v5Uniforms.uRp4H,
             uTime: shared4DUniforms.uTime,
             uTSlice: v5Uniforms.uTSlice,
-            uSideSign: { value: -1.0 },
+            uSideSign: { value: 1.0 },
+            uIsSideB: { value: 1.0 },
             uFnvOffset: v5Uniforms.uFnvOffset,
             uEigenCoherence: v5Uniforms.uEigenCoherence,
             uPointScale: { value: 11.5 },
-            uOpacity: { value: 0.68 }
+            uOpacity: { value: 0.72 }
           };
 
           const voidNodeCoords4D = new Float32Array(TOTAL_VOID_NODES * 4);
-          const voidNodeMeta = new Float32Array(TOTAL_VOID_NODES * 3); // [hueIdx/64, merkleLvl/12, isOrigin]
+          const voidNodeMeta = new Float32Array(TOTAL_VOID_NODES * 3); // [hueIdx/64, merkleLvl/14, isOrigin]
           for (let id = 0; id < TOTAL_VOID_NODES; id++) {
             const v4 = voidBaseCoords4D[id];
             voidNodeCoords4D[id * 4] = v4[0];
@@ -4752,20 +5029,21 @@
             uniform float uRp4H;
             uniform float uTSlice;
             uniform float uSideSign;
+            uniform float uIsSideB;
             uniform float uFnvOffset;
             uniform float uPointScale;
             varying vec3 vCol;
             varying float vVis;
             varying float vPinAmt;
             void main() {
-              float tVal = aCoord4D.w / 0.65;
+              float tVal = (aCoord4D.w / 0.65) * (uIsSideB > 0.5 ? -1.0 : 1.0);
               vVis = (uTSlice > 50.0 || abs(tVal - uTSlice) < 0.15) ? 1.0 : 0.0;
               float H = max(0.1, uRp4H);
               vec4 p4 = uRot4D * (aCoord4D / H);
               float denom = max(0.45, uWDist - p4.w);
               float s = uWDist / denom;
               vec3 pos3 = p4.xyz * (s * uSideSign);
-              float hueShift = fract(aNodeMeta.x + uFnvOffset / 64.0);
+              float hueShift = fract(aNodeMeta.x + uFnvOffset / 64.0 + (uIsSideB > 0.5 ? 0.5 : 0.0));
               vec3 rose64 = 0.52 + 0.48 * cos(6.283185 * (hueShift + vec3(0.0, 0.33, 0.67)));
               vec3 baseCol = mix(aColor, rose64, aNodeMeta.z > 0.5 ? 0.1 : 0.55);
               float pinAmt = clamp(aPathPin, 0.0, 1.0);
@@ -4857,17 +5135,16 @@
           v5HoverNeighborLines.visible = false;
           voidMatrixGroup.add(v5HoverNeighborLines);
 
-          // 2,000 V5 Edges with 64-Hue Quantum Rose Eigenfield + Merkle Pyramid Level Tethers
+          // 4,000 V5 Edges (2,000 Set A + 2,000 Set B Dual) with 64-Hue Quantum Rose Eigenfield + Merkle Tethers
           const voidEdgeVertCoords4D = new Float32Array(voidEdges.length * 2 * 4);
           const voidEdgeVertPositions = new Float32Array(voidEdges.length * 2 * 3);
-          const voidEdgeMetaAttr = new Float32Array(voidEdges.length * 2 * 4); // [hueIdx/64, merkleLvl/12, tCoord, admitNorm]
+          const voidEdgeMetaAttr = new Float32Array(voidEdges.length * 2 * 4); // [hueIdx/64, merkleLvl/14, tCoord, admitNorm]
           for (let i = 0; i < voidEdges.length; i++) {
             const e = voidEdges[i];
             const u = e.source_node, v = e.destination_node;
             const cu = voidBaseCoords4D[u], cv = voidBaseCoords4D[v];
-            // Disperse 64 distinct color hues evenly across all 2,000 edges
             const hue64 = ((i * 64) / voidEdges.length) % 64;
-            const merkleLvlNorm = (i % 13) / 12.0;
+            const merkleLvlNorm = (i % 15) / 14.0;
             const edgeSign = e.temporal_order > 0 ? 1.0 : 0.72;
             for (let k = 0; k < 2; k++) {
               const cc = k === 0 ? cu : cv;
@@ -4914,23 +5191,23 @@
             uniform float uTime;
             uniform float uFnvOffset;
             uniform float uEigenCoherence;
-            uniform float uSideSign;
+            uniform float uIsSideB;
             varying vec4 vEdgeMeta;
             varying float vVis;
             void main() {
               if (vVis < 0.5) discard;
               // Exact 64-hue Quantum Rose eigenfield quantized palette + Merkle pyramid tether harmonic
               float quantizedHue = floor(mod(vEdgeMeta.x * 64.0 + uFnvOffset, 64.0)) / 64.0;
-              float phase = quantizedHue + (uSideSign < 0.0 ? 0.5 : 0.0);
+              float phase = quantizedHue + (uIsSideB > 0.5 ? 0.5 : 0.0);
               vec3 col64 = 0.52 + 0.48 * cos(6.283185 * (phase + vec3(0.0, 0.33, 0.67)));
               float merkleWave = 0.5 + 0.5 * sin(vEdgeMeta.y * 12.56637 - uTime * 2.1 + quantizedHue * 6.283185);
               float fractalIntensity = mix(0.24, 0.72, merkleWave * uEigenCoherence) * vEdgeMeta.w;
-              float alpha = clamp((0.12 + 0.24 * fractalIntensity) * (uSideSign > 0.0 ? 1.0 : 0.78), 0.06, 0.45);
+              float alpha = clamp((0.12 + 0.24 * fractalIntensity) * (uIsSideB > 0.5 ? 0.78 : 1.0), 0.06, 0.45);
               gl_FragColor = vec4(col64 * (0.75 + 0.45 * fractalIntensity), alpha);
             }
           `;
 
-          const voidEdgeIdxArr = new Uint16Array(voidEdges.length * 2);
+          const voidEdgeIdxArr = new Uint16Array(EDGES_PER_SET * 2);
           for (let i = 0; i < voidEdgeIdxArr.length; i++) voidEdgeIdxArr[i] = i;
           const voidEdgeIdxAttr = new THREE.BufferAttribute(voidEdgeIdxArr, 1);
 
@@ -5001,15 +5278,16 @@
           voidGeodesicLine.visible = false;
           voidMatrixGroup.add(voidGeodesicLine);
 
-          // Opposing Dual V_5 Integer Lattice (Side-B Mirror: 625 Nodes / 2,000 Edges on GPU)
-          const dualVoidNodeCol = new Float32Array(625 * 3);
-          for (let id = 0; id < 625; id++) {
-            dualVoidNodeCol[id * 3] = id === 312 ? 0.98 : 0.92;
-            dualVoidNodeCol[id * 3 + 1] = id === 312 ? 0.80 : 0.25;
-            dualVoidNodeCol[id * 3 + 2] = id === 312 ? 0.08 : 0.78;
+          // Opposing Dual V_5 Integer Lattice (Set B Side-B ElGamal Straddle: 625..1249 / Edges 2,000..3,999)
+          const dualVoidNodeCol = new Float32Array(TOTAL_VOID_NODES * 3);
+          for (let id = 0; id < TOTAL_VOID_NODES; id++) {
+            const isDualOrigin = id === 937;
+            dualVoidNodeCol[id * 3] = isDualOrigin ? 0.98 : 0.92;
+            dualVoidNodeCol[id * 3 + 1] = isDualOrigin ? 0.80 : 0.25;
+            dualVoidNodeCol[id * 3 + 2] = isDualOrigin ? 0.08 : 0.78;
           }
-          const dualVoidNodeIdxArr = new Uint16Array(625);
-          for (let i = 0; i < 625; i++) dualVoidNodeIdxArr[i] = i;
+          const dualVoidNodeIdxArr = new Uint16Array(NODES_PER_SET);
+          for (let i = 0; i < NODES_PER_SET; i++) dualVoidNodeIdxArr[i] = NODES_PER_SET + i;
           const dualVoidNodeIdxAttr = new THREE.BufferAttribute(dualVoidNodeIdxArr, 1);
 
           const dualVoidNodeGeo = new THREE.BufferGeometry();
@@ -5033,8 +5311,8 @@
           dualVoidPoints.frustumCulled = false;
           dualityMirrorGroup.add(dualVoidPoints);
 
-          const dualVoidEdgeIdxArr = new Uint16Array(voidEdges.length * 2);
-          for (let i = 0; i < dualVoidEdgeIdxArr.length; i++) dualVoidEdgeIdxArr[i] = i;
+          const dualVoidEdgeIdxArr = new Uint16Array(EDGES_PER_SET * 2);
+          for (let i = 0; i < dualVoidEdgeIdxArr.length; i++) dualVoidEdgeIdxArr[i] = EDGES_PER_SET * 2 + i;
           const dualVoidEdgeIdxAttr = new THREE.BufferAttribute(dualVoidEdgeIdxArr, 1);
 
           const dualVoidEdgeGeo = new THREE.BufferGeometry();
@@ -5059,24 +5337,24 @@
           let activeVoidPathIds = [];
           let activeTemporalSlice = 'ALL';
 
-          // Hierarchical 125-Cell Spatial Frustum Culler with Dirty-Buffer Gating & #312 / L1 Pinning
+          // Hierarchical 250-Cell Spatial Frustum Culler (125 Set A + 125 Set B = 1,250 Nodes / 4,000 Edges)
           const _v5Frustum = new THREE.Frustum();
           const _v5ProjViewMat = new THREE.Matrix4();
           const _v5Sphere = new THREE.Sphere();
           const _v5TmpVec = new THREE.Vector3();
           const _v5TmpVec2 = new THREE.Vector3();
 
-          const macroCellNodes = Array.from({ length: 125 }, () => []);
-          const nodeMacroCell = new Uint8Array(625);
-          for (let id = 0; id < 625; id++) {
-            const c = Math.floor(id / 5); // 5 temporal slices share one (X,Y,Z) spatial macro-cell
+          const macroCellNodes = Array.from({ length: 250 }, () => []);
+          const nodeMacroCell = new Uint8Array(TOTAL_VOID_NODES);
+          for (let id = 0; id < TOTAL_VOID_NODES; id++) {
+            const c = Math.floor(id / 5); // 0..124 Set A, 125..249 Set B
             macroCellNodes[c].push(id);
             nodeMacroCell[id] = c;
           }
           const cellVisA = new Uint8Array(125);
           const cellVisB = new Uint8Array(125);
-          const nodeVisA = new Uint8Array(625);
-          const nodeVisB = new Uint8Array(625);
+          const nodeVisA = new Uint8Array(NODES_PER_SET);
+          const nodeVisB = new Uint8Array(NODES_PER_SET);
 
           const v5Culler = {
             lastCamPV: new Float32Array(16),
@@ -5087,10 +5365,10 @@
             lastSlice: null,
             lastPathSig: '',
             forceDirty: true,
-            visibleNodesA: 625,
-            visibleNodesB: 625,
-            visibleEdgesA: voidEdges.length,
-            visibleEdgesB: voidEdges.length,
+            visibleNodesA: NODES_PER_SET,
+            visibleNodesB: NODES_PER_SET,
+            visibleEdgesA: EDGES_PER_SET,
+            visibleEdgesB: EDGES_PER_SET,
             skippedUploadsTotal: 0,
             skippedThisSec: 0,
             skippedUploadsPerSec: 0,
@@ -5150,62 +5428,83 @@
 
               _v5Frustum.setFromProjectionMatrix(_v5ProjViewMat);
               const pathSet = new Set(activeVoidPathIds);
-              pathSet.add(312); // Origin V5#312 always pinned
+              pathSet.add(312); // Set A Origin V5#312 always pinned
+              pathSet.add(937); // Set B Dual Origin V5#937 always pinned
 
               const sliceAll = activeTemporalSlice === 'ALL';
               const targetT = sliceAll ? 0 : Number(activeTemporalSlice);
 
-              // Evaluate all 125 spatial macro-cells against camera frustum for Side-A & Side-B independently
+              // Evaluate Set A (cells 0..124) and Set B (cells 125..249) against camera frustum independently
               for (let c = 0; c < 125; c++) {
-                const members = macroCellNodes[c];
-                // Compute projected world-space bounding sphere around cell's 5 temporal slices
+                // Set A Macro-Cell
+                const membersA = macroCellNodes[c];
                 let minAx = Infinity, minAy = Infinity, minAz = Infinity;
                 let maxAx = -Infinity, maxAy = -Infinity, maxAz = -Infinity;
-                let hasPin = false;
-                let hasSlice = false;
+                let hasPinA = false, hasSliceA = false;
                 for (let k = 0; k < 5; k++) {
-                  const id = members[k];
-                  if (pathSet.has(id)) hasPin = true;
-                  const node = voidNodes[id];
-                  if (sliceAll || node.T === targetT) {
-                    hasSlice = true;
+                  const id = membersA[k];
+                  if (pathSet.has(id)) hasPinA = true;
+                  if (sliceAll || voidNodes[id].T === targetT) {
+                    hasSliceA = true;
                     const p = project4Dto3D(voidBaseCoords4D[id], m4);
                     if (p.x < minAx) minAx = p.x; if (p.x > maxAx) maxAx = p.x;
                     if (p.y < minAy) minAy = p.y; if (p.y > maxAy) maxAy = p.y;
                     if (p.z < minAz) minAz = p.z; if (p.z > maxAz) maxAz = p.z;
                   }
                 }
-                if (!hasSlice) {
-                  cellVisA[c] = hasPin ? 1 : 0;
-                  cellVisB[c] = 0;
-                  continue;
+                if (!hasSliceA) {
+                  cellVisA[c] = hasPinA ? 1 : 0;
+                } else {
+                  const cx = (minAx + maxAx) * 0.5, cy = (minAy + maxAy) * 0.5, cz = (minAz + maxAz) * 0.5;
+                  const dx = maxAx - cx, dy = maxAy - cy, dz = maxAz - cz;
+                  const radA = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.55;
+                  _v5TmpVec.set(cx, cy, cz).applyMatrix4(grp.matrixWorld);
+                  _v5Sphere.set(_v5TmpVec, radA);
+                  cellVisA[c] = (hasPinA || _v5Frustum.intersectsSphere(_v5Sphere)) ? 1 : 0;
                 }
-                const cx = (minAx + maxAx) * 0.5;
-                const cy = (minAy + maxAy) * 0.5;
-                const cz = (minAz + maxAz) * 0.5;
-                const dx = maxAx - cx, dy = maxAy - cy, dz = maxAz - cz;
-                const radius = Math.sqrt(dx * dx + dy * dy + dz * dz) + 0.55;
 
-                _v5TmpVec.set(cx, cy, cz).applyMatrix4(grp.matrixWorld);
-                _v5Sphere.set(_v5TmpVec, radius);
-                cellVisA[c] = (hasPin || _v5Frustum.intersectsSphere(_v5Sphere)) ? 1 : 0;
-
-                _v5TmpVec2.set(-cx, -cy, -cz).applyMatrix4(grp.matrixWorld);
-                _v5Sphere.set(_v5TmpVec2, radius);
-                cellVisB[c] = _v5Frustum.intersectsSphere(_v5Sphere) ? 1 : 0;
+                // Set B Dual Macro-Cell (nodes 625..1249)
+                const membersB = macroCellNodes[125 + c];
+                let minBx = Infinity, minBy = Infinity, minBz = Infinity;
+                let maxBx = -Infinity, maxBy = -Infinity, maxBz = -Infinity;
+                let hasPinB = false, hasSliceB = false;
+                for (let k = 0; k < 5; k++) {
+                  const id = membersB[k];
+                  if (pathSet.has(id)) hasPinB = true;
+                  if (sliceAll || voidNodes[id].T === targetT) {
+                    hasSliceB = true;
+                    const p = project4Dto3D(voidBaseCoords4D[id], m4);
+                    if (p.x < minBx) minBx = p.x; if (p.x > maxBx) maxBx = p.x;
+                    if (p.y < minBy) minBy = p.y; if (p.y > maxBy) maxBy = p.y;
+                    if (p.z < minBz) minBz = p.z; if (p.z > maxBz) maxBz = p.z;
+                  }
+                }
+                if (!hasSliceB) {
+                  cellVisB[c] = hasPinB ? 1 : 0;
+                } else {
+                  const cxB = (minBx + maxBx) * 0.5, cyB = (minBy + maxBy) * 0.5, czB = (minBz + maxBz) * 0.5;
+                  const dxB = maxBx - cxB, dyB = maxBy - cyB, dzB = maxBz - czB;
+                  const radB = Math.sqrt(dxB * dxB + dyB * dyB + dzB * dzB) + 0.55;
+                  _v5TmpVec2.set(cxB, cyB, czB).applyMatrix4(grp.matrixWorld);
+                  _v5Sphere.set(_v5TmpVec2, radB);
+                  cellVisB[c] = (hasPinB || _v5Frustum.intersectsSphere(_v5Sphere)) ? 1 : 0;
+                }
               }
 
               let nCountA = 0, nCountB = 0;
-              for (let id = 0; id < 625; id++) {
-                const pinned = pathSet.has(id);
-                const sliceMatch = sliceAll || voidNodes[id].T === targetT;
-                const c = nodeMacroCell[id];
-                const visA = sliceMatch && (pinned || cellVisA[c] === 1);
-                const visB = sliceMatch && cellVisB[c] === 1;
-                nodeVisA[id] = visA ? 1 : 0;
-                nodeVisB[id] = visB ? 1 : 0;
-                if (visA) voidNodeIndexArr[nCountA++] = id;
-                if (visB) dualVoidNodeIdxArr[nCountB++] = id;
+              for (let localId = 0; localId < NODES_PER_SET; localId++) {
+                const idA = localId;
+                const idB = NODES_PER_SET + localId;
+                const pinnedA = pathSet.has(idA);
+                const pinnedB = pathSet.has(idB);
+                const sliceMatchA = sliceAll || voidNodes[idA].T === targetT;
+                const sliceMatchB = sliceAll || voidNodes[idB].T === targetT;
+                const visA = sliceMatchA && (pinnedA || cellVisA[nodeMacroCell[idA]] === 1);
+                const visB = sliceMatchB && (pinnedB || cellVisB[nodeMacroCell[idB] - 125] === 1);
+                nodeVisA[localId] = visA ? 1 : 0;
+                nodeVisB[localId] = visB ? 1 : 0;
+                if (visA) voidNodeIndexArr[nCountA++] = idA;
+                if (visB) dualVoidNodeIdxArr[nCountB++] = idB;
               }
               voidNodeGeo.setDrawRange(0, nCountA);
               voidNodeIndexAttr.needsUpdate = true;
@@ -5213,7 +5512,7 @@
               dualVoidNodeIdxAttr.needsUpdate = true;
 
               let eCountA = 0, eCountB = 0;
-              for (let i = 0; i < voidEdges.length; i++) {
+              for (let i = 0; i < EDGES_PER_SET; i++) {
                 const e = voidEdges[i];
                 const u = e.source_node, v = e.destination_node;
                 const sliceOk = sliceAll || (voidNodes[u].T === targetT && voidNodes[v].T === targetT);
@@ -5224,7 +5523,14 @@
                   voidEdgeIdxArr[eCountA * 2 + 1] = i * 2 + 1;
                   eCountA++;
                 }
-                if (nodeVisB[u] === 1 || nodeVisB[v] === 1) {
+              }
+              for (let i = EDGES_PER_SET; i < voidEdges.length; i++) {
+                const e = voidEdges[i];
+                const u = e.source_node, v = e.destination_node;
+                const sliceOk = sliceAll || (voidNodes[u].T === targetT && voidNodes[v].T === targetT);
+                if (!sliceOk) continue;
+                const edgePinned = pathSet.has(u) && pathSet.has(v);
+                if (edgePinned || nodeVisB[u - NODES_PER_SET] === 1 || nodeVisB[v - NODES_PER_SET] === 1) {
                   dualVoidEdgeIdxArr[eCountB * 2] = i * 2;
                   dualVoidEdgeIdxArr[eCountB * 2 + 1] = i * 2 + 1;
                   eCountB++;
@@ -5250,24 +5556,48 @@
                   pArr[id * 3 + 1] = proj.y;
                   pArr[id * 3 + 2] = proj.z;
                 }
+                for (let k = 0; k < nCountB; k++) {
+                  const id = dualVoidNodeIdxArr[k];
+                  const proj = project4Dto3D(voidBaseCoords4D[id], m4);
+                  pArr[id * 3] = proj.x;
+                  pArr[id * 3 + 1] = proj.y;
+                  pArr[id * 3 + 2] = proj.z;
+                }
                 voidNodeGeo.attributes.position.needsUpdate = true;
               }
               return true;
             },
             verifyInvariants() {
-              const pathSet = new Set(activeVoidPathIds);
-              pathSet.add(312);
-              const activeDrawn = new Set();
-              const lim = Math.min(this.visibleNodesA, voidNodeIndexArr.length);
-              for (let i = 0; i < lim; i++) activeDrawn.add(voidNodeIndexArr[i]);
+              const pathSetA = new Set();
+              const pathSetB = new Set();
+              pathSetA.add(312);
+              pathSetB.add(937);
+              for (const reqId of activeVoidPathIds) {
+                if (reqId < NODES_PER_SET) pathSetA.add(reqId);
+                else pathSetB.add(reqId);
+              }
+              const drawnA = new Set();
+              const limA = Math.min(this.visibleNodesA, voidNodeIndexArr.length);
+              for (let i = 0; i < limA; i++) drawnA.add(voidNodeIndexArr[i]);
+              const drawnB = new Set();
+              const limB = Math.min(this.visibleNodesB, dualVoidNodeIdxArr.length);
+              for (let i = 0; i < limB; i++) drawnB.add(dualVoidNodeIdxArr[i]);
+
               let allPinnedPresent = true;
-              for (const reqId of pathSet) {
+              for (const reqId of pathSetA) {
                 if (activeTemporalSlice === 'ALL' || voidNodes[reqId].T === Number(activeTemporalSlice)) {
-                  if (!activeDrawn.has(reqId)) { allPinnedPresent = false; break; }
+                  if (!drawnA.has(reqId)) { allPinnedPresent = false; break; }
                 }
               }
-              const rangeValid = this.visibleNodesA <= 625 && this.visibleEdgesA <= voidEdges.length &&
-                this.visibleNodesB <= 625 && this.visibleEdgesB <= voidEdges.length;
+              if (allPinnedPresent) {
+                for (const reqId of pathSetB) {
+                  if (activeTemporalSlice === 'ALL' || voidNodes[reqId].T === Number(activeTemporalSlice)) {
+                    if (!drawnB.has(reqId)) { allPinnedPresent = false; break; }
+                  }
+                }
+              }
+              const rangeValid = this.visibleNodesA <= NODES_PER_SET && this.visibleEdgesA <= EDGES_PER_SET &&
+                this.visibleNodesB <= NODES_PER_SET && this.visibleEdgesB <= EDGES_PER_SET;
               return { ok: allPinnedPresent && rangeValid, allPinnedPresent, rangeValid };
             }
           };
@@ -5276,14 +5606,37 @@
             v5Culler.update(camera, masterGroup, m4, false);
           }
 
+          function bfsWithinSet(src, dst) {
+            const visited = new Uint8Array(TOTAL_VOID_NODES);
+            const parent = new Int16Array(TOTAL_VOID_NODES).fill(-1);
+            const queue = [src];
+            visited[src] = 1;
+            while (queue.length > 0) {
+              const curr = queue.shift();
+              if (curr === dst) break;
+              for (const { to } of voidAdj[curr]) {
+                if (!visited[to]) { visited[to] = 1; parent[to] = curr; queue.push(to); }
+              }
+            }
+            const seg = [];
+            let cur = dst;
+            while (cur !== -1) {
+              seg.push(cur);
+              if (cur === src) break;
+              cur = parent[cur];
+            }
+            seg.reverse();
+            return seg;
+          }
+
           function solveVoidManhattanGeodesic(startId, endId) {
             const inBounds =
               Number.isFinite(startId) &&
               Number.isFinite(endId) &&
               Math.floor(startId) >= 0 &&
-              Math.floor(startId) <= 624 &&
+              Math.floor(startId) <= TOTAL_VOID_NODES - 1 &&
               Math.floor(endId) >= 0 &&
-              Math.floor(endId) <= 624;
+              Math.floor(endId) <= TOTAL_VOID_NODES - 1;
             const s = inBounds ? Math.floor(startId) : -1;
             const t = inBounds ? Math.floor(endId) : -1;
 
@@ -5294,29 +5647,28 @@
             let chainHash = '';
 
             if (inBounds) {
-              const visited = new Uint8Array(625);
-              const parent = new Int16Array(625).fill(-1);
-              const queue = [s];
-              visited[s] = 1;
-              while (queue.length > 0) {
-                const curr = queue.shift();
-                if (curr === t) break;
-                for (const { to } of voidAdj[curr]) {
-                  if (!visited[to]) { visited[to] = 1; parent[to] = curr; queue.push(to); }
-                }
+              const sIsB = s >= NODES_PER_SET;
+              const tIsB = t >= NODES_PER_SET;
+              if (sIsB === tIsB) {
+                path = bfsWithinSet(s, t);
+                const uNode = voidNodes[s], vNode = voidNodes[t];
+                expectedL1 = Math.abs(uNode.X - vNode.X) + Math.abs(uNode.Y - vNode.Y) + Math.abs(uNode.Z - vNode.Z) + Math.abs(uNode.T - vNode.T);
+              } else {
+                // Cross-lattice path bridges through Origin #312 <-> Dual Origin #937
+                const bridgeSrc = sIsB ? 937 : 312;
+                const bridgeDst = tIsB ? 937 : 312;
+                const legA = bfsWithinSet(s, bridgeSrc);
+                const legB = bfsWithinSet(bridgeDst, t);
+                path = [...legA, ...legB];
+                const uNode = voidNodes[s], vNode = voidNodes[t];
+                expectedL1 =
+                  (Math.abs(uNode.X) + Math.abs(uNode.Y) + Math.abs(uNode.Z) + Math.abs(uNode.T)) +
+                  1 +
+                  (Math.abs(vNode.X) + Math.abs(vNode.Y) + Math.abs(vNode.Z) + Math.abs(vNode.T));
               }
-              let cur = t;
-              while (cur !== -1) {
-                path.push(cur);
-                if (cur === s) break;
-                cur = parent[cur];
-              }
-              path.reverse();
-              const uNode = voidNodes[s], vNode = voidNodes[t];
-              expectedL1 = Math.abs(uNode.X - vNode.X) + Math.abs(uNode.Y - vNode.Y) + Math.abs(uNode.Z - vNode.Z) + Math.abs(uNode.T - vNode.T);
               hops = Math.max(0, path.length - 1);
               optimal = hops === expectedL1;
-              chainHash = uNode.state_hash;
+              chainHash = voidNodes[s].state_hash;
               for (let i = 1; i < path.length; i++) chainHash = sha256Hex(`${chainHash}|${path[i - 1]}->${path[i]}`);
             }
 
@@ -5328,17 +5680,17 @@
                 category: 'SOLVER',
                 required: true,
                 predicates: {
-                  authorization: { state: 'PASS', reason: 'Local V5 geodesic solver authorized' },
+                  authorization: { state: 'PASS', reason: 'Local Dual-Set V5 geodesic solver authorized' },
                   capacity:
-                    voidNodes.length === 625 && voidEdges.length === 2000 && voidAdj.length === 625
-                      ? { state: 'PASS', reason: 'V5 finite lattice intact (625 nodes, 2,000 edges)' }
+                    voidNodes.length === TOTAL_VOID_NODES && voidEdges.length === TOTAL_VOID_EDGES && voidAdj.length === TOTAL_VOID_NODES
+                      ? { state: 'PASS', reason: 'Dual V5 finite lattice intact (1,250 nodes, 4,000 edges)' }
                       : { state: 'FAIL', reason: 'V5 lattice incomplete or corrupted' },
                   verification: optimal
                     ? { state: 'PASS', reason: `BFS geodesic optimal: ${hops} hops == L1(${expectedL1})` }
                     : { state: 'FAIL', reason: 'BFS path did not satisfy L1 Manhattan optimality' },
                   boundary: inBounds
-                    ? { state: 'PASS', reason: `Node endpoints (${s} -> ${t}) within V5 0..624` }
-                    : { state: 'FAIL', reason: `Node endpoints (${startId} -> ${endId}) outside 0..624` },
+                    ? { state: 'PASS', reason: `Node endpoints (${s} -> ${t}) within Dual V5 0..1249` }
+                    : { state: 'FAIL', reason: `Node endpoints (${startId} -> ${endId}) outside 0..1249` },
                   provenancePrivacy: chainHash
                     ? { state: 'PASS', reason: `Transition SHA-256 chain 0x${chainHash.slice(0, 12)}` }
                     : { state: 'FAIL', reason: 'Missing transition chain digest' }
@@ -5349,6 +5701,7 @@
                 voidNodePathFlags.fill(0);
                 for (const nid of path) voidNodePathFlags[nid] = 1.0;
                 voidNodePathFlags[312] = 1.0;
+                voidNodePathFlags[937] = 1.0;
                 voidNodePathAttr.needsUpdate = true;
 
                 if (path.length >= 2) {
@@ -5424,33 +5777,55 @@
           const colPrBwdPool  = new THREE.Color(0x200812);
           const colTargetHi   = new THREE.Color(0x10b981);
           const colInverseHi  = new THREE.Color(0xfacc15);
+          const colRevVerified = new THREE.Color(0x34d399);
+          const colSolventScratch = new THREE.Color();
 
           function updateSequentialSpiralFilling(activePrismId, inversePrismId) {
             const frontier = miningEngine.cursor;
-            const inspKey = `${activePrismId}:${inversePrismId}`;
+            const revCur = miningEngine.reverseCursor;
+            const inspKey = `${activePrismId}:${inversePrismId}:${miningEngine.cyclicPhase}:${revCur}`;
             if (frontier === lastFrontier && inspKey === lastInspectorKey) return;
             lastFrontier = frontier;
             lastInspectorKey = inspKey;
 
             const actSq = activePrismId !== null ? Math.floor(activePrismId / PRISMS_PER_SQUARE) : -1;
             const invSq = inversePrismId !== null ? Math.floor(inversePrismId / PRISMS_PER_SQUARE) : -1;
+            const isRevPhase = miningEngine.cyclicPhase === 'REVERSE_VERIFY';
 
             for (let sqIdx = 0; sqIdx < TOTAL_SQUARES; sqIdx++) {
+              const sq = squareRecords[sqIdx];
               const isFwd = sqIdx < HALF_SQUARES;
               const isMined = sqIdx < frontier;
-              let sqColor = isFwd ? (isMined ? colSqFwdMined : colSqFwdPool) : (isMined ? colSqBwdMined : colSqBwdPool);
-              if (sqIdx === actSq) sqColor = colTargetHi;
-              else if (sqIdx === invSq) sqColor = colInverseHi;
+              const isRevHead = isRevPhase && Math.abs(sqIdx - revCur) <= 6;
+              let sqColor;
+              if (sqIdx === actSq) {
+                sqColor = colTargetHi;
+              } else if (sqIdx === invSq || isRevHead) {
+                sqColor = colInverseHi;
+              } else if (sq?.reverseVerified) {
+                sqColor = colRevVerified;
+              } else if (sq?.solventHueHex) {
+                colSolventScratch.set(sq.solventHueHex);
+                sqColor = colSolventScratch;
+              } else {
+                sqColor = isFwd ? (isMined ? colSqFwdMined : colSqFwdPool) : (isMined ? colSqBwdMined : colSqBwdPool);
+              }
               squareInstancedMesh.setColorAt(sqIdx, sqColor);
 
               const isHead = Math.abs(sqIdx - frontier) <= 4;
               for (let p = 0; p < PRISMS_PER_SQUARE; p++) {
                 const prIdx = sqIdx * PRISMS_PER_SQUARE + p;
+                const pr = prismRecords[prIdx];
                 let prColor;
                 if (prIdx === activePrismId) prColor = colTargetHi;
-                else if (prIdx === inversePrismId) prColor = colInverseHi;
-                else if (isFwd) prColor = isHead ? colPrFwdHead : (isMined ? colPrFwdMined : colPrFwdPool);
-                else prColor = isHead ? colPrBwdHead : (isMined ? colPrBwdMined : colPrBwdPool);
+                else if (prIdx === inversePrismId || isRevHead) prColor = colInverseHi;
+                else if (isHead) prColor = isFwd ? colPrFwdHead : colPrBwdHead;
+                else if (sq?.reverseVerified) prColor = colRevVerified;
+                else if (pr?.solventHueHex) {
+                  colSolventScratch.set(pr.solventHueHex);
+                  prColor = colSolventScratch;
+                } else if (isFwd) prColor = isMined ? colPrFwdMined : colPrFwdPool;
+                else prColor = isMined ? colPrBwdMined : colPrBwdPool;
                 prismInstancedMesh.setColorAt(prIdx, prColor);
               }
             }
@@ -5495,14 +5870,15 @@
 
             voidNodePathFlags.fill(0);
             for (const nid of activeVoidPathIds) {
-              if (nid >= 0 && nid < 625) voidNodePathFlags[nid] = 1.0;
+              if (nid >= 0 && nid < TOTAL_VOID_NODES) voidNodePathFlags[nid] = 1.0;
             }
             voidNodePathFlags[312] = 1.0;
+            voidNodePathFlags[937] = 1.0;
 
-            if (renderId >= 0 && renderId < 625 && clampedMix > 0.005) {
+            if (renderId >= 0 && renderId < TOTAL_VOID_NODES && clampedMix > 0.005) {
               voidNodePathFlags[renderId] = Math.max(voidNodePathFlags[renderId], clampedMix);
               for (const { to } of (voidAdj[renderId] || [])) {
-                if (to >= 0 && to < 625) {
+                if (to >= 0 && to < TOTAL_VOID_NODES) {
                   voidNodePathFlags[to] = Math.max(voidNodePathFlags[to], clampedMix * 0.85);
                 }
               }
@@ -5514,7 +5890,8 @@
             const rawTargetId = miningHoverVoidNodeId !== null
               ? miningHoverVoidNodeId
               : (voidPickMode ? hoveredVoidNodeId : null);
-            const targetId = (rawTargetId !== null && rawTargetId >= 0 && rawTargetId < 625 && voidMatrixGroup.visible)
+            const latticeVisible = voidMatrixGroup.visible || dualityMirrorGroup.visible;
+            const targetId = (rawTargetId !== null && rawTargetId >= 0 && rawTargetId < TOTAL_VOID_NODES && latticeVisible)
               ? rawTargetId
               : null;
 
@@ -5578,7 +5955,7 @@
             }
 
             const renderId = targetId !== null ? targetId : v5HoverAnim.fadeTargetId;
-            if (renderId < 0 || renderId >= 625 || !voidMatrixGroup.visible || (!v5HoverAnim.isActive && v5HoverAnim.opacity <= 0.005)) {
+            if (renderId < 0 || renderId >= TOTAL_VOID_NODES || !latticeVisible || (!v5HoverAnim.isActive && v5HoverAnim.opacity <= 0.005)) {
               applyV5NodePathMix(-1, 0);
               v5HoverBeacon.visible = false;
               v5HoverHalo.visible = false;
@@ -5654,7 +6031,7 @@
             const v5 = quantizeToVoidLattice([pr.x, pr.y, pr.z, pr.w]);
             const admitEval = typeof admitGateEngine !== 'undefined' ? admitGateEngine.evaluatePrism(prismId) : null;
 
-            if (modeEl) modeEl.textContent = isLocked ? 'LOCKED · ADMIT(x) + 12-HOP MERKLE' : 'HOVER · CLICK TO LOCK';
+            if (modeEl) modeEl.textContent = isLocked ? 'LOCKED · ADMIT(x) + 14-HOP MERKLE' : 'HOVER · CLICK TO LOCK';
             if (flyBtn) flyBtn.classList.remove('hidden');
             if (unlockBtn) unlockBtn.classList.toggle('hidden', !isLocked);
 
@@ -5677,6 +6054,9 @@
                 payloadEl.appendChild(line);
               };
               addLine(sq.mined ? 'MINED BLOCK DATA:' : 'UNMINED SLOT:', String(pr.encodedPayload));
+              if (sq.solventReceipt) {
+                addLine('SOLVENT RECEIPT:', `${sq.solventReceipt} · HUE ${sq.solventHueHex || '#--'} · REV=${sq.reverseVerified ? 'OK' : 'PENDING'}`);
+              }
               addLine('V₅ CELL:', `ID ${v5.id} (${v5.X},${v5.Y},${v5.Z},${v5.T})`);
               if (admitEval) {
                 addLine('ADMIT(x):', `${admitEval.admitted ? 'PASS' : 'PENDING'} · Hue #${String(admitEval.hueIdx64).padStart(2, '0')}/63 · Merkle L${admitEval.merkleLevel}`);
@@ -5703,7 +6083,7 @@
             bPos.needsUpdate = true;
             inverseBridgeLine.visible = true;
 
-            // Highlight 13-hop Merkle inclusion path from L0 leaf to L13 apex root
+            // Highlight 14-hop Merkle inclusion path from L0 leaf to L14 apex root
             const mPos = merkleProofPathLine.geometry.attributes.position;
             let curLeaf = pr.squareId;
             for (let lvl = 0; lvl < MERKLE_LEVEL_COUNTS.length; lvl++) {
@@ -5721,8 +6101,11 @@
             raycaster.setFromCamera(pointerNDC, camera);
             hoveredPrismId = null;
             hoveredVoidNodeId = null;
-            if (voidPickMode && voidMatrixGroup.visible) {
-              const vHits = raycaster.intersectObject(voidLatticePoints, false);
+            if (voidPickMode && (voidMatrixGroup.visible || dualityMirrorGroup.visible)) {
+              const targets = [];
+              if (voidMatrixGroup.visible) targets.push(voidLatticePoints);
+              if (dualityMirrorGroup.visible) targets.push(dualVoidPoints);
+              const vHits = raycaster.intersectObjects(targets, false);
               if (vHits.length > 0 && vHits[0].index !== undefined) hoveredVoidNodeId = vHits[0].index;
             }
             if (hoveredVoidNodeId === null && prismInstancedMesh.visible) {
@@ -5843,7 +6226,7 @@
                   voidPickToggle = 0;
                 }
                 const s = parseInt(startEl?.value || '312', 10);
-                const t = parseInt(endEl?.value || '624', 10);
+                const t = parseInt(endEl?.value || (hoveredVoidNodeId >= 625 ? '937' : '624'), 10);
                 solveVoidManhattanGeodesic(s, t);
                 appendAuditLog(`3D V₅ PICK: Node #${hoveredVoidNodeId} → Geodesic ${s}→${t}`);
               } else if (hoveredPrismId !== null) {
@@ -6183,10 +6566,12 @@
             }
             results.push({ name: 'GF(256) Inverse Exhaustion', passed: gfOk });
 
-            let v5Ok = voidNodes.length === 625 && voidEdges.length === 2000;
+            let v5Ok = voidNodes.length === TOTAL_VOID_NODES && voidEdges.length === TOTAL_VOID_EDGES;
             const originNode = voidNodes[312];
-            if (originNode.X !== 0 || originNode.Y !== 0 || originNode.Z !== 0 || originNode.T !== 0) v5Ok = false;
-            results.push({ name: 'V₅ Z⁴ Bijection & L₁ Adjacency', passed: v5Ok });
+            const dualOriginNode = voidNodes[937];
+            if (!originNode || originNode.X !== 0 || originNode.Y !== 0 || originNode.Z !== 0 || originNode.T !== 0) v5Ok = false;
+            if (!dualOriginNode || dualOriginNode.X !== 0 || dualOriginNode.Y !== 0 || dualOriginNode.Z !== 0 || dualOriginNode.T !== 0) v5Ok = false;
+            results.push({ name: 'Dual V₅ Z⁴ Bijection & 4k L₁', passed: v5Ok });
 
             const testMsg = new Uint8Array(CSR_LDPC.k).fill(1);
             const testCw = CSR_LDPC.encode(testMsg);
@@ -6203,15 +6588,15 @@
                 required: true,
                 predicates: {
                   authorization: { state: 'PASS', reason: 'Local governance self-check authorized' },
-                  capacity: voidNodes.length === 625
-                    ? { state: 'PASS', reason: 'All 5 test harnesses allocated cleanly' }
-                    : { state: 'FAIL', reason: 'V5 capacity mismatch' },
+                  capacity: voidNodes.length === TOTAL_VOID_NODES
+                    ? { state: 'PASS', reason: 'All 5 test harnesses + Dual 625×2 V5 allocated cleanly' }
+                    : { state: 'FAIL', reason: 'Dual V5 capacity mismatch' },
                   verification: allPassed
                     ? { state: 'PASS', reason: 'All 5/5 cryptographic & algebraic vectors passed' }
                     : { state: 'FAIL', reason: `Self-certification failed (${results.filter(r => !r.passed).map(r => r.name).join(', ')})` },
                   boundary: v5Ok
-                    ? { state: 'PASS', reason: 'V5=625 nodes / 2,000 edges origin (0,0,0,0)@312' }
-                    : { state: 'FAIL', reason: 'V5 coordinate boundary failed' },
+                    ? { state: 'PASS', reason: 'Dual V5=1,250 nodes (625×2) / 4,000 edges origins (0,0,0,0)@312,937' }
+                    : { state: 'FAIL', reason: 'Dual V5 coordinate boundary failed' },
                   provenancePrivacy: { state: 'PASS', reason: 'Deterministic FIPS/LDPC/GF256 vectors only' }
                 }
               },
@@ -6277,7 +6662,7 @@
                 predicates: {
                   authorization: { state: 'PASS', reason: 'Local prism index query authorized' },
                   capacity: prismRecords.length === TOTAL_PRISMS
-                    ? { state: 'PASS', reason: '32,768-prism lookup table ready' }
+                    ? { state: 'PASS', reason: '65,536-prism lookup table ready' }
                     : { state: 'FAIL', reason: 'Prism table incomplete' },
                   verification: targetPr !== null
                     ? { state: 'PASS', reason: `Resolved prism #${targetPr} with inverse bijection` }
@@ -6302,7 +6687,7 @@
             );
 
             if (!gated.admitted) {
-              if (statusEl) statusEl.textContent = `No exact match for "${q}". Try #0..#4095, 1.4.01, or 0x prefix.`;
+              if (statusEl) statusEl.textContent = `No exact match for "${q}". Try #0..#16383, 1.4.01, or 0x prefix.`;
               return `NO MATCH (${gated.verdict}): ${q}`;
             }
             return gated.value;
@@ -6375,10 +6760,13 @@
               created_at: new Date().toISOString(),
               monolith_version: monolithEngine.version,
               blocks_mined: miningEngine.cursor,
+              cyclic_phase: miningEngine.cyclicPhase,
+              reverse_verified_count: miningEngine.reverseVerifiedCount,
               pow_difficulty_bits: miningEngine.difficultyBits,
               merkle_root: merkleTree.root,
               zk_fold_ivc: zkFoldEngine.getSnapshot(),
-              void_v5_origin_hash: voidNodes[312].state_hash
+              void_v5_origin_hash: voidNodes[312].state_hash,
+              void_v5_dual_origin_hash: voidNodes[937].state_hash
             };
             const gated = await admitViaCreedAsync(
               {
@@ -6391,9 +6779,9 @@
                   authorization: durableVault?.keyPair || window.crypto?.subtle
                     ? { state: 'PASS', reason: 'ECDSA/SHA-256 signing capability available' }
                     : { state: 'INCOMPLETE', reason: 'SubtleCrypto ECDSA signer unavailable' },
-                  capacity: voidNodes.length === 625
-                    ? { state: 'PASS', reason: `Snapshot ready (blks=${miningEngine.cursor}, v=${monolithEngine.version})` }
-                    : { state: 'FAIL', reason: 'Invalid system lattice state' },
+                  capacity: voidNodes.length === TOTAL_VOID_NODES
+                    ? { state: 'PASS', reason: `Snapshot ready (blks=${miningEngine.cursor}/16384, v=${monolithEngine.version})` }
+                    : { state: 'FAIL', reason: 'Invalid Dual V5 lattice state' },
                   verification: merkleTree.root && merkleTree.root.length === 64
                     ? { state: 'PASS', reason: 'Merkle root and V5#312 origin digest present' }
                     : { state: 'FAIL', reason: 'Invalid Merkle root for snapshot export' },
@@ -6802,10 +7190,10 @@
               const res = solveVoidManhattanGeodesic(parts[0] || 312, parts[1] ?? 624);
               log(`V₅ Geodesic: ${res.hops} hops (L₁=${res.expectedL1}, optimal=${res.optimal})`, 'text-emerald-300');
             } else if (cmd.startsWith('merkle:')) {
-              const idx = Math.max(0, Math.min(8191, parseInt(cmd.slice(7), 10) || 0));
+              const idx = Math.max(0, Math.min(16383, parseInt(cmd.slice(7), 10) || 0));
               const proof = merkleTree.getProof(idx);
               const ok = merkleTree.verifyProof(merkleTree.leaves[idx], idx, proof, merkleTree.root);
-              log(`Merkle L0[${idx}] → Root 0x${merkleTree.root.slice(0, 16)}… (13-hop proof=${ok})`, 'text-cyan-300');
+              log(`Merkle L0[${idx}] → Root 0x${merkleTree.root.slice(0, 16)}… (14-hop L0..L14 proof=${ok})`, 'text-cyan-300');
             } else if (cmd.startsWith('pow:')) {
               const bits = Math.max(4, Math.min(16, parseInt(cmd.slice(4), 10) || 8));
               miningEngine.difficultyBits = bits;
@@ -6854,7 +7242,7 @@
                 log(`GOLDEN LINE SEED BROADCAST: ${sd}`, 'text-amber-300');
               });
             } else if (cmd === 'status') {
-              log(`Blocks: ${miningEngine.cursor}/8192 (×3 sets = 24,576, ${miningEngine.difficultyBits}b PoW, ${miningEngine.workerMode}) | Stakes: ${engramStakeState.activeStakes.length} (${engramStakeState.currentRewardWeight().toFixed(2)}x) | V-Disk: ${virtualDiskArchive.records.length}/28160 | Engrams: ${engramStore.cards.length}`, 'text-amber-300');
+              log(`Blocks: ${miningEngine.cursor}/16384 (×3 sets = 49,152 [384 GiB], ${miningEngine.cyclicPhase}, rev=${miningEngine.reverseVerifiedCount}, ${miningEngine.difficultyBits}b PoW, ${miningEngine.workerMode}) | Stakes: ${engramStakeState.activeStakes.length} (${engramStakeState.currentRewardWeight().toFixed(2)}x) | V₅: 1,250/4,000 | Engrams: ${engramStore.cards.length}`, 'text-amber-300');
             } else {
               log(executeQuery(cmd), 'text-emerald-300');
             }
@@ -8122,6 +8510,17 @@
             }
             if (miningEngine.running) miningEngine.dispatchNextBlockJob(0);
           });
+          document.getElementById('btn-cyclic-reverse-test')?.addEventListener('click', () => {
+            if (miningEngine.cursor === 0) {
+              miningEngine.mineSingleBlockSync();
+            }
+            const ok = miningEngine.stepReverseVerificationSweep(Math.min(64, Math.max(16, miningEngine.cursor)));
+            appendAuditLog(
+              ok
+                ? `CYCLIC REVERSE VERIFY: Verified ${miningEngine.reverseVerifiedCount} solvent pairs (cursor=${miningEngine.reverseCursor}).`
+                : 'CYCLIC REVERSE VERIFY COMPLETE: Resumed cyclic forward PoW fill.'
+            );
+          });
           document.getElementById('rng-pow-diff').addEventListener('input', (e) => {
             miningEngine.difficultyBits = parseInt(e.target.value, 10);
             document.getElementById('lbl-pow-diff').textContent = `${miningEngine.difficultyBits} bits`;
@@ -8173,12 +8572,12 @@
             const customEl = document.getElementById('osmosis-custom-input');
             const val = (customEl?.value || '').trim();
             textOsmosisEngine.rebuildSlicesAndAtlas(val || DEFAULT_OSMOSIS_SEED_TEXT, val ? 'USER_PASTE' : 'BOOT_SEED');
-            appendAuditLog(`OSMOSIS ATLAS UPDATED (${textOsmosisEngine.sourceLabel}): Applied across 32,768 prisms & L0..L13 Merkle plates.`);
+            appendAuditLog(`OSMOSIS ATLAS UPDATED (${textOsmosisEngine.sourceLabel}): Applied across 65,536 prisms & L0..L14 Merkle plates.`);
           });
           document.getElementById('btn-osmosis-reload')?.addEventListener('click', async () => {
             const ok = await textOsmosisEngine.loadPasteAsset();
             appendAuditLog(ok
-              ? 'OSMOSIS RELOAD: Loaded 92,194-byte Nov 26 NEXUS OMNI artifact across all 32,768 prisms & 14 Merkle levels.'
+              ? 'OSMOSIS RELOAD: Loaded 92,194-byte Nov 26 NEXUS OMNI artifact across all 65,536 prisms & 15 Merkle levels.'
               : 'OSMOSIS RELOAD FAILED: Asset fetch unavailable.');
           });
 
@@ -8267,13 +8666,13 @@
                 triggerRgbTogglePulse('lbl-rose-b', 'animate-pulse-sky', b > 0.5);
               }
             }
-            appendAuditLog(`QUANTUM ROSE RGB MUX: R=${r} G=${g} B=${b} applied to 32,768 active prisms.`);
+            appendAuditLog(`QUANTUM ROSE RGB MUX: R=${r} G=${g} B=${b} applied to 65,536 active prisms.`);
           }
           ['chk-rose-r', 'chk-rose-g', 'chk-rose-b'].forEach(id => {
             document.getElementById(id)?.addEventListener('change', updatePrismRgbChannels);
           });
 
-          // Raycast hover handler for #tab-mining > .rounded-xl:last-of-type -> 4D V5 lattice node highlight
+          // Raycast hover handler for #tab-mining > .rounded-xl:last-of-type -> Dual 4D V5 lattice node highlight
           const miningSectionEl = document.querySelector('#tab-mining > .rounded-xl:last-of-type');
           if (miningSectionEl) {
             const miningLatticeRaycaster = new THREE.Raycaster();
@@ -8282,7 +8681,7 @@
             const _miningWorldPt = new THREE.Vector3();
 
             const syncVoidPositionsForRaycast = (m4) => {
-              for (let id = 0; id < 625; id++) {
+              for (let id = 0; id < TOTAL_VOID_NODES; id++) {
                 const p = project4Dto3D(voidBaseCoords4D[id], m4);
                 voidNodePositions[id * 3] = p.x;
                 voidNodePositions[id * 3 + 1] = p.y;
@@ -8308,10 +8707,12 @@
               const targetT = sliceAll ? 0 : Number(activeTemporalSlice);
               let hitNodeId = null;
 
-              const hits = miningLatticeRaycaster.intersectObject(voidLatticePoints, false);
+              const rayTargets = [voidLatticePoints];
+              if (dualityMirrorGroup.visible) rayTargets.push(dualVoidPoints);
+              const hits = miningLatticeRaycaster.intersectObjects(rayTargets, false);
               for (let i = 0; i < hits.length; i++) {
                 const idx = hits[i].index;
-                if (idx !== undefined && idx >= 0 && idx < 625 && (sliceAll || voidNodes[idx].T === targetT)) {
+                if (idx !== undefined && idx >= 0 && idx < TOTAL_VOID_NODES && (sliceAll || voidNodes[idx].T === targetT)) {
                   hitNodeId = idx;
                   break;
                 }
@@ -8319,7 +8720,7 @@
 
               if (hitNodeId === null) {
                 let bestDistSq = Infinity;
-                for (let id = 0; id < 625; id++) {
+                for (let id = 0; id < TOTAL_VOID_NODES; id++) {
                   if (!sliceAll && voidNodes[id].T !== targetT) continue;
                   _miningWorldPt.set(
                     voidNodePositions[id * 3],
@@ -8344,7 +8745,7 @@
                   const hoverUi = document.getElementById('mining-lattice-hover-ui');
                   if (hoverUi) {
                     hoverUi.setAttribute('data-hover-active', 'true');
-                    hoverUi.textContent = `4D Highlight: V₅ #${hitNodeId} (${n.X},${n.Y},${n.Z},${n.T}) · ${nbrCount} edges`;
+                    hoverUi.textContent = `4D Highlight (${hitNodeId >= 625 ? 'SET_B' : 'SET_A'}): V₅ #${hitNodeId} (${n.X},${n.Y},${n.Z},${n.T}) · ${nbrCount} edges`;
                   }
                   const blueLbl = document.getElementById('lbl-rose-b');
                   if (blueLbl) {
@@ -8682,6 +9083,17 @@
               appendAuditLog(`GOOGLE DRIVE AUTH: Signed in as ${res.email || 'Google user'}`);
             } catch (err) {
               appendAuditLog(`GOOGLE SIGN-IN ERROR: ${err?.message || 'Cancelled'}`);
+            }
+          });
+          document.getElementById('btn-signin-machackabook')?.addEventListener('click', async () => {
+            const bridge = window.__gaiaDriveBridge;
+            if (!bridge) return;
+            try {
+              const res = await bridge.signIn('machackabook');
+              syncDriveAuthUI(res);
+              appendAuditLog(`MACHACKABOOK GOOGLE AUTH: Signed in as ${res.email || 'Machackabook user'}`);
+            } catch (err) {
+              appendAuditLog(`MACHACKABOOK SIGN-IN ERROR: ${err?.message || 'Cancelled'}`);
             }
           });
           document.getElementById('btn-google-signout').addEventListener('click', async () => {
@@ -9362,14 +9774,14 @@
             selectedIdx: -1,
             rebuildNodes() {
               const memHead = sharedMemoryRouterClient.entries[0]?.entry_hash || '0'.repeat(64);
-              const v5Root = sha256Hex(`V5_625_2000|${v5Culler.visibleNodesA}|${v5Culler.visibleEdgesA}`);
+              const v5Root = sha256Hex(`V5_1250_4000|${v5Culler.visibleNodesA}|${v5Culler.visibleNodesB}|${v5Culler.visibleEdgesA}|${v5Culler.visibleEdgesB}`);
               const genDigest = zeroTrustGenesis.genesisStatus?.genesisSeedDigest || sha256Hex('GENESIS_2026_11_26');
               this.nodes = [
                 { col: 0, row: 0, title: 'Genesis Anchor', uri: `rose://sha256/${genDigest}`, meta: 'Nov 26 2026 · ADMIT(x) · ZERO_TRUST' },
                 { col: 0, row: 1, title: 'Drive Manifest', uri: `rose://sha256/${sha256Hex(geometricDoctrineEngine.boundPackage?.matchedPackage || 'KERNEL_LOCAL')}`, meta: geometricDoctrineEngine.boundPackage?.matchedPackage || 'AE.SL6.DUALTRACE.4P' },
                 { col: 0, row: 2, title: 'U(97152) Field', uri: `rose://sha256/${sha256Hex(String(TARGET_BIGINT))}`, meta: '28,160 Coprimes · Stride 799' },
-                { col: 1, row: 0, title: 'V₅ GPU Frustum', uri: `rose://sha256/${v5Root}`, meta: `A:${v5Culler.visibleNodesA}/625 · B:${v5Culler.visibleNodesB}/625` },
-                { col: 1, row: 1, title: '64-Hue ADMIT(x)', uri: `rose://sha256/${admitGateEngine.lastEval?.stage2DoubleDigest || sha256Hex('ADMIT')}`, meta: '32,768 Prisms · 2,000 Edges' },
+                { col: 1, row: 0, title: 'Dual V₅ Frustum', uri: `rose://sha256/${v5Root}`, meta: `A:${v5Culler.visibleNodesA}/625 · B:${v5Culler.visibleNodesB}/625 (#312,#937)` },
+                { col: 1, row: 1, title: 'Osmosis Equator', uri: `rose://sha256/${admitGateEngine.lastEval?.stage2DoubleDigest || sha256Hex('ADMIT')}`, meta: '65,536 Prisms · 4,000 Edges' },
                 { col: 1, row: 2, title: 'HWAD / HOP-251', uri: `rose://sha256/${sha256Hex(`HWAD_963_${hwadSonifier.epochYear}`)}`, meta: 'BWV 666 · 360 NVMe Slots' },
                 { col: 2, row: 0, title: 'TDOC Ledger', uri: `receipt://sha256/${memHead}`, meta: `${sharedMemoryRouterClient.entries.length} Chained Entries` },
                 { col: 2, row: 1, title: 'Local SelfCheck', uri: `receipt://sha256/${boundedSelfCheckRunner.lastDigest || sha256Hex('LOCAL_ONLY')}`, meta: boundedSelfCheckRunner.lastStatusText }
@@ -9912,18 +10324,19 @@
             // MEMORY -> CONVERGENCE -> AUDIT UI (no view-invented counters)
             if (blksValEl) {
               blksValEl.textContent = conv
-                ? `${conv.acceptedBlocksCount.toLocaleString()} / 8,192 (×3)`
+                ? `${conv.acceptedBlocksCount.toLocaleString()} / 16,384 (×3)`
                 : 'WAITING CONVERGENCE…';
             }
             if (nodesValEl) {
+              const totalVisV5 = v5Culler.visibleNodesA + v5Culler.visibleNodesB;
               nodesValEl.textContent = conv
-                ? `${v5Culler.visibleNodesA.toLocaleString()} / ${conv.v5NodesCount.toLocaleString()}`
-                : `${v5Culler.visibleNodesA.toLocaleString()} / 625`;
+                ? `${totalVisV5.toLocaleString()} / ${conv.v5NodesCount.toLocaleString()}`
+                : `${totalVisV5.toLocaleString()} / 1,250`;
             }
             if (edgesValEl) {
               edgesValEl.textContent = conv
                 ? `${conv.v5EdgesCount.toLocaleString()}`
-                : '2,000';
+                : '4,000';
             }
 
             if (conv) {
@@ -9941,7 +10354,7 @@
                     ? 'px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 text-[8px] font-semibold whitespace-nowrap'
                     : 'px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 border border-amber-400/40 text-[8px] font-semibold whitespace-nowrap';
               }
-              setEl('audit-conv-blocks', `${conv.acceptedBlocksCount.toLocaleString()} / 8,192 (${conv.prismsEncodedCount.toLocaleString()} prisms)`);
+              setEl('audit-conv-blocks', `${conv.acceptedBlocksCount.toLocaleString()} / 16,384 (${conv.prismsEncodedCount.toLocaleString()} prisms)`);
               setEl('audit-conv-events', `${conv.totalMemoryEvents.toLocaleString()} stored / ${conv.blockedWritesCount.toLocaleString()} blocked`);
               setEl('audit-conv-latest-evt', conv.latestCandidateEventId ? `${conv.latestCandidateEventId} (BLK #${conv.latestBlockIndex})` : 'NONE');
               setEl('audit-conv-reg-anchor', `${conv.primaryRegistrySourceId}: ${conv.primaryRegistryFingerprintSha256.slice(0, 16)}…`);
@@ -10008,10 +10421,18 @@
             v5Uniforms.uRp4H.value = state.rp4H;
             v5Uniforms.uEigenCoherence.value = state.roseCoherence;
             v5Uniforms.uFnvOffset.value = ((performance.now() * 0.008) + miningEngine.cursor * 0.37) % 64.0;
-            if (voidMatrixGroup.visible) updateVoidLatticeProjection(m4);
+            if (voidMatrixGroup.visible || dualityMirrorGroup.visible) updateVoidLatticeProjection(m4);
             updateV5HoverVisualHighlight(m4, dt);
             updateZkVrfChains(dt, m4);
             miningEngine.runBoundedTick(4.0);
+
+            if (typeof osmosisCoreMesh !== 'undefined') {
+              osmosisCoreMesh.rotation.y += dt * 0.4;
+              osmosisCoreMesh.rotation.x += dt * 0.18;
+            }
+            if (typeof osmosisEquatorUniforms !== 'undefined') {
+              osmosisEquatorUniforms.uFusionFlux.value = 0.65 + 0.25 * Math.sin(shared4DUniforms.uTime.value * 2.2);
+            }
 
             processCameraAndFlight(dt);
             const { activeId, invId } = performRaycastInspection();
@@ -10078,12 +10499,12 @@
               const cullUi = document.getElementById('v5-cull-stats-ui');
               if (cullUi) {
                 const errCount = window.LivingSystemConvergence?.errorRegistry?.getErrorCount() ?? 6;
-                cullUi.textContent = `Nodes A:${v5Culler.visibleNodesA}/625 · Edges: 2,000 · Errs: ${errCount} · SKIP ${v5Culler.skippedUploadsPerSec}/s`;
+                cullUi.textContent = `Nodes A:${v5Culler.visibleNodesA}/625 B:${v5Culler.visibleNodesB}/625 · Edges: 4,000 · Errs: ${errCount} · SKIP ${v5Culler.skippedUploadsPerSec}/s`;
               }
               const eigenUi = document.getElementById('v5-eigen-readout');
               if (eigenUi) {
                 const hueShift = Math.floor(v5Uniforms.uFnvOffset.value) % 64;
-                eigenUi.textContent = `64 HUES (Δ=${hueShift}) · #312+L₁(${activeVoidPathIds.length}) PIN · V₅ 625 Nodes / 2,000 Edges`;
+                eigenUi.textContent = `64 HUES (Δ=${hueShift}) · #312,#937+L₁(${activeVoidPathIds.length}) PIN · V₅ 1,250 Nodes / 4,000 Edges`;
               }
               const tel = document.getElementById('top-telemetry');
               if (tel) {
@@ -10091,7 +10512,8 @@
                 const blksDisplay = convNow ? convNow.acceptedBlocksCount : 0;
                 const errCount = convNow ? convNow.unifiedErrorCount : (window.LivingSystemConvergence?.errorRegistry?.getErrorCount() ?? 6);
                 const rootVerdict = convNow ? convNow.creedRootVerdict : (window.__creedAdmittance?.getRootVerdict?.() ?? 'YELLOW');
-                tel.textContent = `${fpsVal} FPS · BLKS ${blksDisplay}/8192×3 · V₅ Nodes ${v5Culler.visibleNodesA}/625 · Edges 2,000 · Errs ${errCount} · CREED ${rootVerdict}`;
+                const visV5Total = v5Culler.visibleNodesA + v5Culler.visibleNodesB;
+                tel.textContent = `${fpsVal} FPS · BLKS ${blksDisplay}/16384×3 · V₅ Nodes ${visV5Total}/1250 · Edges 4,000 · Errs ${errCount} · CREED ${rootVerdict}`;
               }
               syncAuditDefinitionsCard();
             }

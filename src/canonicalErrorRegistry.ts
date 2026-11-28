@@ -231,10 +231,10 @@ export class CanonicalErrorRegistryService {
     },
     {
       id: 'MOCK-013',
-      subsystem: '192 GiB Physical Contiguous RAM & Kernel FUSE rclone Mount',
+      subsystem: '384 GiB Physical Contiguous RAM & Kernel FUSE rclone Mount',
       location: 'src/sparseBandCryptoEngine.ts · src/driveSparseMount.ts · server.ts (/v1/sparsebundle/httpfs/*)',
       statusLabel: 'SIMULATED',
-      reason: 'Sparsebundle 192 GiB (24,576 × 8 MiB = 206,158,430,208 B) geometry, Info.plist, HTTPFS 206 Byte-Range gateway, and real touched 8 MiB Google Drive band sync execute live; however, allocating 192 GiB raw contiguous RAM and spawning a kernel FUSE rclone daemon are unsupported in browser/4 GiB container sandboxes.'
+      reason: '8-Sparse-Fusion 384 GiB (49,152 × 8 MiB = 412,316,860,416 B) geometry, bit-scaled clip-path mounts (64..2048+), Drive quota check, HTTPFS 206 Byte-Range gateway, and touched 8 MiB Google Drive band sync execute live; however, allocating 384 GiB raw contiguous RAM and spawning a kernel FUSE rclone daemon are unsupported in browser/4 GiB container sandboxes.'
     }
   ];
 
