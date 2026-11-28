@@ -1,0 +1,20 @@
+┌───────────────────────────────────────────────────────────────────────────┐
+│                         POLYGLOT ENGRAM WORKBENCH                         │
+│   Mint Engram ──► [Stake Engram] ──► (Any Minted Card Eligible)           │
+└──────────────┬──────────────────────────┬─────────────────────────────────┘
+               │                          │
+               ▼                          ▼
+┌─────────────────────────────┐  ┌──────────────────────────────────────────┐
+│  Additive Staking Engine    │  │   Virtual Disk Archive (User ECDSA Key)  │
+│ • Stack N × 256-blk windows │  │ • Permanent difficulty enhancement floor │
+│ • Σ Reward Weight (1.0 + Δ) │  │ • Sequential inverse-order + coprime map │
+│ • On block mined: tick -1   │  │ • Domain octave Base64 universal index   │
+└──────────────┬──────────────┘  └───────┬──────────────────┬───────────────┘
+               │                         │                  │
+               ▼                         ▼                  ▼
+┌─────────────────────────────┐  ┌───────────────┐  ┌───────────────────────┐
+│   PoW Mining & Pool State   │  │ Peer P2P Mesh │  │ Exact Lookup & Guard  │
+│ • Permanent + active diff   │  │ • Mount Disk  │  │ • unlock all files    │
+│ • Weighted block payouts    │  │ • Accept Sel. │  │   on load + pre-cmd   │
+│ • Live HUD & Receipt audit  │  │ • Accept All  │  │ • Case-sensitive ===  │
+└─────────────────────────────┘  └───────────────┘  └───────────────────────┘

@@ -1,0 +1,769 @@
+# Sephiroth Sierpinski Core Face and Edge Tethered Matrix
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sephiroth Sierpinski Core Face and Edge Tethered Matrix</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        body {
+            background-color: #000000;
+            font-family: 'Courier New', Courier, monospace;
+            color: #00ffaa;
+            width: 100vw;
+            height: 100vh;
+
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        #matrix-readout {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border: 1px solid #ff3366;
+            border-radius: 2px;
+
+            max-width: 600px;
+            font-size: 11px;
+            line-height: 1.5;
+            box-shadow: 0 0 30px rgba(255, 51, 102, 0.2);
+        }
+        .telemetry-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .highlight {
+            color: #ff3366;
+            text-shadow: 0 0 8px #ff3366;
+            font-weight: bold;
+        }
+        .totient {
+            color: #ffff00;
+        }
+        .glitch-text {
+
+            color: #ff00ff;
+            animation: flash 0.4s infinite alternate;
+        }
+        @keyframes flash {
+            0% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        #control-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px dashed #00ffaa;
+            padding: 12px;
+            font-size: 10px;
+            color: #ffffff;
+            line-height: 1.4;
+
+        }
+    </style>
+    <!-- Three.js Framework for multi-dimensional mathematical rendering -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="control-indicator">
+        <span class="highlight">SURFACE INTEGRITY ROUTING</span><br>
+        TRAVERSAL: [W][A][S][D]<br>
+        360 LOOK: [ARROW KEYS] / [MOUSE DRAG]<br>
+        POLAR LINKS: NORTH &amp; SOUTH DIAMETER EDGES
+    </div>
+
+    <div id="matrix-readout">
+        <div class="telemetry-line" style="font-size: 13px; border-bottom: 1px solid #ff3366; padding-bottom: 6px; margin-bottom: 8px;">
+            <span class="highlight">SIERPINSKI CORE POLAR LINK DISTRIBUTOR</span>
+            <span class="glitch-text" id="chaos-indicator">*CHAOS OVERFLOW STABILIZED*</span>
+        </div>
+
+        <div class="telemetry-line">
+            <span>TETHER ROUTING PROFILE:</span>
+            <span class="totient">4 POOL TERMINALS MAP TO NORTH/SOUTH DIAMETER EDGES</span>
+        </div>
+        <div class="telemetry-line">
+            <span>FRACTAL ANCHOR POOL:</span>
+            <span style="color: #ff00ff;" id="anchor-pool-count">Calculating centroids...</span>
+        </div>
+        <div class="telemetry-line">
+            <span>BARREL OFFSET CLEARANCE:</span>
+            <span style="color: #00ffff;">13.0 UNIT CO-AXIAL PIPELINE RUNS (-50% DISPLACEMENT)</span>
+        </div>
+        <div class="telemetry-line">
+            <span>PALINDROME CYCLE TIME:</span>
+            <span id="palindrome-clock" style="color: #00ffff; font-weight: bold;">00:00:00:000:000</span>
+        </div>
+        <div class="telemetry-line" style="margin-top: 6px; border-top: 1px dashed #ff3366; padding-top: 6px;">
+            <span id="polynomial-readout" style="color: #00ffaa;">Locking direct-center face connections evenly down the barrel junctions...</span>
+        </div>
+
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <script>
+        window.onload = function () {
+            const container = document.getElementById('canvas-container');
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000000, 0.015);
+
+            const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(20, 12, 38);
+            camera.rotation.order = 'YXZ';
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+
+            const masterMatrixGroup = new THREE.Group();
+            scene.add(masterMatrixGroup);
+
+            // Core math parameters
+            let executionTime = 0;
+            const COPRIME_P = 13;
+            const COPRIME_Q = 7;
+            
+            // Interaction tracking arrays
+            const keysPressed = {
+                w: false, a: false, s: false, d: false,
+                ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false
+            };
+
+            let cameraYaw = -0.52;
+            let cameraPitch = -0.22;
+            const movementSpeed = 0.5;
+            const rotationSpeed = 0.025;
+
+
+            window.addEventListener('keydown', (e) => {
+                const k = e.key.toLowerCase();
+                if (k in keysPressed) keysPressed[k] = true;
+                if (e.key in keysPressed) keysPressed[e.key] = true;
+            });
+
+            window.addEventListener('keyup', (e) => {
+                const k = e.key.toLowerCase();
+                if (k in keysPressed) keysPressed[k] = false;
+                if (e.key in keysPressed) keysPressed[e.key] = false;
+            });
+
+            const rivetMeshGeo = new THREE.BoxGeometry(0.14, 0.14, 0.14);
+            const nodeSphereGeo = new THREE.SphereGeometry(0.14, 6, 6);
+
+            // GENERATE THE CENTRAL SIX-AXIS SIERPINSKI CORE
+            const sierpinskiGroup = new THREE.Group();
+            sierpinskiGroup.position.set(0, 0, 0); 
+            masterMatrixGroup.add(sierpinskiGroup);
+
+
+            const sierpinskiLinePositions = [];
+            const fractalFaceCenters = []; 
+            const fractalEdgePoints = [];  
+
+            function buildSixSierpinski(center, size, depth) {
+                const baseAxes = [
+                    new THREE.Vector3(1, 0, 0),
+                    new THREE.Vector3(-1, 0, 0),
+                    new THREE.Vector3(0, 1, 0),
+                    new THREE.Vector3(0, -1, 0),
+                    new THREE.Vector3(0, 0, 1),
+                    new THREE.Vector3(0, 0, -1)
+                ];
+
+                if (depth === 0) {
+                    const localVertices = baseAxes.map(axis => axis.clone().multiplyScalar(size).add(center));
+
+                    for (let i = 0; i < baseAxes.length; i++) {
+                        for (let j = i + 1; j < baseAxes.length; j++) {
+
+                            if (baseAxes[i].dot(baseAxes[j]) === 0) {
+                                sierpinskiLinePositions.push(localVertices[i].x, localVertices[i].y, localVertices[i].z);
+                                sierpinskiLinePositions.push(localVertices[j].x, localVertices[j].y, localVertices[j].z);
+                            }
+                        }
+                    }
+
+                    const triangularFaceCombinations = [
+                        [0, 2, 4], [0, 2, 5], [0, 3, 4], [0, 3, 5], 
+                        [1, 2, 4], [1, 2, 5], [1, 3, 4], [1, 3, 5]  
+                    ];
+
+                    triangularFaceCombinations.forEach(combination => {
+                        const v1 = localVertices[combination[0]];
+                        const v2 = localVertices[combination[1]];
+                        const v3 = localVertices[combination[2]];
+
+                        const centroid = new THREE.Vector3()
+                            .add(v1).add(v2).add(v3)
+
+                            .divideScalar(3);
+                        fractalFaceCenters.push(centroid);
+                    });
+
+                    const edgeCombinations = [
+                        [0, 2], [0, 3], [0, 4], [0, 5],
+                        [1, 2], [1, 3], [1, 4], [1, 5],
+                        [2, 4], [2, 5], [3, 4], [3, 5]
+                    ];
+
+                    edgeCombinations.forEach(edge => {
+                        const e1 = localVertices[edge[0]];
+                        const e2 = localVertices[edge[1]];
+
+                        const midpoint = new THREE.Vector3()
+                            .add(e1).add(e2)
+                            .divideScalar(2);
+                        fractalEdgePoints.push(midpoint);
+                    });
+
+
+                    return;
+                }
+
+                const nextSize = size * 0.5;
+                baseAxes.forEach(axis => {
+                    const nextCenter = axis.clone().multiplyScalar(size * 0.5).add(center);
+                    buildSixSierpinski(nextCenter, nextSize, depth - 1);
+                });
+            }
+
+            buildSixSierpinski(new THREE.Vector3(0, 0, 0), 7.0, 3);
+
+            const fractalGeometry = new THREE.BufferGeometry();
+            fractalGeometry.setAttribute('position', new THREE.Float32BufferAttribute(sierpinskiLinePositions, 3));
+            const fractalMaterial = new THREE.LineBasicMaterial({
+                color: 0xffff00, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending
+            });
+            const fractalLinesMesh = new THREE.LineSegments(fractalGeometry, fractalMaterial);
+            sierpinskiGroup.add(fractalLinesMesh);
+
+
+            const anchorVisualsGroup = new THREE.Group();
+            sierpinskiGroup.add(anchorVisualsGroup);
+            const anchorMarkers = [];
+            const anchorBoxGeo = new THREE.BoxGeometry(0.12, 0.12, 0.12);
+
+            const combinedAnchorsPool = [];
+            fractalFaceCenters.forEach(pos => combinedAnchorsPool.push({ pos, type: 'FACE' }));
+            fractalEdgePoints.forEach(pos => combinedAnchorsPool.push({ pos, type: 'EDGE' }));
+
+            document.getElementById('anchor-pool-count').innerText = `${fractalFaceCenters.length} FACES / ${fractalEdgePoints.length} EDGES REGISTERED`;
+
+            combinedAnchorsPool.forEach((anchor, idx) => {
+                const markerMat = new THREE.MeshBasicMaterial({ 
+                    color: anchor.type === 'FACE' ? 0xff00ff : 0x00ffff, 
+                    transparent: true, 
+                    opacity: 0.65 
+                });
+                const m = new THREE.Mesh(anchorBoxGeo, markerMat);
+                m.position.copy(anchor.pos);
+
+                anchorVisualsGroup.add(m);
+                anchorMarkers.push({ mesh: m, type: anchor.type, index: idx });
+            });
+
+
+            // CYLINDRICAL BARREL SYSTEM CONSTRUCTOR
+            function createSephirothSystem(xOffset, zOffset, isInverted) {
+                const systemGroup = new THREE.Group();
+                systemGroup.position.set(xOffset, 0, zOffset);
+                masterMatrixGroup.add(systemGroup);
+
+                // Central node anchor
+                const birdieGeo = new THREE.OctahedronGeometry(0.5, 1);
+                const birdieMat = new THREE.MeshBasicMaterial({
+                    color: isInverted ? 0xff00ff : 0x00ffff, 
+                    wireframe: true, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending
+                });
+                const birdie = new THREE.Mesh(birdieGeo, birdieMat);
+                systemGroup.add(birdie);
+
+
+                // Build cylinder lanes running cleanly parallel down the local Z-axis
+                const rivetedLanes = [];
+                const rivetPointsCount = 28;
+                const totalLanes = 12;
+
+                for (let l = 0; l < totalLanes; l++) {
+                    const isEven = (l % 2 === 0);
+                    let directionalInverse = isEven ? 1 : -1;
+                    if (isInverted) directionalInverse *= -1;
+
+                    const laneRivetMeshes = [];
+                    const baseLaneAngleOffset = ((l * COPRIME_Q) % totalLanes / totalLanes) * Math.PI * 2;
+
+                    for (let p = 0; p < rivetPointsCount; p++) {
+                        const progressFactor = p / (rivetPointsCount - 1);
+                        const lockedZPos = (progressFactor - 0.5) * 24.0; 
+                        const straightCylinderRadius = 7.5; 
+
+                        const angle = baseLaneAngleOffset + (progressFactor * Math.PI * 2 * directionalInverse);
+
+                        const xPos = Math.cos(angle) * straightCylinderRadius;
+                        const yPos = Math.sin(angle) * straightCylinderRadius;
+
+                        const rivetMat = new THREE.MeshBasicMaterial({
+                            color: isInverted ? 0xff0066 : 0x00ffaa,
+                            transparent: true, opacity: 0.22
+                        });
+                        const rivetMesh = new THREE.Mesh(rivetMeshGeo, rivetMat);
+                        rivetMesh.position.set(xPos, yPos, lockedZPos);
+                        systemGroup.add(rivetMesh);
+
+                        laneRivetMeshes.push({
+                            mesh: rivetMesh, baseAngle: angle, radius: straightCylinderRadius, zBase: lockedZPos, pIndex: p
+                        });
+                    }
+                    rivetedLanes.push({ rivets: laneRivetMeshes, isEven: isEven, dir: directionalInverse });
+                }
+
+                // Create localized 4D Tesseract Core
+
+                const tesseractVertices4D = [];
+                for (let x of [-1, 1]) {
+                    for (let y of [-1, 1]) {
+                        for (let z of [-1, 1]) {
+                            for (let w of [-1, 1]) {
+                                tesseractVertices4D.push({ x: x * 3.0, y: y * 3.0, z: z * 3.0, w: w * 3.0 });
+                            }
+                        }
+                    }
+                }
+                const tessLines = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+                    color: isInverted ? 0xff00ff : 0x33ffcc, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending
+                }));
+                systemGroup.add(tessLines);
+
+                const quadTethers = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+                    color: isInverted ? 0xff3366 : 0x00ffaa, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending
+                }));
+                systemGroup.add(quadTethers);
+
+
+                const horizonCornerTethers = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+                    color: 0xffff00, transparent: true, opacity: 0.25, blending: THREE.AdditiveBlending
+                }));
+                systemGroup.add(horizonCornerTethers);
+
+                const dualbellInterlinks = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+                    color: 0xff3366, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending
+                }));
+                systemGroup.add(dualbellInterlinks);
+
+                const horizontalMirrorTethers = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({
+                    color: 0x00ffff, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending
+                }));
+                systemGroup.add(horizontalMirrorTethers);
+
+                const nodesA = [];
+                const nodesB = [];
+                const nodeCountTotal = 120;
+
+
+                for (let i = 0; i < nodeCountTotal; i++) {
+                    const theta = (i / nodeCountTotal) * Math.PI * 2;
+                    const normalizedPos = (i / (nodeCountTotal - 1));
+                    const zBase = (normalizedPos - 0.5) * 24.0;
+                    const internalStraightRadius = 5.5;
+
+                    const xA = Math.cos(theta) * internalStraightRadius;
+                    const yA = Math.sin(theta) * internalStraightRadius;
+
+                    const meshA = new THREE.Mesh(nodeSphereGeo, new THREE.MeshBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.7 }));
+                    meshA.position.set(xA, yA, zBase);
+                    meshA.userData = { index: i, theta: theta, rBase: internalStraightRadius, zBase: zBase, isEven: (i % 2 === 0), history: [] };
+                    systemGroup.add(meshA);
+                    nodesA.push(meshA);
+
+                    const coprimePhaseShift = ((i * COPRIME_P) % nodeCountTotal / nodeCountTotal) * Math.PI * 2;
+                    const thetaB = -theta + coprimePhaseShift;
+                    const meshB = new THREE.Mesh(nodeSphereGeo, new THREE.MeshBasicMaterial({ color: 0xff00ff, transparent: true, opacity: 0.7 }));
+                    meshB.position.set(Math.cos(thetaB) * internalStraightRadius, Math.sin(thetaB) * internalStraightRadius, -zBase);
+
+                    meshB.userData = { index: i, theta: thetaB, rBase: internalStraightRadius, zBase: -zBase, isEven: (i % 2 === 0), history: [] };
+                    systemGroup.add(meshB);
+                    nodesB.push(meshB);
+                }
+
+                return {
+                    group: systemGroup, birdie, rivetedLanes, tesseractVertices4D, tessLines, quadTethers,
+                    horizonCornerTethers, dualbellInterlinks, horizontalMirrorTethers, nodesA, nodesB, isInverted
+                };
+            }
+
+            function project4DTo3D(v4, wOffset) {
+                const distanceFactor = 1 / (3.2 - (v4.w / 12) + wOffset);
+                return new THREE.Vector3(v4.x * distanceFactor, v4.y * distanceFactor, v4.z * distanceFactor);
+            }
+
+            // Dual pipelines operating at 13% localized absolute spatial clearance gaps
+            const alphaSystem = createSephirothSystem(0, -13.0, false);
+            const omegaSystem = createSephirothSystem(0, 13.0, true);
+
+
+            const integrationBridgeGeometry = new THREE.BufferGeometry();
+            const integrationBridgeMaterial = new THREE.LineBasicMaterial({
+                color: 0xff3366, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending
+            });
+            const integrationBridgeLines = new THREE.LineSegments(integrationBridgeGeometry, integrationBridgeMaterial);
+            masterMatrixGroup.add(integrationBridgeLines);
+
+            let mouseDrag = false;
+            let lastMousePos = { x: 0, y: 0 };
+            window.addEventListener('mousedown', () => { mouseDrag = true; });
+            window.addEventListener('mouseup', () => { mouseDrag = false; });
+            window.addEventListener('mousemove', (e) => {
+                if (mouseDrag) {
+                    cameraYaw -= (e.offsetX - lastMousePos.x) * 0.003;
+                    cameraPitch -= (e.offsetY - lastMousePos.y) * 0.003;
+                }
+                lastMousePos = { x: e.offsetX, y: e.offsetY };
+            });
+
+
+            function updatePalindromicClock(msElapsed) {
+                const totalSeconds = Math.floor(msElapsed / 1000);
+                const milliseconds = Math.floor(msElapsed % 1000);
+                const microseconds = Math.floor((msElapsed * 1000) % 1000);
+                const seconds = totalSeconds % 60;
+                const minutes = Math.floor(totalSeconds / 60) % 60;
+                const hours = Math.floor(totalSeconds / 3600) % 24;
+
+                const pf = (val, len = 2) => String(val).padStart(len, '0');
+                document.getElementById('palindrome-clock').innerText = `${pf(hours)}:${pf(minutes)}:${pf(seconds)}:${pf(milliseconds, 3)}:${pf(microseconds, 3)}`;
+            }
+
+            function chaosOverflow(timeMetric, nodeIndex, baseHue) {
+                const modularShift = (nodeIndex * COPRIME_P) % 4;
+                const noiseWave = Math.sin(timeMetric * 6.5 + nodeIndex) * Math.cos(timeMetric * 4.0);
+                let skewedHue = (baseHue + (modularShift * 0.25) + (noiseWave * 0.12)) % 1.0;
+                if (skewedHue < 0) skewedHue += 1.0;
+                return skewedHue;
+            }
+
+
+            function updateSubsystem(sys, secondsElapsed, independentColorWaveFront) {
+                const globalSpinDirection = sys.isInverted ? -1 : 1;
+                sys.birdie.rotation.y = -secondsElapsed * 0.6 * globalSpinDirection;
+                sys.birdie.rotation.x = secondsElapsed * 0.25;
+                sys.group.rotation.z = secondsElapsed * 0.006 * globalSpinDirection;
+
+                const twistOscillation = Math.sin(secondsElapsed * 1.4);
+                const gateAngleTwist = (twistOscillation * Math.PI) * globalSpinDirection;
+
+                sys.rivetedLanes.forEach((lane) => {
+                    lane.rivets.forEach((rivet) => {
+                        const rivetColorPhase = (rivet.baseAngle * 1.2) + (rivet.zBase * 0.04) - (independentColorWaveFront * globalSpinDirection);
+                        const baselineHue = Math.abs(Math.sin(rivetColorPhase)) % 1.0;
+                        const finalHue = chaosOverflow(secondsElapsed, rivet.pIndex, baselineHue);
+
+                        const normalizedDeg = (Math.abs(rivet.baseAngle) * (180 / Math.PI)) % 360;
+                        const ledStateIndex = Math.floor(normalizedDeg / 15);
+                        
+                        let ledOn = (ledStateIndex % 2 === 0);
+
+                        if (sys.isInverted) ledOn = !ledOn;
+
+                        if (ledOn) {
+                            rivet.mesh.material.color.setHSL(finalHue, 0.95, 0.5);
+                            rivet.mesh.material.opacity = 0.55;
+                        } else {
+                            rivet.mesh.material.color.setHSL(finalHue, 0.2, 0.1);
+                            rivet.mesh.material.opacity = 0.08;
+                        }
+                    });
+                });
+
+                const projectedPositions = [];
+                const wOscillation = Math.sin(secondsElapsed * 1.1 + (sys.isInverted ? Math.PI : 0)) * 0.35;
+                const points3D = sys.tesseractVertices4D.map(v => project4DTo3D(v, wOscillation));
+                
+                for (let i = 0; i < points3D.length; i++) {
+                    for (let j = i + 1; j < points3D.length; j++) {
+                        let bitDifference = 0;
+
+                        let checkXor = i ^ j;
+                        while (checkXor > 0) {
+                            if (checkXor & 1) bitDifference++;
+                            checkXor >>= 1;
+                        }
+                        if (bitDifference === 1) {
+                            projectedPositions.push(points3D[i].x, points3D[i].y, points3D[i].z);
+                            projectedPositions.push(points3D[j].x, points3D[j].y, points3D[j].z);
+                        }
+                    }
+                }
+                sys.tessLines.geometry.setAttribute('position', new THREE.Float32BufferAttribute(projectedPositions, 3));
+                sys.tessLines.geometry.attributes.position.needsUpdate = true;
+
+                const mappedVertices = points3D.map((v, idx) => ({ v, idx, dist: v.length() }));
+                mappedVertices.sort((a, b) => a.dist - b.dist);
+                const innerHorizonPoints = mappedVertices.slice(0, 8).map(item => item.v);
+                const outerHorizonPoints = mappedVertices.slice(8, 16).map(item => item.v);
+
+
+                const quadStabilizerPos = [];
+                const explicitCornerTetherPos = [];
+                const closedDualbellTetherPos = [];
+                const horizontalMirrorPos = [];
+
+                const telescopingDistanceModifier = 1.0 + Math.sin(secondsElapsed * 1.4 + (sys.isInverted ? Math.PI : 0)) * 0.22;
+
+                sys.nodesA.forEach((node) => {
+                    const uData = node.userData;
+                    const traversalRate = uData.isEven ? 0.32 : -0.32;
+                    const currentSpiralAngle = uData.theta + gateAngleTwist + (secondsElapsed * (traversalRate / (uData.index * 0.005 + 1)));
+
+                    const calculatedX = Math.cos(currentSpiralAngle) * uData.rBase * telescopingDistanceModifier;
+                    const calculatedY = Math.sin(currentSpiralAngle) * uData.rBase * telescopingDistanceModifier;
+                    const calculatedZ = uData.zBase; 
+
+                    uData.history.push(new THREE.Vector3(calculatedX, calculatedY, calculatedZ));
+                    if (uData.history.length > 4) uData.history.shift();
+
+
+                    node.position.copy(uData.history[0]);
+                    
+                    const colorPhase = (currentSpiralAngle * 1.8) + (calculatedZ * 0.05) - (independentColorWaveFront * globalSpinDirection);
+                    const coreHue = chaosOverflow(secondsElapsed, uData.index, Math.abs(Math.sin(colorPhase)) % 1.0);
+                    node.material.color.setHSL(coreHue, 0.95, 0.5);
+
+                    const targetVertex = outerHorizonPoints[uData.index % outerHorizonPoints.length];
+                    quadStabilizerPos.push(node.position.x, node.position.y, node.position.z);
+                    quadStabilizerPos.push(targetVertex.x, targetVertex.y, targetVertex.z);
+                });
+
+                sys.nodesB.forEach((node) => {
+                    const uData = node.userData;
+                    const traversalRate = uData.isEven ? -0.32 : 0.32;
+                    const currentSpiralAngle = uData.theta - gateAngleTwist + (secondsElapsed * (traversalRate / (uData.index * 0.005 + 1)));
+
+                    const calculatedX = Math.cos(currentSpiralAngle) * uData.rBase * telescopingDistanceModifier;
+                    const calculatedY = Math.sin(currentSpiralAngle) * uData.rBase * telescopingDistanceModifier;
+                    const calculatedZ = uData.zBase;
+
+
+                    uData.history.push(new THREE.Vector3(calculatedX, calculatedY, calculatedZ));
+                    if (uData.history.length > 4) uData.history.shift();
+
+                    node.position.copy(uData.history[0]);
+
+                    const colorPhase = (currentSpiralAngle * 1.8) + (calculatedZ * 0.05) - (independentColorWaveFront * globalSpinDirection);
+                    const coreHue = chaosOverflow(secondsElapsed, uData.index + 90, Math.abs(Math.sin(colorPhase)) % 1.0);
+                    node.material.color.setHSL(coreHue, 0.95, 0.5);
+
+                    const targetVertex = innerHorizonPoints[uData.index % innerHorizonPoints.length];
+                    quadStabilizerPos.push(node.position.x, node.position.y, node.position.z);
+                    quadStabilizerPos.push(targetVertex.x, targetVertex.y, targetVertex.z);
+                });
+
+                innerHorizonPoints.forEach((innerPt, idx) => {
+                    const endpointNode = sys.nodesA[idx % Math.max(1, Math.floor(sys.nodesA.length * 0.1))];
+                    if (endpointNode) {
+                        explicitCornerTetherPos.push(innerPt.x, innerPt.y, innerPt.z);
+                        explicitCornerTetherPos.push(endpointNode.position.x, endpointNode.position.y, endpointNode.position.z);
+
+                    }
+                });
+                outerHorizonPoints.forEach((outerPt, idx) => {
+                    const endpointNode = sys.nodesB[sys.nodesB.length - 1 - (idx % Math.max(1, Math.floor(sys.nodesB.length * 0.1)))];
+                    if (endpointNode) {
+                        explicitCornerTetherPos.push(outerPt.x, outerPt.y, outerPt.z);
+                        explicitCornerTetherPos.push(endpointNode.position.x, endpointNode.position.y, endpointNode.position.z);
+                    }
+                });
+
+                for (let i = 0; i < sys.nodesA.length; i++) {
+                    const nodeA = sys.nodesA[i];
+                    const inverseIndex = (sys.nodesB.length - 1 - ((i * COPRIME_P) % sys.nodesB.length));
+                    const nodeB = sys.nodesB[inverseIndex];
+                    closedDualbellTetherPos.push(nodeA.position.x, nodeA.position.y, nodeA.position.z);
+                    closedDualbellTetherPos.push(nodeB.position.x, nodeB.position.y, nodeB.position.z);
+                }
+
+                for (let i = 0; i < sys.nodesA.length; i++) {
+
+                    const nodeA = sys.nodesA[i];
+                    const nodeB = sys.nodesB[i];
+                    if (i % 2 === 0) {
+                        horizontalMirrorPos.push(nodeA.position.x, nodeA.position.y, nodeA.position.z);
+                        horizontalMirrorPos.push(nodeB.position.x, nodeB.position.y, nodeB.position.z);
+                    } else {
+                        const twistOffsetIndex = (i + COPRIME_Q) % sys.nodesB.length;
+                        horizontalMirrorPos.push(nodeA.position.x, nodeA.position.y, nodeA.position.z);
+                        horizontalMirrorPos.push(sys.nodesB[twistOffsetIndex].position.x, sys.nodesB[twistOffsetIndex].position.y, sys.nodesB[twistOffsetIndex].position.z);
+                    }
+                }
+
+                sys.quadTethers.geometry.setAttribute('position', new THREE.Float32BufferAttribute(quadStabilizerPos, 3));
+                sys.quadTethers.geometry.attributes.position.needsUpdate = true;
+
+                sys.horizonCornerTethers.geometry.setAttribute('position', new THREE.Float32BufferAttribute(explicitCornerTetherPos, 3));
+                sys.horizonCornerTethers.geometry.attributes.position.needsUpdate = true;
+
+                sys.dualbellInterlinks.geometry.setAttribute('position', new THREE.Float32BufferAttribute(closedDualbellTetherPos, 3));
+
+                sys.dualbellInterlinks.geometry.attributes.position.needsUpdate = true;
+
+                sys.horizontalMirrorTethers.geometry.setAttribute('position', new THREE.Float32BufferAttribute(horizontalMirrorPos, 3));
+                sys.horizontalMirrorTethers.geometry.attributes.position.needsUpdate = true;
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+
+                executionTime += 16.666;
+                const secondsElapsed = executionTime * 0.001;
+                updatePalindromicClock(executionTime);
+
+                sierpinskiGroup.rotation.y = secondsElapsed * 0.35;
+                sierpinskiGroup.rotation.x = secondsElapsed * 0.12;
+
+                anchorMarkers.forEach((marker) => {
+                    const waveMod = Math.sin(secondsElapsed * 2.5 + marker.index) * 0.3;
+                    marker.mesh.scale.set(1.0 + waveMod, 1.0 + waveMod, 1.0 + waveMod);
+
+                    
+                    const markerHue = chaosOverflow(secondsElapsed, marker.index, (secondsElapsed * 0.08) % 1.0);
+                    marker.mesh.material.color.setHSL(markerHue, 1.0, marker.type === 'FACE' ? 0.6 : 0.4);
+                });
+
+                if (keysPressed.ArrowLeft)  cameraYaw += rotationSpeed;
+                if (keysPressed.ArrowRight) cameraYaw -= rotationSpeed;
+                if (keysPressed.ArrowUp)    cameraPitch += rotationSpeed;
+                if (keysPressed.ArrowDown)  cameraPitch -= rotationSpeed;
+
+                cameraPitch = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, cameraPitch));
+                camera.rotation.set(cameraPitch, cameraYaw, 0);
+
+                const forwardVector = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).normalize();
+                const rightVector = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion).normalize();
+
+                if (keysPressed.w) camera.position.addScaledVector(forwardVector, movementSpeed);
+                if (keysPressed.s) camera.position.addScaledVector(forwardVector, -movementSpeed);
+                if (keysPressed.a) camera.position.addScaledVector(rightVector, -movementSpeed);
+
+                if (keysPressed.d) camera.position.addScaledVector(rightVector, movementSpeed);
+
+                const independentColorWaveFront = secondsElapsed * 1.5;
+
+                updateSubsystem(alphaSystem, secondsElapsed, independentColorWaveFront);
+                updateSubsystem(omegaSystem, secondsElapsed, independentColorWaveFront);
+
+                const bridgeCoordinates = [];
+                const totalLanesCount = alphaSystem.rivetedLanes.length;
+
+                // CRITICAL STRUCTURAL ROUTING: Map out standard lanes (0-7) across the recursive faces & midpoints pool
+                for (let l = 0; l < totalLanesCount - 2; l++) {
+                    // Alpha Standard Elements
+                    const laneA = alphaSystem.rivetedLanes[l];
+                    const rivetA = laneA.rivets[laneA.rivets.length - 1].mesh; 
+                    const worldPosA = new THREE.Vector3();
+                    rivetA.getWorldPosition(worldPosA);
+
+                    const targetIndexA = (l * COPRIME_P) % combinedAnchorsPool.length;
+
+                    const localAnchorPosA = combinedAnchorsPool[targetIndexA].pos.clone();
+                    sierpinskiGroup.localToWorld(localAnchorPosA);
+
+                    bridgeCoordinates.push(worldPosA.x, worldPosA.y, worldPosA.z);
+                    bridgeCoordinates.push(localAnchorPosA.x, localAnchorPosA.y, localAnchorPosA.z);
+
+                    // Omega Standard Elements
+                    const laneB = omegaSystem.rivetedLanes[l];
+                    const rivetB = laneB.rivets[0].mesh; 
+                    const worldPosB = new THREE.Vector3();
+                    rivetB.getWorldPosition(worldPosB);
+
+                    const targetIndexB = (l * COPRIME_P + COPRIME_Q) % combinedAnchorsPool.length;
+                    const localAnchorPosB = combinedAnchorsPool[targetIndexB].pos.clone();
+                    sierpinskiGroup.localToWorld(localAnchorPosB);
+
+                    bridgeCoordinates.push(worldPosB.x, worldPosB.y, worldPosB.z);
+                    bridgeCoordinates.push(localAnchorPosB.x, localAnchorPosB.y, localAnchorPosB.z);
+                }
+
+
+                // EXTRACT HIGH-ALTITUDE GEOMETRIC POLAR MARKERS FROM THE COMBINED SIERPINSKI POOL
+                // Identify the highest Y coordinates (+Y for North polar face edges, -Y for South polar face edges)
+                const polarSortedAnchors = [...combinedAnchorsPool].sort((a, b) => b.pos.y - a.pos.y);
+                const northPolarEdge = polarSortedAnchors[0].pos; // Max Y apex
+                const southPolarEdge = polarSortedAnchors[polarSortedAnchors.length - 1].pos; // Min Y apex
+
+                // ROUTE THE REMAINING 4 LANES (Indices 10 and 11 on both Alpha and Omega) TO NORTH/SOUTH DIAMETERS
+                // Alpha Polar Terminal 1 (Lane index 10) -> North Polar Apex Edge
+                const alphaPolar1 = alphaSystem.rivetedLanes[10].rivets[alphaSystem.rivetedLanes[10].rivets.length - 1].mesh;
+                const worldAlphaPolar1 = new THREE.Vector3();
+                alphaPolar1.getWorldPosition(worldAlphaPolar1);
+                const globalNorthA = northPolarEdge.clone();
+                sierpinskiGroup.localToWorld(globalNorthA);
+                bridgeCoordinates.push(worldAlphaPolar1.x, worldAlphaPolar1.y, worldAlphaPolar1.z);
+                bridgeCoordinates.push(globalNorthA.x, globalNorthA.y, globalNorthA.z);
+
+                // Alpha Polar Terminal 2 (Lane index 11) -> South Polar Apex Edge
+                const alphaPolar2 = alphaSystem.rivetedLanes[11].rivets[alphaSystem.rivetedLanes[11].rivets.length - 1].mesh;
+                const worldAlphaPolar2 = new THREE.Vector3();
+
+                alphaPolar2.getWorldPosition(worldAlphaPolar2);
+                const globalSouthA = southPolarEdge.clone();
+                sierpinskiGroup.localToWorld(globalSouthA);
+                bridgeCoordinates.push(worldAlphaPolar2.x, worldAlphaPolar2.y, worldAlphaPolar2.z);
+                bridgeCoordinates.push(globalSouthA.x, globalSouthA.y, globalSouthA.z);
+
+                // Omega Polar Terminal 1 (Lane index 10) -> North Polar Apex Edge
+                const omegaPolar1 = omegaSystem.rivetedLanes[10].rivets[0].mesh;
+                const worldOmegaPolar1 = new THREE.Vector3();
+                omegaPolar1.getWorldPosition(worldOmegaPolar1);
+                const globalNorthB = northPolarEdge.clone();
+                sierpinskiGroup.localToWorld(globalNorthB);
+                bridgeCoordinates.push(worldOmegaPolar1.x, worldOmegaPolar1.y, worldOmegaPolar1.z);
+                bridgeCoordinates.push(globalNorthB.x, globalNorthB.y, globalNorthB.z);
+
+                // Omega Polar Terminal 2 (Lane index 11) -> South Polar Apex Edge
+                const omegaPolar2 = omegaSystem.rivetedLanes[11].rivets[0].mesh;
+                const worldOmegaPolar2 = new THREE.Vector3();
+                omegaPolar2.getWorldPosition(worldOmegaPolar2);
+
+                const globalSouthB = southPolarEdge.clone();
+                sierpinskiGroup.localToWorld(globalSouthB);
+                bridgeCoordinates.push(worldOmegaPolar2.x, worldOmegaPolar2.y, worldOmegaPolar2.z);
+                bridgeCoordinates.push(globalSouthB.x, globalSouthB.y, globalSouthB.z);
+
+                integrationBridgeLines.geometry.setAttribute('position', new THREE.Float32BufferAttribute(bridgeCoordinates, 3));
+                integrationBridgeLines.geometry.attributes.position.needsUpdate = true;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+        };
+    </script>
+</body>
+</html>
+
+

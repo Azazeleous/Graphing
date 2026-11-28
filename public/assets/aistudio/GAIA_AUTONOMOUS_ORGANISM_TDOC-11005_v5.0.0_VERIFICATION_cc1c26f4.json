@@ -1,0 +1,57 @@
+{
+  "package": "/mnt/data/GAIA_AUTONOMOUS_ORGANISM_TDOC-11005_v5.0.0.zip",
+  "size_bytes": 1362080,
+  "sha256": "1e8caa21708282953ee0797acc92136f2112f0d6d3490baef471cdcd9c3cba3d",
+  "included_files": 34,
+  "tests": {
+    "unit": {
+      "status": "PASS",
+      "count": 10
+    },
+    "js_parse": {
+      "status": "PASS",
+      "files": 2
+    },
+    "http_live": {
+      "status": "PASS",
+      "checks": [
+        "GET /",
+        "GET /app.js",
+        "GET /api/status",
+        "POST /api/alpha",
+        "POST /api/exec returns 404"
+      ]
+    },
+    "browser_interaction": {
+      "status": "NOT_VERIFIED",
+      "reason": "Local headless Chromium loopback request restricted by evaluation environment; HTTP API tested separately"
+    },
+    "pdf_attachment_bytes": {
+      "status": "PASS",
+      "pages": 10,
+      "attachments_total": 6,
+      "byte_matched_payloads": [
+        "adam_evidence_gates.mp4",
+        "gaia_nucleus_organism.mp4",
+        "organism.py",
+        "true_quine.py",
+        "organism.policy.json"
+      ]
+    },
+    "pdf_visual": {
+      "status": "PASS",
+      "pages_rendered": 10,
+      "render": "pdf renderer + visual contact sheet reviewed"
+    },
+    "fresh_bootstrap": {
+      "status": "PASS",
+      "new_install": "scratch directory",
+      "symlink_launcher": "PASS"
+    },
+    "heuristic_secret_screen": {
+      "status": "PASS",
+      "files": 24,
+      "limitation": "regex detection only; does not prove no secrets"
+    }
+  }
+}

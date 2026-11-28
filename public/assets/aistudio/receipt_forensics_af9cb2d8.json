@@ -1,0 +1,31 @@
+{
+  "source_file": "receipt.pdf",
+  "file_size_bytes": 1274,
+  "file_sha256": "751e49e5d30cd6a34fce30032a4264b5cb7f0b59eb2764a702d9befdbb399fa9",
+  "pdf_version": "1.4",
+  "page_count": 1,
+  "page_size_points": [
+    288,
+    384
+  ],
+  "pdf_creator": "cairo 1.14.8",
+  "encoded_stream_filter": "FlateDecode (zlib/DEFLATE)",
+  "encoded_stream_count": 1,
+  "encoded_stream_sizes_bytes": [
+    388
+  ],
+  "decoded_stream_sizes_bytes": [
+    1081
+  ],
+  "decoded_stream_sha256": [
+    "30c5328353ff262cbcbb23b2e9d7875f429bdc142a0d5a35418c1942ad2d6d4f"
+  ],
+  "content": "vector path commands drawing a receipt-shaped icon and three horizontal cutouts",
+  "transaction_data_present": false,
+  "embedded_files": 0,
+  "text": false,
+  "fonts": 0,
+  "raster_images": 0,
+  "encrypted": false,
+  "transaction_decoding": "Not possible from these bytes: no transaction record, ID, amount, timestamp, or chain information found."
+}

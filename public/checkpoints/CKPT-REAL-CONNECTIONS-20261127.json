@@ -1,0 +1,76 @@
+{
+  "checkpointId": "CKPT-REAL-CONNECTIONS-20261127",
+  "createdAt": "2026-11-27T15:56:24.999Z",
+  "purpose": "Pre-wiring snapshot before implementing real data connections across Registry -> Core -> Miner -> Memory -> Convergence -> UI and Creed Gate",
+  "fileCount": 17,
+  "fingerprints": {
+    "index.html": {
+      "bytes": 527113,
+      "sha256": "23b7d57fb6d6424d8df80bb85db2b1124c3a0fc6cc4d4293df9dfb4cb3bf9f06"
+    },
+    "server.ts": {
+      "bytes": 51656,
+      "sha256": "ed1434493940c7a8d9ef2d8e341fca3aca590501eb028655e426444c267b8931"
+    },
+    "package.json": {
+      "bytes": 974,
+      "sha256": "c86813b7b14b008d7ad8df69fd9af40dd095765a160e8355f945bb57963fa699"
+    },
+    "metadata.json": {
+      "bytes": 332,
+      "sha256": "9739c83f8351a4db4c32fdce6cea1d83d5ee39c4236d5d8882e9abb87212b03f"
+    },
+    "src/App.tsx": {
+      "bytes": 116,
+      "sha256": "26753d3d5863cc8285d5ae26507f492ff9476602b293abbc71aa8f3c61006137"
+    },
+    "src/adlScheduler.ts": {
+      "bytes": 3545,
+      "sha256": "a50cbb7baaedd1ba9c8bd2813eb5febc808f1c15cd716f1d28c1bf43533f2d26"
+    },
+    "src/canonicalErrorRegistry.ts": {
+      "bytes": 16946,
+      "sha256": "987a2b9f3f69ff8c74cfccd46df6a02d429db84a1200f196ab3910b6b8651454"
+    },
+    "src/creedAdmittance.ts": {
+      "bytes": 23568,
+      "sha256": "48505f3c60a6ee9f5e7c43bc8fa16bacf6330babd82ef32fccbbad22a81b71fe"
+    },
+    "src/drivePackageBridge.ts": {
+      "bytes": 9182,
+      "sha256": "219e121b981fac34444013becbe51be58bec6120909dfeb8f58539076a48d398"
+    },
+    "src/genesis3Evidence.ts": {
+      "bytes": 39083,
+      "sha256": "0ee4a719130542b72223315f35423c6c1338e4eea8b50c419429f8d13f0fcc4e"
+    },
+    "src/hamiltonianCore.ts": {
+      "bytes": 4784,
+      "sha256": "a6f96f1e27fbd58c691243821b4fb15c87fe915902467e68ab718273955bda3b"
+    },
+    "src/livingSystemConvergence.ts": {
+      "bytes": 3267,
+      "sha256": "3a12e6c9fbd8a1e093e4d3f43ad8319060dc29218f48559ce51fd14360184369"
+    },
+    "src/livingSystemRegistry.ts": {
+      "bytes": 4712,
+      "sha256": "6f7696484ccba9810b87d3fd8ff0160102133c3c316d9a79db1247c3733706f7"
+    },
+    "src/main.tsx": {
+      "bytes": 567,
+      "sha256": "fd20aa1a5be38f3938ec5bee122590391b189e5a51af25784a7dfcb5e701ec7e"
+    },
+    "src/memoryFabric.ts": {
+      "bytes": 5636,
+      "sha256": "da5dae906dd0d8a59f458fce1679178b2afa68d023a04bbbad021a98e8b9d3bb"
+    },
+    "src/merklePowD3Chart.ts": {
+      "bytes": 16675,
+      "sha256": "13a6c6edba5165f66337fda6f7ebe302a1bfbb22e80078c8ead015167fc07428"
+    },
+    "src/vite-env.d.ts": {
+      "bytes": 127,
+      "sha256": "fa4fefa1318b2822287303e1fef740b891bc45ceae5018049402446a1d971c83"
+    }
+  }
+}

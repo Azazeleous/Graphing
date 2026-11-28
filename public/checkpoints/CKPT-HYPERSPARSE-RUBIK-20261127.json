@@ -1,0 +1,77 @@
+{
+  "id": "CKPT-HYPERSPARSE-RUBIK-20261127",
+  "createdAt": "2026-11-28T01:52:19.115Z",
+  "purpose": "Pre-edit checkpoint before implementing AUDIT D3 Memory Fabric stream, BLAKE2b+SHA256d doubled 8192x3 Merkle engine, 8MiB sparsebundle spreadsheet prisms, 64-lane coprime inverse solver, and 3-axis 6-face doubled Rubik hypercube",
+  "files": [
+    {
+      "path": "index.html",
+      "bytes": 544980,
+      "sha256": "f2e44af8881446200af0f4a59734186bf95b349b0f7159bfa9e13f7d2d6d5a6c"
+    },
+    {
+      "path": "server.ts",
+      "bytes": 51656,
+      "sha256": "ed1434493940c7a8d9ef2d8e341fca3aca590501eb028655e426444c267b8931"
+    },
+    {
+      "path": "package.json",
+      "bytes": 974,
+      "sha256": "c86813b7b14b008d7ad8df69fd9af40dd095765a160e8355f945bb57963fa699"
+    },
+    {
+      "path": "metadata.json",
+      "bytes": 332,
+      "sha256": "9739c83f8351a4db4c32fdce6cea1d83d5ee39c4236d5d8882e9abb87212b03f"
+    },
+    {
+      "path": "src/canonicalErrorRegistry.ts",
+      "bytes": 16946,
+      "sha256": "987a2b9f3f69ff8c74cfccd46df6a02d429db84a1200f196ab3910b6b8651454"
+    },
+    {
+      "path": "src/creedAdmittance.ts",
+      "bytes": 28325,
+      "sha256": "73cde880402d153d1a83bcdb901ae3f0c1a31445f02071de385c9113f69e62b2"
+    },
+    {
+      "path": "src/hamiltonianCore.ts",
+      "bytes": 14189,
+      "sha256": "1992dcda8dcf1f410d7eb790f4dab32341704ac3ab8e27b8c165799c79e1bee1"
+    },
+    {
+      "path": "src/livingSystemRegistry.ts",
+      "bytes": 4712,
+      "sha256": "6f7696484ccba9810b87d3fd8ff0160102133c3c316d9a79db1247c3733706f7"
+    },
+    {
+      "path": "src/livingSystemConvergence.ts",
+      "bytes": 7887,
+      "sha256": "ca82378bf5f8703efdd8407366f3e7a36c219ad76c8f01084ab483c6b10bd4b8"
+    },
+    {
+      "path": "src/memoryFabric.ts",
+      "bytes": 9520,
+      "sha256": "1520667f6c77d889dde76cd727bf23d527e72e38d48a2a291b933bf322728abd"
+    },
+    {
+      "path": "src/merklePowD3Chart.ts",
+      "bytes": 17304,
+      "sha256": "4ef7f44da0e614dca981fac06a3ee7cbf625d281df735469bb080fd84c825d66"
+    },
+    {
+      "path": "src/adlScheduler.ts",
+      "bytes": 3545,
+      "sha256": "a50cbb7baaedd1ba9c8bd2813eb5febc808f1c15cd716f1d28c1bf43533f2d26"
+    },
+    {
+      "path": "src/genesis3Evidence.ts",
+      "bytes": 39083,
+      "sha256": "0ee4a719130542b72223315f35423c6c1338e4eea8b50c419429f8d13f0fcc4e"
+    },
+    {
+      "path": "src/drivePackageBridge.ts",
+      "bytes": 9182,
+      "sha256": "219e121b981fac34444013becbe51be58bec6120909dfeb8f58539076a48d398"
+    }
+  ]
+}

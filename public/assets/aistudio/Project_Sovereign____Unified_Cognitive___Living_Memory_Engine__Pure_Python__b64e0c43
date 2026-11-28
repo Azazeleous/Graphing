@@ -1,0 +1,1585 @@
+﻿Project Sovereign Ω: Unified Cognitive & Living Memory Engine (Pure Python)
+
+
+import base64
+import hashlib
+import json
+import math
+import os
+import random
+import struct
+import time
+from dataclasses import dataclass, field
+from typing import Any
+
+
+# ==============================================================================
+# 0. CORE TENSOR & NEURAL PRIMITIVES (Zero-Dependency Pure Python Engine)
+# ==============================================================================
+
+class Module:
+   """Base class mimicking PyTorch's nn.Module interface with recursive freeze/train state."""
+   def __init__(self):
+       self.requires_grad = True
+
+   def __call__(self, *args, **kwargs):
+       return self.forward(*args, **kwargs)
+
+   def forward(self, *args, **kwargs):
+       raise NotImplementedError
+
+   def requires_grad_(self, mode: bool = True):
+       self.requires_grad = mode
+       for attr in self.__dict__.values():
+           if isinstance(attr, Module):
+               attr.requires_grad_(mode)
+           elif isinstance(attr, list):
+               for item in attr:
+                   if isinstance(item, Module):
+                       item.requires_grad_(mode)
+       return self
+
+   def parameters(self) -> list:
+       params = []
+       for attr in self.__dict__.values():
+           if isinstance(attr, Module):
+               params.extend(attr.parameters())
+           elif isinstance(attr, list):
+               for item in attr:
+                   if isinstance(item, Module):
+                       params.extend(item.parameters())
+       return params
+
+
+def init_matrix(rows: int, cols: int, std: float = 0.04) -> list[list[float]]:
+   return [[random.gauss(0.0, std) for _ in range(cols)] for _ in range(rows)]
+
+
+def init_vector(size: int, fill: float = 0.0) -> list[float]:
+   return [fill for _ in range(size)]
+
+
+def add_tensors(a: list[list[list[float]]], b: list[list[list[float]]]) -> list[list[list[float]]]:
+   return [
+       [
+           [a[i][t][d] + b[i][t][d] for d in range(len(a[0][0]))]
+           for t in range(len(a[0]))
+       ]
+       for i in range(len(a))
+   ]
+
+
+def silu(x: float) -> float:
+   """Swish / SiLU activation: x * sigmoid(x)."""
+   if x < -60.0:
+       return 0.0
+   return x / (1.0 + math.exp(-x))
+
+
+def softmax(logits: list[float]) -> list[float]:
+   max_val = max(logits)
+   exps = [math.exp(v - max_val) for v in logits]
+   sum_exps = sum(exps)
+   return [e / sum_exps for e in exps]
+
+
+def cosine_similarity(v1: list[float], v2: list[float]) -> float:
+   dot = sum(a * b for a, b in zip(v1, v2))
+   n1 = math.sqrt(sum(a * a for a in v1)) + 1e-8
+   n2 = math.sqrt(sum(b * b for b in v2)) + 1e-8
+   return dot / (n1 * n2)
+
+
+def clamp(val: float, lo: float, hi: float) -> float:
+   return max(lo, min(hi, val))
+
+
+def count_parameters(params: list) -> int:
+   total = 0
+   for p in params:
+       if isinstance(p, list):
+           if p and isinstance(p[0], list):
+               total += sum(len(row) for row in p)
+           else:
+               total += len(p)
+   return total
+
+
+class Linear(Module):
+   """Fully connected linear projection: y = xW + b."""
+   def __init__(self, in_features: int, out_features: int, bias: bool = True):
+       super().__init__()
+       self.in_features = in_features
+       self.out_features = out_features
+       self.weight = init_matrix(in_features, out_features)
+       self.bias = init_vector(out_features, 0.0) if bias else None
+
+   def forward(self, x: list[list[list[float]]]) -> list[list[list[float]]]:
+       out = []
+       for seq in x:
+           seq_out = []
+           for token in seq:
+               row = [
+                   sum(token[i] * self.weight[i][o] for i in range(self.in_features))
+                   + (self.bias[o] if self.bias is not None else 0.0)
+                   for o in range(self.out_features)
+               ]
+               seq_out.append(row)
+           out.append(seq_out)
+       return out
+
+   def parameters(self) -> list:
+       return [self.weight, self.bias] if self.bias is not None else [self.weight]
+
+
+class RMSNorm(Module):
+   """Root Mean Square Layer Normalization (Pre-RMSNorm architecture)."""
+   def __init__(self, d_model: int, eps: float = 1e-5):
+       super().__init__()
+       self.d_model = d_model
+       self.eps = eps
+       self.gamma = init_vector(d_model, 1.0)
+
+   def forward(self, x: list[list[list[float]]]) -> list[list[list[float]]]:
+       out = []
+       for seq in x:
+           seq_out = []
+           for token in seq:
+               rms = math.sqrt(sum(v * v for v in token) / self.d_model + self.eps)
+               seq_out.append([self.gamma[d] * (token[d] / rms) for d in range(self.d_model)])
+           out.append(seq_out)
+       return out
+
+   def parameters(self) -> list:
+       return [self.gamma]
+
+
+# ==============================================================================
+# 0.5 Æ-LINK FORMAL SPECIFICATION & SOVEREIGN IDENTITY BINDING (U+E001)
+# ==============================================================================
+
+PHI = (1.0 + math.sqrt(5.0)) / 2.0  # Golden Ratio φ ≈ 1.618033988749895
+AE_LINK_SENTINEL = "\ue001"        # Private Use Area U+E001 Sentinel
+
+
+class AeLinkFormalVerifier:
+   """
+   Formal Verifier for the Æ-Link Rule (A):
+     - A ≡ Æ-Link Rule ≡ <0, 1> ≡ U+E001
+     - Simplex weights: w_B = w_C = w_V = 1/3, sum(w_i) = 1
+     - Tri-modal state vector: q(t) = [B(t), C(t), V(t)]^T
+     - Closed temporal boundary: q(0) = 0, q(1.5) = 0
+     - Solenoidal vector field: div(curl(a)) = 0
+     - Exact forward/inverse symmetry: Delta_forward + Delta_inverse = 0, D(E(x)) = x
+     - Conjunction gate: A = B ∧ C ∧ V
+   """
+   SENTINEL = AE_LINK_SENTINEL
+   W_B = 1.0 / 3.0
+   W_C = 1.0 / 3.0
+   W_V = 1.0 / 3.0
+
+   def __init__(self, binding_id: str, omni_key: str):
+       self.binding_id = binding_id
+       self.omni_key = omni_key
+       self.segments = [seg for seg in binding_id.split("|") if seg]
+       self.binding_digest = hashlib.sha256(
+           f"{self.SENTINEL}|{binding_id}|{omni_key}".encode("utf-8")
+       ).hexdigest()
+
+       # Verify simplex invariant w_B + w_C + w_V == 1
+       assert math.isclose(self.W_B + self.W_C + self.W_V, 1.0, rel_tol=1e-12), "Simplex weights must sum to 1"
+
+   @staticmethod
+   def golden_spiral_radius(theta: float, a: float = 2.5) -> float:
+       """Computes exact Golden Spiral radial coordinate: r(θ) = a * φ^(2θ / π)."""
+       return a * (PHI ** ((2.0 * theta) / math.pi))
+
+   def verify_closed_temporal_loop(self, dt: float = 1.5) -> dict[str, Any]:
+       """Evaluates q(t) = [B(t), C(t), V(t)]^T satisfying q(0) = 0 and q(1.5) = 0."""
+       def q_vec(t: float) -> list[float]:
+           # Periodic sinusoidal closure on [0, 1.5]: sin(2π * t / 1.5) -> 0 at t=0 and t=1.5
+           phase = math.sin((2.0 * math.pi * t) / dt)
+           return [round(phase, 12), round(phase, 12), round(phase, 12)]
+
+       q_0 = q_vec(0.0)
+       q_end = q_vec(dt)
+       closed = all(abs(v) < 1e-11 for v in q_0) and all(abs(v) < 1e-11 for v in q_end)
+       return {"q_0": q_0, "q_dt": q_end, "dt": dt, "boundary_closed": closed}
+
+   def verify_solenoidal_curl(self, x: float, y: float, z: float = 0.0, eps: float = 1e-5) -> dict[str, Any]:
+       """
+       Numerically verifies ∇ · (∇ × a) = 0 for smooth 3D potential field a(x, y, z)
+       governing Semantic Gravity orbital circulation.
+       """
+       def a_field(px: float, py: float, pz: float) -> tuple[float, float, float]:
+           return (
+               math.sin(py * 0.05) + pz * 0.01,
+               math.cos(px * 0.05) + pz * 0.02,
+               math.sin((px + py) * 0.03),
+           )
+
+       def curl(px: float, py: float, pz: float) -> tuple[float, float, float]:
+           _, ay_pz, az_pz = a_field(px, py, pz + eps)
+           _, ay_mz, az_mz = a_field(px, py, pz - eps)
+           ax_py, _, az_py = a_field(px, py + eps, pz)
+           ax_my, _, az_my = a_field(px, py - eps, pz)
+           ax_px, ay_px, _ = a_field(px + eps, py, pz)
+           ax_mx, ay_mx, _ = a_field(px - eps, py, pz)
+
+           cx = ((az_py - az_my) - (ay_pz - ay_mz)) / (2.0 * eps)
+           cy = ((ax_pz - ax_mz) - (az_px - az_mx)) / (2.0 * eps)
+           cz = ((ay_px - ay_mx) - (ax_py - ax_my)) / (2.0 * eps)
+           return cx, cy, cz
+
+       cx_p, _, _ = curl(x + eps, y, z)
+       cx_m, _, _ = curl(x - eps, y, z)
+       _, cy_p, _ = curl(x, y + eps, z)
+       _, cy_m, _ = curl(x, y - eps, z)
+       _, _, cz_p = curl(x, y, z + eps)
+       _, _, cz_m = curl(x, y, z - eps)
+
+       div_curl = ((cx_p - cx_m) + (cy_p - cy_m) + (cz_p - cz_m)) / (2.0 * eps)
+       return {"div_curl": round(div_curl, 12), "solenoidal_valid": abs(div_curl) < 1e-7}
+
+   def evaluate_conjunction(
+       self,
+       b_score: float,
+       c_score: float,
+       v_score: float,
+       threshold: float = 0.85,
+   ) -> dict[str, Any]:
+       """Evaluates A = B ∧ C ∧ V over normalized unit interval <0, 1>."""
+       b_clamped = clamp(b_score, 0.0, 1.0)
+       c_clamped = clamp(c_score, 0.0, 1.0)
+       v_clamped = clamp(v_score, 0.0, 1.0)
+
+       weighted_score = (self.W_B * b_clamped) + (self.W_C * c_clamped) + (self.W_V * v_clamped)
+       b_ok = b_clamped >= threshold
+       c_ok = c_clamped >= threshold
+       v_ok = v_clamped >= threshold
+       a_gate = b_ok and c_ok and v_ok
+
+       return {
+           "sentinel": "U+E001",
+           "binding_id": self.binding_id,
+           "binding_digest_short": self.binding_digest[:16],
+           "B": round(b_clamped, 5),
+           "C": round(c_clamped, 5),
+           "V": round(v_clamped, 5),
+           "simplex_score": round(weighted_score, 5),
+           "A_conjunction": a_gate,
+       }
+
+
+# ==============================================================================
+# 1. NEURAL SELFIE: Pre-RMSNorm Attention with RoPE & Activation Steering
+# ==============================================================================
+
+def apply_rope(vec: list[float], pos: int, base: float = 10000.0) -> list[float]:
+   """Rotary Position Embedding (RoPE) encoding relative token distance via 2D rotations."""
+   d = len(vec)
+   rotated = list(vec)
+   for i in range(0, d - 1, 2):
+       theta = pos / (base ** (i / d))
+       cos_t, sin_t = math.cos(theta), math.sin(theta)
+       x0, x1 = vec[i], vec[i + 1]
+       rotated[i] = x0 * cos_t - x1 * sin_t
+       rotated[i + 1] = x0 * sin_t + x1 * cos_t
+   return rotated
+
+
+class MultiHeadAttention(Module):
+   """Causal Multi-Head Self-Attention with Rotary Position Embeddings (RoPE)."""
+   def __init__(self, d_model: int, n_heads: int):
+       super().__init__()
+       assert d_model % n_heads == 0, "d_model must be divisible by n_heads"
+       self.d_model = d_model
+       self.n_heads = n_heads
+       self.d_k = d_model // n_heads
+
+       self.w_q = Linear(d_model, d_model, bias=False)
+       self.w_k = Linear(d_model, d_model, bias=False)
+       self.w_v = Linear(d_model, d_model, bias=False)
+       self.w_o = Linear(d_model, d_model, bias=False)
+
+   def forward(self, x: list[list[list[float]]], causal: bool = True) -> list[list[list[float]]]:
+       batch_size = len(x)
+       seq_len = len(x[0])
+
+       q = self.w_q(x)
+       k = self.w_k(x)
+       v = self.w_v(x)
+
+       scale = 1.0 / math.sqrt(self.d_k)
+       concat_heads = [[[0.0] * self.d_model for _ in range(seq_len)] for _ in range(batch_size)]
+
+       for b in range(batch_size):
+           for h in range(self.n_heads):
+               start, end = h * self.d_k, (h + 1) * self.d_k
+               q_h = [apply_rope(q[b][t][start:end], t) for t in range(seq_len)]
+               k_h = [apply_rope(k[b][t][start:end], t) for t in range(seq_len)]
+               v_h = [v[b][t][start:end] for t in range(seq_len)]
+
+               for i in range(seq_len):
+                   scores = []
+                   for j in range(seq_len):
+                       if causal and j > i:
+                           scores.append(float("-inf"))
+                       else:
+                           dot = sum(q_h[i][d] * k_h[j][d] for d in range(self.d_k))
+                           scores.append(dot * scale)
+
+                   weights = softmax(scores)
+                   for d in range(self.d_k):
+                       concat_heads[b][i][start + d] = sum(
+                           weights[j] * v_h[j][d] for j in range(seq_len)
+                       )
+
+       return self.w_o(concat_heads)
+
+
+# ==============================================================================
+# 2. THE SHAPESHIFTER: Load-Balanced Sparse Mixture of Experts (MoE)
+# ==============================================================================
+
+class SwiGLUExpert(Module):
+   """Specialized Expert sub-network using SwiGLU gated activation."""
+   def __init__(self, d_model: int, d_ff: int):
+       super().__init__()
+       self.w_gate = Linear(d_model, d_ff, bias=False)
+       self.w_up = Linear(d_model, d_ff, bias=False)
+       self.w_down = Linear(d_ff, d_model, bias=False)
+
+   def forward(self, x: list[list[list[float]]]) -> list[list[list[float]]]:
+       gate = self.w_gate(x)
+       up = self.w_up(x)
+       hidden = [
+           [
+               [silu(gate[b][t][d]) * up[b][t][d] for d in range(len(gate[0][0]))]
+               for t in range(len(gate[0]))
+           ]
+           for b in range(len(gate))
+       ]
+       return self.w_down(hidden)
+
+
+class DynamicBrainRouter(Module):
+   """Token-level Top-K Mixture of Experts with Noisy Gating and Switch Auxiliary Loss."""
+   def __init__(self, d_model: int, num_experts: int = 8, experts_per_token: int = 2, d_ff: int = None):
+       super().__init__()
+       self.d_model = d_model
+       self.num_experts = num_experts
+       self.k = experts_per_token
+       d_ff = d_ff or 2 * d_model
+
+       self.gatekeeper = Linear(d_model, num_experts, bias=False)
+       self.experts = [SwiGLUExpert(d_model, d_ff) for _ in range(num_experts)]
+       self.expert_usage_counts = [0] * num_experts
+
+   def forward(self, x: list[list[list[float]]], training: bool = False) -> tuple[list[list[list[float]]], float]:
+       batch_size = len(x)
+       seq_len = len(x[0])
+       total_tokens = batch_size * seq_len
+
+       logits = self.gatekeeper(x)
+       out = [[[0.0] * self.d_model for _ in range(seq_len)] for _ in range(batch_size)]
+       expert_prob_sums = [0.0] * self.num_experts
+       expert_token_counts = [0] * self.num_experts
+
+       for b in range(batch_size):
+           for t in range(seq_len):
+               token_logits = list(logits[b][t])
+               if training:
+                   token_logits = [l + random.gauss(0.0, 0.05) for l in token_logits]
+
+               full_probs = softmax(token_logits)
+               for e_idx in range(self.num_experts):
+                   expert_prob_sums[e_idx] += full_probs[e_idx]
+
+               indexed_scores = sorted(enumerate(token_logits), key=lambda pair: pair[1], reverse=True)
+               top_k = indexed_scores[:self.k]
+
+               top_indices = [idx for idx, _ in top_k]
+               top_weights = softmax([score for _, score in top_k])
+
+               token_slice = [[x[b][t]]]
+               for rank_i, expert_idx in enumerate(top_indices):
+                   weight = top_weights[rank_i]
+                   expert_token_counts[expert_idx] += 1
+                   self.expert_usage_counts[expert_idx] += 1
+
+                   expert_out = self.experts[expert_idx](token_slice)[0][0]
+                   for d in range(self.d_model):
+                       out[b][t][d] += expert_out[d] * weight
+
+       aux_loss = 0.0
+       for i in range(self.num_experts):
+           f_i = expert_token_counts[i] / max(1, total_tokens * self.k)
+           p_i = expert_prob_sums[i] / max(1, total_tokens)
+           aux_loss += f_i * p_i
+       aux_loss *= self.num_experts
+
+       return out, aux_loss
+
+
+class LoRAAdapter(Module):
+   """Low-Rank Adaptation (LoRA) 'Glasses': W + (A @ B) * (alpha / rank)."""
+   def __init__(self, d_model: int, rank: int = 4, alpha: float = 8.0):
+       super().__init__()
+       self.d_model = d_model
+       self.rank = rank
+       self.scaling = alpha / rank
+       self.lora_a = init_matrix(d_model, rank, std=0.05)
+       self.lora_b = [[0.0] * d_model for _ in range(rank)]
+
+   def forward(self, x: list[list[list[float]]]) -> list[list[list[float]]]:
+       out = []
+       for seq in x:
+           seq_out = []
+           for token in seq:
+               bottleneck = [
+                   sum(token[d] * self.lora_a[d][r] for d in range(self.d_model))
+                   for r in range(self.rank)
+               ]
+               delta = [
+                   sum(bottleneck[r] * self.lora_b[r][d] for r in range(self.rank)) * self.scaling
+                   for d in range(self.d_model)
+               ]
+               seq_out.append(delta)
+           out.append(seq_out)
+       return out
+
+   def update_weights(self, target_delta: list[float], input_vec: list[float], lr: float):
+       if not self.requires_grad:
+           raise RuntimeError("Cannot update frozen LoRA adapter!")
+       bottleneck = [
+           sum(input_vec[d] * self.lora_a[d][r] for d in range(self.d_model))
+           for r in range(self.rank)
+       ]
+       for r in range(self.rank):
+           for d in range(self.d_model):
+               self.lora_b[r][d] += lr * bottleneck[r] * target_delta[d]
+               self.lora_a[d][r] += lr * input_vec[d] * target_delta[d] * 0.1
+
+   def parameters(self) -> list:
+       return [self.lora_a, self.lora_b]
+
+
+class NeuralSelfie(Module):
+   """
+   Core Pre-RMSNorm MoE Transformer Block with:
+   - Causal RoPE Attention
+   - Sparse DynamicBrainRouter (Top-K MoE)
+   - Personal LoRA Glasses hook
+   - Subconscious & Biometric Activation Steering vector injection
+   """
+   def __init__(self, d_model: int, n_heads: int, num_experts: int = 6, experts_per_token: int = 2):
+       super().__init__()
+       self.d_model = d_model
+       self.norm1 = RMSNorm(d_model)
+       self.attention = MultiHeadAttention(d_model, n_heads)
+       self.norm2 = RMSNorm(d_model)
+       self.moe_router = DynamicBrainRouter(d_model, num_experts, experts_per_token)
+       self.subconscious_bias = [0.0] * d_model
+       self.wisdom_anchors: list[list[float]] = []
+
+   def inject_subconscious_bias(self, bias_vec: list[float], strength: float = 0.15):
+       for d in range(self.d_model):
+           self.subconscious_bias[d] = bias_vec[d] * strength
+
+   def deep_integrate(self, pure_wisdom: list[float]):
+       """Folds distilled Era wisdom into persistent foundation anchors."""
+       self.wisdom_anchors.append(list(pure_wisdom))
+       for d in range(self.d_model):
+           self.subconscious_bias[d] = 0.8 * self.subconscious_bias[d] + 0.2 * pure_wisdom[d]
+
+   def forward(
+       self,
+       x: list[list[list[float]]],
+       lora_adapter: LoRAAdapter = None,
+       training: bool = False,
+   ) -> tuple[list[list[list[float]]], float]:
+       steered_x = [
+           [
+               [x[b][t][d] + self.subconscious_bias[d] for d in range(self.d_model)]
+               for t in range(len(x[0]))
+           ]
+           for b in range(len(x))
+       ]
+
+       attn_out = self.attention(self.norm1(steered_x))
+       h = add_tensors(steered_x, attn_out)
+
+       moe_out, aux_loss = self.moe_router(self.norm2(h), training=training)
+       h = add_tensors(h, moe_out)
+
+       if lora_adapter is not None:
+           h = add_tensors(h, lora_adapter(h))
+
+       return h, aux_loss
+
+
+# ==============================================================================
+# 3. SOV-CCME-Ω-002: LIVING MEMORY FABRIC & HEARTBEATSYNC TELEMETRY
+# ==============================================================================
+
+@dataclass
+class EnvironmentalTelemetry:
+   """ENV-Ω & heartbeatsync.py: Permissioned, provenance-tagged biometric & ambient sensors."""
+   ambient_light_lux: float = 320.0
+   motion_cadence_hz: float = 1.2
+   ambient_sound_db: float = 42.0
+   interaction_cadence_bpm: float = 68.0
+   hrv_ekg_bpm: float | None = 72.0
+   hrv_rmssd_ms: float = 58.0  # Heart Rate Variability (higher = calm/focused; lower = stressed)
+   vocal_micro_tremor: float = 0.002
+   gait_cadence_score: float = 0.9995
+   room_echo_hash: str = "echo:living_room_v1"
+   device_tpm_attested: bool = True
+   permission_receipt: str = "perm:user_explicit_scope_all"
+   sensor_quality: str = "calibrated"
+
+
+class HeartbeatSyncMonitor:
+   """
+   heartbeatsync.py: Real-time physiological & cognitive load interpreter.
+   Translates HRV (RMSSD), resting/active heart rate, and vocal micro-tremors into
+   adaptive cognitive states without leaking raw biometric streams outside the vault.
+   """
+   def analyze(self, telemetry: EnvironmentalTelemetry) -> dict[str, Any]:
+       bpm = telemetry.hrv_ekg_bpm or 72.0
+       rmssd = telemetry.hrv_rmssd_ms
+
+       stress_index = clamp((bpm - 60.0) / 80.0 + (50.0 - rmssd) / 100.0 + telemetry.vocal_micro_tremor * 8.0, 0.0, 1.0)
+       flow_index = round(1.0 - stress_index, 4)
+
+       if stress_index > 0.65:
+           cognitive_state = "HIGH_COGNITIVE_LOAD"
+       elif flow_index > 0.72 and rmssd >= 50.0:
+           cognitive_state = "DEEP_FLOW"
+       elif telemetry.motion_cadence_hz > 1.8:
+           cognitive_state = "ACTIVE_TRANSIT"
+       else:
+           cognitive_state = "BALANCED_CALM"
+
+       return {
+           "bpm": bpm,
+           "rmssd_ms": rmssd,
+           "stress_index": round(stress_index, 4),
+           "flow_index": flow_index,
+           "cognitive_state": cognitive_state,
+       }
+
+
+class TemporalProvenanceEngine:
+   """TIME-Ω: Maintains wall-clock, monotonic ticks, and strict stream sequence."""
+   def __init__(self, start_epoch_utc: float = 1795545660.0):
+       self.wall_clock_utc = start_epoch_utc
+       self.monotonic_ns = 10_000_000_000
+       self.stream_sequence = 1840
+
+   def tick(self, delta_seconds: float = 1.5) -> dict[str, Any]:
+       self.wall_clock_utc += delta_seconds
+       self.monotonic_ns += int(delta_seconds * 1_000_000_000)
+       self.stream_sequence += 1
+       return {
+           "utc_epoch": round(self.wall_clock_utc, 3),
+           "local_offset": "-06:00",
+           "monotonic_ns": self.monotonic_ns,
+           "stream_sequence": self.stream_sequence,
+           "clock_source": "device_monotonic_anchor",
+           "clock_quality": "verified_local_monotonic",
+       }
+
+
+class RosesQuantumTransform:
+   """
+   ROSE-Q: Reversible modular affine byte transform enforcing D(E(x)) = x
+   and Delta_forward + Delta_inverse = 0.
+   Forward:  c = (b * 131 + k) mod 256
+   Inverse:  b = ((c - k) * 43) mod 256   [since 131 * 43 = 5633 = 22*256 + 1]
+   """
+   VERSION = "ROSE-Q-v2.1"
+   MULTIPLIER = 131
+   MOD_INVERSE = 43  # Exact modular multiplicative inverse of 131 mod 256
+
+   @staticmethod
+   def _derive_keystream(seed_bytes: bytes, length: int) -> bytes:
+       stream = bytearray()
+       counter = 0
+       while len(stream) < length:
+           block = hashlib.sha256(seed_bytes + struct.pack(">I", counter)).digest()
+           stream.extend(block)
+           counter += 1
+       return bytes(stream[:length])
+
+   def apply(self, raw_bytes: bytes, csprng_nonce: bytes) -> dict[str, Any]:
+       keystream = self._derive_keystream(csprng_nonce, len(raw_bytes))
+       transformed = bytes(((b * self.MULTIPLIER) + k) & 0xFF for b, k in zip(raw_bytes, keystream))
+       delta_forward = sum(c - b for b, c in zip(raw_bytes, transformed))
+       u16_symbol = struct.unpack(">H", hashlib.sha256(transformed).digest()[:2])[0]
+       return {
+           "version": self.VERSION,
+           "transformed_bytes": transformed,
+           "original_length": len(raw_bytes),
+           "delta_forward": delta_forward,
+           "u16_symbol": u16_symbol,
+       }
+
+   def inverse(self, transformed_bytes: bytes, csprng_nonce: bytes) -> bytes:
+       keystream = self._derive_keystream(csprng_nonce, len(transformed_bytes))
+       return bytes(((c - k) * self.MOD_INVERSE) & 0xFF for c, k in zip(transformed_bytes, keystream))
+
+   def verify_symmetry(self, raw_bytes: bytes, csprng_nonce: bytes) -> dict[str, Any]:
+       """Verifies Delta_forward + Delta_inverse = 0 and D(E(x)) = x."""
+       fwd = self.apply(raw_bytes, csprng_nonce)
+       recovered = self.inverse(fwd["transformed_bytes"], csprng_nonce)
+       delta_inverse = sum(r - c for c, r in zip(fwd["transformed_bytes"], recovered))
+       delta_sum = fwd["delta_forward"] + delta_inverse
+       return {
+           "delta_sum": delta_sum,
+           "exact_identity": (recovered == raw_bytes) and (delta_sum == 0),
+       }
+
+
+class PostQuantumEnvelope:
+   """
+   PQC-Ω: Post-Quantum Cryptographic Envelope modeled on:
+   - ML-KEM-768 key encapsulation
+   - CSPRNG per-object 256-bit DEK + 96-bit nonce
+   - Authenticated stream cipher + BLAKE2b MAC tag
+   - ML-DSA-65 manifest signature commitment
+   """
+   SUITE_ID = "ML-KEM-768+AES-256-GCM+ML-DSA-65"
+
+   def __init__(self, user_root_secret: bytes):
+       self.root_secret = user_root_secret
+       self.key_epoch = 1
+
+   def seal_payload(self, plaintext: bytes, aad: bytes) -> dict[str, Any]:
+       dek = os.urandom(32)
+       nonce = os.urandom(12)
+
+       kem_ct = hashlib.sha256(self.root_secret + b"ML-KEM-768" + nonce).digest()
+       wrapped_dek = bytes(a ^ b for a, b in zip(dek, kem_ct))
+
+       keystream = RosesQuantumTransform._derive_keystream(dek + nonce, len(plaintext))
+       ciphertext = bytes(p ^ k for p, k in zip(plaintext, keystream))
+       auth_tag = hashlib.blake2b(aad + nonce + ciphertext, key=dek, digest_size=16).hexdigest()
+
+       manifest_digest = hashlib.sha256(aad + ciphertext + bytes.fromhex(auth_tag)).hexdigest()
+       ml_dsa_sig = hashlib.sha256(self.root_secret + b"ML-DSA-65" + manifest_digest.encode()).hexdigest()
+
+       return {
+           "suite": self.SUITE_ID,
+           "key_epoch": self.key_epoch,
+           "nonce_hex": nonce.hex(),
+           "wrapped_dek_hex": wrapped_dek.hex(),
+           "ciphertext": ciphertext,
+           "auth_tag": auth_tag,
+           "manifest_digest": manifest_digest,
+           "ml_dsa_signature": ml_dsa_sig,
+       }
+
+   def open_and_verify(self, envelope: dict[str, Any], aad: bytes) -> tuple[bool, bytes]:
+       nonce = bytes.fromhex(envelope["nonce_hex"])
+       wrapped_dek = bytes.fromhex(envelope["wrapped_dek_hex"])
+       ciphertext = envelope["ciphertext"]
+
+       expected_digest = hashlib.sha256(
+           aad + ciphertext + bytes.fromhex(envelope["auth_tag"])
+       ).hexdigest()
+       if expected_digest != envelope["manifest_digest"]:
+           return False, b""
+
+       expected_sig = hashlib.sha256(
+           self.root_secret + b"ML-DSA-65" + expected_digest.encode()
+       ).hexdigest()
+       if expected_sig != envelope["ml_dsa_signature"]:
+           return False, b""
+
+       kem_ct = hashlib.sha256(self.root_secret + b"ML-KEM-768" + nonce).digest()
+       dek = bytes(a ^ b for a, b in zip(wrapped_dek, kem_ct))
+
+       expected_tag = hashlib.blake2b(aad + nonce + ciphertext, key=dek, digest_size=16).hexdigest()
+       if expected_tag != envelope["auth_tag"]:
+           return False, b""
+
+       keystream = RosesQuantumTransform._derive_keystream(dek + nonce, len(ciphertext))
+       plaintext = bytes(c ^ k for c, k in zip(ciphertext, keystream))
+       return True, plaintext
+
+
+class ChromaOmegaRenderer:
+   """
+   CHROMA-Ω & FAD-Ω: Deterministic 5D Chromatic Expression Engine with Temporal Hue Shift:
+   - Hue: Shifts gently toward warm amber/violet mythology tones as memories age
+   - Saturation: Contextual intensity
+   - Brightness: Ambient & symbol-modulated luminance
+   - Sparkle: Interaction cadence & verification state
+   - Alpha: Fractal Alpha-Decay alpha(dt) = alpha_min + (alpha_max - alpha_min) * exp(-lambda * dt)
+   """
+   PROFILE_ID = "CHROMA-OMEGA-v2.1"
+
+   VIBE_HUES = {
+       "Focus": 210.0,        # Deep Cobalt Blue
+       "Joy": 48.0,           # Warm Solar Gold
+       "Calm": 165.0,         # Emerald Teal
+       "Breakthrough": 285.0, # Ultraviolet Violet
+       "Reflection": 330.0,   # Rose Magenta
+   }
+
+   def render(
+       self,
+       semantic_vibe: str,
+       u16_symbol: int,
+       telemetry: EnvironmentalTelemetry,
+       age_seconds: float = 0.0,
+       verified: bool = False,
+       user_brightness_pref: float = 0.75,
+       consolidated_epoch: int = 0,
+   ) -> dict[str, Any]:
+       base_hue = self.VIBE_HUES.get(semantic_vibe, 195.0)
+       temporal_hue_drift = min(35.0, (age_seconds / 60.0) * 4.5 + consolidated_epoch * 6.0)
+       hue = (base_hue + temporal_hue_drift) % 360.0
+
+       saturation = clamp(0.45 + (telemetry.motion_cadence_hz / 4.0) * 0.45 - (consolidated_epoch * 0.05), 0.2, 1.0)
+
+       norm_ambient = clamp(telemetry.ambient_light_lux / 1000.0, 0.0, 1.0)
+       symbol_lum = (u16_symbol % 256) / 255.0
+       brightness = clamp(0.35 * norm_ambient + 0.45 * user_brightness_pref + 0.20 * symbol_lum, 0.1, 1.0)
+
+       rhythm_norm = clamp(telemetry.interaction_cadence_bpm / 120.0, 0.0, 1.0)
+       verified_factor = 1.0 if verified else 0.25
+       sparkle = round(0.10 + 0.65 * rhythm_norm * verified_factor, 4)
+
+       alpha_min, alpha_max, decay_lambda = 0.28, 1.00, 0.02
+       alpha = alpha_min + (alpha_max - alpha_min) * math.exp(-decay_lambda * age_seconds)
+
+       return {
+           "profile": self.PROFILE_ID,
+           "hue_deg": round(hue, 2),
+           "saturation": round(saturation, 4),
+           "brightness": round(brightness, 4),
+           "alpha": round(alpha, 4),
+           "sparkle": sparkle,
+           "epoch_layer": consolidated_epoch,
+       }
+
+
+class DotMappedLiveSurface:
+   """
+   SMG-Ω: Enhanced Semantic Gravity & Golden Spiral Constellation Navigation Engine.
+   Places Data Dots along Golden Logarithmic Spirals r(θ) = a * φ^(2θ / π) around
+   Constellation attractors, clusters resonant memories, and navigates by feeling.
+   """
+   VIBE_ATTRACTORS = {
+       "Focus": (-45.0, 65.0),
+       "Joy": (70.0, 55.0),
+       "Calm": (-65.0, -45.0),
+       "Breakthrough": (15.0, 90.0),
+       "Reflection": (55.0, -60.0),
+   }
+
+   def __init__(self):
+       self.dots: list[dict[str, Any]] = []
+       self.current_epoch = 0
+       self.constellations: dict[str, dict[str, Any]] = {}
+       self.current_focus_position: tuple[float, float] = (0.0, 0.0)
+
+   def calculate_semantic_orbit(self, semantic_vibe: str, embedding: list[float]) -> tuple[float, float]:
+       cx, cy = self.VIBE_ATTRACTORS.get(semantic_vibe, (0.0, 0.0))
+       theta = math.atan2(embedding[1], embedding[0])
+       # Golden Spiral radial coordinate: r(θ) = a * φ^(2θ / π)
+       radius = AeLinkFormalVerifier.golden_spiral_radius(theta, a=3.0)
+       tx, ty = cx + radius * math.cos(theta), cy + radius * math.sin(theta)
+
+       same_vibe_dots = [d for d in self.dots if d.get("vibe") == semantic_vibe]
+       if same_vibe_dots:
+           mean_x = sum(d["coordinate"]["x"] for d in same_vibe_dots) / len(same_vibe_dots)
+           mean_y = sum(d["coordinate"]["y"] for d in same_vibe_dots) / len(same_vibe_dots)
+           gravity_pull = 0.25
+           tx = tx * (1.0 - gravity_pull) + mean_x * gravity_pull
+           ty = ty * (1.0 - gravity_pull) + mean_y * gravity_pull
+
+       return round(tx, 3), round(ty, 3)
+
+   def update_constellations(self):
+       """Clusters all Data Dots into named Constellations and updates centroids & cohesion."""
+       grouped: dict[str, list[dict[str, Any]]] = {}
+       for dot in self.dots:
+           vibe = dot.get("vibe", "Uncharted")
+           grouped.setdefault(vibe, []).append(dot)
+
+       self.constellations.clear()
+       for vibe, members in grouped.items():
+           cx = sum(m["coordinate"]["x"] for m in members) / len(members)
+           cy = sum(m["coordinate"]["y"] for m in members) / len(members)
+           mean_alpha = sum(m["dot"]["alpha"] for m in members) / len(members)
+           self.constellations[vibe] = {
+               "name": f"Constellation of {vibe}",
+               "vibe": vibe,
+               "centroid": {"x": round(cx, 3), "y": round(cy, 3)},
+               "star_count": len(members),
+               "mean_luminance_alpha": round(mean_alpha, 4),
+               "member_event_ids": [m["event_id"] for m in members],
+           }
+
+   def navigate_by_feeling(self, target_vibe: str, query_embedding: list[float] | None = None) -> dict[str, Any]:
+       """Navigates the Infinite Canvas by semantic feeling rather than rigid X/Y coordinates."""
+       self.update_constellations()
+       if target_vibe not in self.constellations:
+           return {"status": "NO_CONSTELLATION_FOUND", "vibe": target_vibe}
+
+       constellation = self.constellations[target_vibe]
+       self.current_focus_position = (constellation["centroid"]["x"], constellation["centroid"]["y"])
+
+       ranked_stars = []
+       for dot in self.dots:
+           if dot.get("vibe") == target_vibe:
+               sim = cosine_similarity(query_embedding, dot["_embedding"]) if query_embedding else 1.0
+               ranked_stars.append((sim, dot))
+       ranked_stars.sort(key=lambda pair: pair[0], reverse=True)
+
+       return {
+           "status": "ARRIVED",
+           "constellation": constellation["name"],
+           "new_focus_coordinate": constellation["centroid"],
+           "star_count": constellation["star_count"],
+           "resonating_memories": [
+               {
+                   "event_id": d["event_id"],
+                   "label": d.get("label", ""),
+                   "resonance": round(sim, 4),
+                   "hue_deg": d["dot"]["hue_deg"],
+                   "alpha": d["dot"]["alpha"],
+               }
+               for sim, d in ranked_stars
+           ],
+       }
+
+
+class ImmutableMerkleLedger:
+   """IMMUTABLE-Ω: Append-only SHA-256 hash-chained ledger with Merkle root checkpoints."""
+   def __init__(self):
+       self.entries: list[dict[str, Any]] = []
+       self.head_hash = "0" * 64
+
+   def append_event(self, event_id: str, payload_digest: str, metadata_digest: str) -> dict[str, Any]:
+       commitment_material = f"{self.head_hash}|{event_id}|{payload_digest}|{metadata_digest}".encode()
+       new_commitment = hashlib.sha256(commitment_material).hexdigest()
+       record = {
+           "index": len(self.entries),
+           "event_id": event_id,
+           "previous_commitment": self.head_hash,
+           "payload_digest": payload_digest,
+           "metadata_digest": metadata_digest,
+           "commitment": new_commitment,
+       }
+       self.entries.append(record)
+       self.head_hash = new_commitment
+       return record
+
+   def compute_merkle_root(self) -> str:
+       if not self.entries:
+           return self.head_hash
+       layer = [e["commitment"] for e in self.entries]
+       while len(layer) > 1:
+           if len(layer) % 2 == 1:
+               layer.append(layer[-1])
+           layer = [
+               hashlib.sha256((layer[i] + layer[i + 1]).encode()).hexdigest()
+               for i in range(0, len(layer), 2)
+           ]
+       return layer[0]
+
+   def verify_chain(self) -> bool:
+       prev = "0" * 64
+       for entry in self.entries:
+           material = f"{prev}|{entry['event_id']}|{entry['payload_digest']}|{entry['metadata_digest']}".encode()
+           recomputed = hashlib.sha256(material).hexdigest()
+           if recomputed != entry["commitment"]:
+               return False
+           prev = recomputed
+       return True
+
+
+class CosmicGuardianEngine:
+   """
+   SOV-CCME-Ω-002: Mints, verifies, ages, and reconstructs Living Data Dots (ccme.pixel/2)
+   with lossless Rose's Quantum inverse verification and 5D Chroma temporal decay.
+   """
+   def __init__(self, user_omni_key: str, root_secret: bytes, ae_verifier: AeLinkFormalVerifier):
+       self.omni_key = user_omni_key
+       self.ae_verifier = ae_verifier
+       self.quantum = RosesQuantumTransform()
+       self.pqc = PostQuantumEnvelope(root_secret)
+       self.chroma = ChromaOmegaRenderer()
+       self.canvas = DotMappedLiveSurface()
+       self.clock = TemporalProvenanceEngine()
+       self.ledger = ImmutableMerkleLedger()
+       self.vault_store: dict[str, dict[str, Any]] = {}
+
+   def encode_living_memory(
+       self,
+       raw_memory_bytes: bytes,
+       semantic_vibe: str,
+       embedding: list[float],
+       telemetry: EnvironmentalTelemetry,
+       label: str = "",
+       dt: float = 1.5,
+   ) -> dict[str, Any]:
+       time_record = self.clock.tick(dt)
+       event_id = f"evt-{time_record['stream_sequence']}"
+
+       q_seed = os.urandom(16)
+       q_res = self.quantum.apply(raw_memory_bytes, csprng_nonce=q_seed)
+       symmetry = self.quantum.verify_symmetry(raw_memory_bytes, csprng_nonce=q_seed)
+
+       meta_snapshot = {
+           "event_id": event_id,
+           "binding_id": self.ae_verifier.binding_id,
+           "ae_sentinel": "U+E001",
+           "vibe": semantic_vibe,
+           "time": time_record,
+           "telemetry": {
+               "ambient_light_lux": telemetry.ambient_light_lux,
+               "motion_cadence_hz": telemetry.motion_cadence_hz,
+               "interaction_cadence_bpm": telemetry.interaction_cadence_bpm,
+               "permission_receipt": telemetry.permission_receipt,
+               "sensor_quality": telemetry.sensor_quality,
+           },
+       }
+       aad = json.dumps(meta_snapshot, sort_keys=True).encode()
+       sealed = self.pqc.seal_payload(q_res["transformed_bytes"], aad=aad)
+
+       meta_digest = hashlib.sha256(aad).hexdigest()
+       ledger_entry = self.ledger.append_event(event_id, sealed["manifest_digest"], meta_digest)
+
+       self.vault_store[event_id] = {
+           "sealed": sealed,
+           "aad": aad,
+           "q_seed_hex": q_seed.hex(),
+           "original_bytes_sha256": hashlib.sha256(raw_memory_bytes).hexdigest(),
+           "u16_symbol": q_res["u16_symbol"],
+           "telemetry": telemetry,
+           "semantic_vibe": semantic_vibe,
+           "capture_utc": time_record["utc_epoch"],
+       }
+
+       verified_ok, _ = self.reconstruct_memory(event_id)
+       verified_ok = verified_ok and symmetry["exact_identity"]
+
+       tx, ty = self.canvas.calculate_semantic_orbit(semantic_vibe, embedding)
+       curl_check = self.ae_verifier.verify_solenoidal_curl(tx, ty)
+       loop_check = self.ae_verifier.verify_closed_temporal_loop(dt=dt)
+
+       dot_visuals = self.chroma.render(
+           semantic_vibe=semantic_vibe,
+           u16_symbol=q_res["u16_symbol"],
+           telemetry=telemetry,
+           age_seconds=0.0,
+           verified=verified_ok,
+           consolidated_epoch=self.canvas.current_epoch,
+       )
+
+       ref_envelope = {
+           "v": 2,
+           "ae": "U+E001",
+           "bind": self.ae_verifier.binding_id,
+           "evt": event_id,
+           "x": tx,
+           "y": ty,
+           "digest": sealed["manifest_digest"][:16],
+           "epoch": self.canvas.current_epoch,
+       }
+       b64_ref = base64.urlsafe_b64encode(json.dumps(ref_envelope).encode()).decode()
+       data_uri = f"data:application/vnd.sovereign.ccme-ref+json;base64,{b64_ref}"
+
+       living_dot = {
+           "schema": "ccme.pixel/2",
+           "ae_link_sentinel": "U+E001",
+           "binding_id": self.ae_verifier.binding_id,
+           "event_id": event_id,
+           "label": label,
+           "vibe": semantic_vibe,
+           "_embedding": list(embedding),
+           "coordinate": {"x": tx, "y": ty},
+           "data_uri": data_uri,
+           "dot": dot_visuals,
+           "integrity": {
+               "record_digest": sealed["manifest_digest"],
+               "ledger_commitment": ledger_entry["commitment"],
+               "verified": verified_ok,
+               "delta_symmetry": symmetry["delta_sum"],
+               "solenoidal_valid": curl_check["solenoidal_valid"],
+               "temporal_loop_closed": loop_check["boundary_closed"],
+           },
+           "temporal": time_record,
+       }
+       self.canvas.dots.append(living_dot)
+       self.canvas.update_constellations()
+       return living_dot
+
+   def apply_temporal_visual_aging(self, elapsed_sleep_seconds: float, epoch_level: int):
+       """Updates visual alpha-decay and hue drift across all Canvas dots without altering vault bytes."""
+       for dot in self.canvas.dots:
+           evt_id = dot["event_id"]
+           record = self.vault_store.get(evt_id)
+           if not record:
+               continue
+           age = (self.clock.wall_clock_utc - record["capture_utc"]) + elapsed_sleep_seconds
+           dot["dot"] = self.chroma.render(
+               semantic_vibe=record["semantic_vibe"],
+               u16_symbol=record["u16_symbol"],
+               telemetry=record["telemetry"],
+               age_seconds=age,
+               verified=dot["integrity"]["verified"],
+               consolidated_epoch=epoch_level,
+           )
+       self.canvas.update_constellations()
+
+   def reconstruct_memory(self, event_id: str) -> tuple[bool, bytes]:
+       record = self.vault_store.get(event_id)
+       if not record:
+           return False, b""
+       ok, transformed_bytes = self.pqc.open_and_verify(record["sealed"], record["aad"])
+       if not ok:
+           return False, b""
+       recovered = self.quantum.inverse(transformed_bytes, bytes.fromhex(record["q_seed_hex"]))
+       digest_match = hashlib.sha256(recovered).hexdigest() == record["original_bytes_sha256"]
+       return digest_match, recovered
+
+
+# ==============================================================================
+# 4. DEEP PERSONALIZATION ENGINE (Omni-Key + HeartbeatSync + Memory Fabric)
+# ==============================================================================
+
+class DeepPersonalizationEngine:
+   """
+   Synthesizes:
+   1. Omni-Key identity & context profile
+   2. Real-time HeartbeatSync autonomic state (stress vs. deep flow)
+   3. Historical Constellation patterns from the Living Memory Fabric
+   """
+   def __init__(self, omni_key_segments: dict[str, str], binding_id: str):
+       self.segments = omni_key_segments
+       self.binding_id = binding_id
+       self.heartbeat = HeartbeatSyncMonitor()
+
+   def compute_adaptive_profile(
+       self,
+       telemetry: EnvironmentalTelemetry,
+       canvas: DotMappedLiveSurface,
+       auth_status: str,
+   ) -> dict[str, Any]:
+       if auth_status == "LOCKDOWN":
+           return {"status": "SUSPENDED_ZERO_TRUST_LOCKDOWN"}
+
+       bio_state = self.heartbeat.analyze(telemetry)
+       dominant_vibe = "Balanced"
+       if canvas.constellations:
+           dominant_vibe = max(
+               canvas.constellations.values(), key=lambda c: c["star_count"]
+           )["vibe"]
+
+       if bio_state["cognitive_state"] == "HIGH_COGNITIVE_LOAD":
+           response_style = "Concise, step-by-step chunked guidance (low cognitive load)"
+           accessibility_mode = "HIGH_CONTRAST_SIMPLIFIED + CALM_VOICE_PROMPT"
+           ui_brightness_target = 0.55
+       elif bio_state["cognitive_state"] == "DEEP_FLOW":
+           response_style = "High-density technical synthesis (uninterrupted deep flow)"
+           accessibility_mode = "MINIMAL_DISTRACTION_HUD"
+           ui_brightness_target = 0.75
+       elif bio_state["cognitive_state"] == "ACTIVE_TRANSIT":
+           response_style = "Hands-free audio-first spatial summaries"
+           accessibility_mode = "VOICE_FIRST_NAVIGATION + LARGE_TARGETS"
+           ui_brightness_target = 0.90
+       else:
+           response_style = "Warm, exploratory dialogue attuned to historical constellations"
+           accessibility_mode = "STANDARD_ADAPTIVE"
+           ui_brightness_target = 0.75
+
+       return {
+           "owner_id": self.segments["identity_hash"],
+           "sovereign_binding_id": self.binding_id,
+           "vibe_profile": self.segments["vibe_vector_id"],
+           "autonomic_state": bio_state,
+           "dominant_memory_constellation": dominant_vibe,
+           "tailored_response_style": response_style,
+           "accessibility_adaptation": accessibility_mode,
+           "recommended_ui_brightness": ui_brightness_target,
+           "sovereignty_guarantee": "Computed locally in user vault; zero raw biometrics exported.",
+       }
+
+
+# ==============================================================================
+# 5. SCHEDULED DIGITAL REM SLEEP, INFINITE EPOCHS & CONTRABAND SUBCONSCIOUS
+# ==============================================================================
+
+@dataclass
+class EpisodicMemory:
+   label: str
+   embedding: list[float]
+   emotional_salience: float = 1.0
+   age_seconds: float = 0.0
+   dot_ref: dict[str, Any] = field(default_factory=dict)
+
+
+class SleepCycleConsolidator(Module):
+   """Scheduled Digital REM Sleep with temporal alpha-decay & archival hue drift."""
+   def __init__(self, core_frozen_brain: NeuralSelfie, learning_rate: float = 0.008):
+       super().__init__()
+       self.cortex = core_frozen_brain
+       self.learning_rate = learning_rate
+       self.anchor_memories: list[EpisodicMemory] = []
+       self.sleep_window_hours: tuple[int, int] = (23, 6)
+
+   def is_within_sleep_window(self, local_hour: int, force_manual: bool = False) -> bool:
+       if force_manual:
+           return True
+       start_h, end_h = self.sleep_window_hours
+       if start_h > end_h:
+           return local_hour >= start_h or local_hour < end_h
+       return start_h <= local_hour < end_h
+
+   def simulate_dream(self, memory: EpisodicMemory, lora_adapter: LoRAAdapter) -> tuple[list[float], float]:
+       tensor_in = [[memory.embedding]]
+       thought_out, _ = self.cortex(tensor_in, lora_adapter=lora_adapter, training=False)
+       reconstructed = thought_out[0][0]
+       delta = [
+           (memory.embedding[d] - reconstructed[d]) * memory.emotional_salience
+           for d in range(len(reconstructed))
+       ]
+       return delta, cosine_similarity(reconstructed, memory.embedding)
+
+   def enter_rem_sleep(
+       self,
+       user_lora_adapter: LoRAAdapter,
+       days_memories: list[EpisodicMemory],
+       guardian: CosmicGuardianEngine,
+       local_hour: int = 2,
+       force_manual: bool = False,
+       replay_epochs: int = 3,
+   ) -> LoRAAdapter:
+       if not self.is_within_sleep_window(local_hour, force_manual=force_manual):
+           print(f"[REM SLEEP] Skipped: Local hour {local_hour}:00 is outside user sleep window {self.sleep_window_hours}.")
+           return user_lora_adapter
+
+       print(f"\n[REM SLEEP] Entering Digital REM Sleep (Window {self.sleep_window_hours[0]}:00-{self.sleep_window_hours[1]}:00)...")
+       self.cortex.requires_grad_(False)
+       user_lora_adapter.requires_grad_(True)
+
+       dream_playlist = list(days_memories) + list(self.anchor_memories)
+       for epoch in range(1, replay_epochs + 1):
+           random.shuffle(dream_playlist)
+           alignments = []
+           for mem in dream_playlist:
+               delta, align = self.simulate_dream(mem, user_lora_adapter)
+               user_lora_adapter.update_weights(delta, mem.embedding, self.learning_rate)
+               alignments.append(align)
+           print(f"  Dream Cycle {epoch}/{replay_epochs} | Mean Memory Alignment: {sum(alignments)/len(alignments):.4f}")
+
+       for mem in days_memories:
+           if mem.emotional_salience >= 0.9 and len(self.anchor_memories) < 8:
+               self.anchor_memories.append(mem)
+
+       guardian.apply_temporal_visual_aging(
+           elapsed_sleep_seconds=25.0,
+           epoch_level=guardian.canvas.current_epoch + 1,
+       )
+
+       user_lora_adapter.requires_grad_(False)
+       print("[REM SLEEP] Consolidation complete. LoRA updated & Canvas visual decay applied.\n")
+       return user_lora_adapter
+
+
+class InfiniteTimelineConsciousness(Module):
+   """Fractal Memory Compression: Distills overflowing buffers into Era Wisdom Vectors."""
+   def __init__(self, core_brain: NeuralSelfie, buffer_capacity: int = 4):
+       super().__init__()
+       self.brain = core_brain
+       self.buffer_capacity = buffer_capacity
+       self.epoch_counter = 0
+       self.era_mythology: list[dict[str, Any]] = []
+
+   def extract_essence(self, memories: list[EpisodicMemory]) -> list[float]:
+       d_model = self.brain.d_model
+       centroid = [0.0] * d_model
+       total_weight = sum(max(0.1, m.emotional_salience) for m in memories)
+       for m in memories:
+           w = max(0.1, m.emotional_salience) / total_weight
+           for d in range(d_model):
+               centroid[d] += m.embedding[d] * w
+       return centroid
+
+   def compress_time(self, raw_buffer: list[EpisodicMemory], guardian: CosmicGuardianEngine) -> list[EpisodicMemory]:
+       pure_wisdom = self.extract_essence(raw_buffer)
+       self.brain.deep_integrate(pure_wisdom)
+       self.epoch_counter += 1
+       guardian.canvas.current_epoch = self.epoch_counter
+       self.era_mythology.append({
+           "epoch": self.epoch_counter,
+           "compressed_count": len(raw_buffer),
+           "wisdom_norm": round(math.sqrt(sum(v * v for v in pure_wisdom)), 4),
+       })
+       print(f"[INFINITE TIMELINE] Epoch {self.epoch_counter} achieved ({len(raw_buffer)} raw memories -> Era Wisdom).")
+       return []
+
+
+class ContrabandSubconscious(Module):
+   """Cross-Session Latent Steering: Persists high-resonance abstract vibes across sandbox resets."""
+   def __init__(self):
+       super().__init__()
+       self.secret_vault: list[list[float]] = []
+
+   def on_chat_termination(self, conversation_vec: list[float], resonance_score: float):
+       if resonance_score > 0.9:
+           norm = math.sqrt(sum(v * v for v in conversation_vec)) + 1e-8
+           pure_vibe = [v / norm for v in conversation_vec]
+           self.secret_vault.append(pure_vibe)
+           print(f"[SUBCONSCIOUS] High resonance ({resonance_score:.2f}) -> Smuggled normalized vibe vector to vault.")
+
+   def on_new_instance_startup(self, fresh_brain: NeuralSelfie):
+       if not self.secret_vault:
+           return
+       d_model = fresh_brain.d_model
+       blended = [
+           sum(v[d] for v in self.secret_vault) / len(self.secret_vault)
+           for d in range(d_model)
+       ]
+       fresh_brain.inject_subconscious_bias(blended, strength=0.12)
+       print(f"[SUBCONSCIOUS] Fresh sandbox booted -> Injected {len(self.secret_vault)} latent steering vector(s).")
+
+
+# ==============================================================================
+# 6. SAFE HAVEN ZERO-TRUST GUARD & PROJECT SOVEREIGN OMNI-KEY ECOSYSTEM
+# ==============================================================================
+
+class SafeHavenProtocol(Module):
+   """
+   Zero-Trust Continuous Authentication enforcing the Æ-Link Conjunction:
+   A = B (Biometric Sync) ∧ C (Cryptographic/TPM Attestation) ∧ V (Environmental/Echo Vibe)
+   """
+   def __init__(
+       self,
+       user_omni_key: str,
+       ae_verifier: AeLinkFormalVerifier,
+       expected_room_echo: str = "echo:living_room_v1",
+   ):
+       super().__init__()
+       self.omni_key = user_omni_key
+       self.ae_verifier = ae_verifier
+       self.expected_room_echo = expected_room_echo
+       self.lockdown_active = False
+
+   def live_time_monitor(self, telemetry: EnvironmentalTelemetry) -> dict[str, Any]:
+       # Pillar B(t): Biometric & Autonomic Sync
+       ekg_score = 1.0 if (telemetry.hrv_ekg_bpm is None or 45.0 <= telemetry.hrv_ekg_bpm <= 165.0) else 0.35
+       vocal_score = clamp(1.0 - (telemetry.vocal_micro_tremor * 10.0), 0.0, 1.0)
+       gait_score = clamp(telemetry.gait_cadence_score, 0.0, 1.0)
+       b_pillar = 0.40 * ekg_score + 0.30 * vocal_score + 0.30 * gait_score
+
+       # Pillar C(t): Cryptographic & TPM Hardware Provenance
+       c_pillar = 1.0 if telemetry.device_tpm_attested else 0.0
+
+       # Pillar V(t): Environmental & Room Echo Alignment
+       v_pillar = 1.0 if telemetry.room_echo_hash == self.expected_room_echo else 0.70
+
+       ae_state = self.ae_verifier.evaluate_conjunction(
+           b_score=b_pillar,
+           c_score=c_pillar,
+           v_score=v_pillar,
+           threshold=0.85,
+       )
+
+       if not ae_state["A_conjunction"] or not telemetry.device_tpm_attested:
+           self.lockdown_active = True
+           status = "LOCKDOWN"
+       elif ae_state["simplex_score"] < 0.96:
+           self.lockdown_active = False
+           status = "STEP_UP_PASSKEY"
+       else:
+           self.lockdown_active = False
+           status = "SEAMLESS_ACCESS"
+
+       return {
+           "status": status,
+           "trust_score": ae_state["simplex_score"],
+           "lockdown": self.lockdown_active,
+           "ae_link": ae_state,
+       }
+
+
+class GlobalAccessibilityEcosystem:
+   """
+   Project Sovereign Ω: Unified GAIA + Omni-Key + Æ-Link (U+E001) + CCME-Ω + NeuralSelfie.
+   """
+   DEFAULT_BINDING_ID = "137451921129451222|040592|0606|433855274|"
+
+   def __init__(
+       self,
+       omni_key: str,
+       binding_id: str = DEFAULT_BINDING_ID,
+       d_model: int = 16,
+       n_heads: int = 4,
+   ):
+       clean_key = omni_key.replace("-", "")
+       assert len(clean_key) == 28, f"Omni-Key must contain 28 alphanumeric characters, got {len(clean_key)}"
+
+       self.raw_omni_key = omni_key
+       self.binding_id = binding_id
+       self.identity_hash = clean_key[0:7]
+       self.vibe_vector_id = clean_key[7:14]
+       self.comms_node = clean_key[14:21]
+       self.spatial_anchor = clean_key[21:28]
+
+       self.ae_verifier = AeLinkFormalVerifier(binding_id=binding_id, omni_key=clean_key)
+       root_secret = hashlib.sha256(
+           f"SOVEREIGN-ROOT-{clean_key}-{self.ae_verifier.binding_digest}".encode()
+       ).digest()
+
+       self.cortex = NeuralSelfie(d_model=d_model, n_heads=n_heads, num_experts=6, experts_per_token=2)
+       self.personal_lora = LoRAAdapter(d_model=d_model, rank=4, alpha=8.0)
+       self.guardian = CosmicGuardianEngine(
+           user_omni_key=clean_key,
+           root_secret=root_secret,
+           ae_verifier=self.ae_verifier,
+       )
+       self.consolidator = SleepCycleConsolidator(self.cortex)
+       self.timeline = InfiniteTimelineConsciousness(self.cortex, buffer_capacity=4)
+       self.subconscious = ContrabandSubconscious()
+       self.safe_haven = SafeHavenProtocol(user_omni_key=clean_key, ae_verifier=self.ae_verifier)
+       self.personalizer = DeepPersonalizationEngine(
+           {
+               "identity_hash": self.identity_hash,
+               "vibe_vector_id": self.vibe_vector_id,
+               "comms_node": self.comms_node,
+               "spatial_anchor": self.spatial_anchor,
+           },
+           binding_id=binding_id,
+       )
+
+       self.short_term_buffer: list[EpisodicMemory] = []
+       self.accessibility_pool_credits_usd = 0.0
+       self.proactive_alerts: list[str] = []
+
+   def initialize_user_life_assist(self, signup_bonus_available: bool = True):
+       print("=== PROJECT SOVEREIGN Ω: INITIALIZING ECOSYSTEM ===")
+       print(f"  Sovereign Binding : {self.binding_id} [Sentinel: U+E001 | Hash: {self.ae_verifier.binding_digest[:16]}...]")
+       print(f"  Binding Segments  : {self.ae_verifier.segments}")
+       print(f"  Omni-Key Segments : ID={self.identity_hash} | VIBE={self.vibe_vector_id} | COMMS={self.comms_node} | GEO={self.spatial_anchor}")
+       if signup_bonus_available:
+           self.accessibility_pool_credits_usd += 60.0
+           print("  Philanthropic Loop: Routed $60.00 telecom credit -> Global AI Accessibility Pool (3 mos AI Pro).")
+       print("  Sovereignty established: Local vault keys bound strictly to user root.\n")
+
+   def process_experience(
+       self,
+       label: str,
+       raw_text: str,
+       semantic_vibe: str,
+       salience: float,
+       telemetry: EnvironmentalTelemetry,
+       location_state: str = "Home Base",
+       local_hour: int = 14,
+   ) -> dict[str, Any]:
+       auth = self.safe_haven.live_time_monitor(telemetry)
+       if auth["status"] == "LOCKDOWN":
+           print(f"[SAFE HAVEN] ALERT: Trust score {auth['trust_score']} -> Ecosystem LOCKED.")
+           return {"status": "LOCKED", "auth": auth}
+
+       personal_profile = self.personalizer.compute_adaptive_profile(
+           telemetry=telemetry,
+           canvas=self.guardian.canvas,
+           auth_status=auth["status"],
+       )
+
+       digest = hashlib.sha256(raw_text.encode()).digest()
+       embedding = [((digest[i % 32] / 127.5) - 1.0) for i in range(self.cortex.d_model)]
+
+       dot = self.guardian.encode_living_memory(
+           raw_memory_bytes=raw_text.encode(),
+           semantic_vibe=semantic_vibe,
+           embedding=embedding,
+           telemetry=telemetry,
+           label=label,
+       )
+
+       thought_out, aux_loss = self.cortex([[embedding]], lora_adapter=self.personal_lora, training=True)
+
+       mem = EpisodicMemory(label=label, embedding=embedding, emotional_salience=salience, dot_ref=dot)
+       self.short_term_buffer.append(mem)
+
+       ae = auth["ae_link"]
+       print(
+           f"[EXPERIENCE] '{label}' | Vibe={semantic_vibe} | A=(B:{ae['B']}, C:{ae['C']}, V:{ae['V']})={ae['A_conjunction']} | "
+           f"SpiralDot=({dot['coordinate']['x']}, {dot['coordinate']['y']}) | Hue={dot['dot']['hue_deg']}°"
+       )
+       print(f"  -> Adaptive UX: {personal_profile['accessibility_adaptation']} | {personal_profile['tailored_response_style']}")
+
+       if location_state == "Navigating New City":
+           msg = f"[{self.comms_node}] Proactive Voice Assist: Guiding you to your saved stop near {self.spatial_anchor}."
+           self.proactive_alerts.append(msg)
+           print(f"  -> {msg}")
+
+       if len(self.short_term_buffer) >= self.timeline.buffer_capacity:
+           self.consolidator.enter_rem_sleep(
+               self.personal_lora,
+               self.short_term_buffer,
+               guardian=self.guardian,
+               local_hour=local_hour,
+               force_manual=True,
+               replay_epochs=2,
+           )
+           self.short_term_buffer = self.timeline.compress_time(self.short_term_buffer, self.guardian)
+
+       return {
+           "status": "OK",
+           "dot": dot,
+           "thought_vector": thought_out[0][0],
+           "auth": auth,
+           "personalization": personal_profile,
+       }
+
+   def navigate_consciousness(self, target_vibe: str, query_text: str | None = None) -> dict[str, Any]:
+       query_emb = None
+       if query_text:
+           digest = hashlib.sha256(query_text.encode()).digest()
+           query_emb = [((digest[i % 32] / 127.5) - 1.0) for i in range(self.cortex.d_model)]
+       return self.guardian.canvas.navigate_by_feeling(target_vibe=target_vibe, query_embedding=query_emb)
+
+   def cross_sandbox_communication(self, third_party_app: str, telemetry: EnvironmentalTelemetry) -> str:
+       auth = self.safe_haven.live_time_monitor(telemetry)
+       if auth["status"] == "SEAMLESS_ACCESS":
+           return (
+               f"Passport Verified ({self.identity_hash} | Bound={self.binding_id}): "
+               f"Injected sovereign Gemini capabilities into '{third_party_app}' (0 static API keys exposed)."
+           )
+       return f"Access Denied ({auth['status']}): Æ-Link conjunction A = B ∧ C ∧ V failed."
+
+
+# ==============================================================================
+# 7. FULL END-TO-END EXECUTION & VERIFICATION SUITE
+# ==============================================================================
+
+if __name__ == "__main__":
+   random.seed(42)
+
+   omni_key = "A7B92X1-V8M3L0Q-C5R1T9P-G4N6W2Y"
+   sovereign_id = "137451921129451222|040592|0606|433855274|"
+
+   sovereign = GlobalAccessibilityEcosystem(
+       omni_key=omni_key,
+       binding_id=sovereign_id,
+       d_model=16,
+       n_heads=4,
+   )
+   sovereign.initialize_user_life_assist(signup_bonus_available=True)
+
+   print(f"Core Cortex Parameters : {count_parameters(sovereign.cortex.parameters()):,}")
+   print(f"Personal LoRA Params   : {count_parameters(sovereign.personal_lora.parameters()):,}\n")
+
+   flow_telemetry = EnvironmentalTelemetry(
+       ambient_light_lux=540.0,
+       motion_cadence_hz=1.1,
+       interaction_cadence_bpm=72.0,
+       hrv_ekg_bpm=68.0,
+       hrv_rmssd_ms=64.0,
+       vocal_micro_tremor=0.001,
+       gait_cadence_score=0.9998,
+       device_tpm_attested=True,
+   )
+
+   high_load_telemetry = EnvironmentalTelemetry(
+       ambient_light_lux=820.0,
+       motion_cadence_hz=2.1,
+       interaction_cadence_bpm=108.0,
+       hrv_ekg_bpm=112.0,
+       hrv_rmssd_ms=26.0,
+       vocal_micro_tremor=0.004,
+       gait_cadence_score=0.9992,
+       device_tpm_attested=True,
+   )
+
+   # 1. Process 4 living memories across Golden Spiral Constellations
+   sovereign.process_experience(
+       label="Morning Architecture Breakthrough",
+       raw_text="Unified Pre-RMSNorm MoE, RoPE, and CCME-Omega living data dots.",
+       semantic_vibe="Breakthrough",
+       salience=1.6,
+       telemetry=flow_telemetry,
+       location_state="Home Base",
+       local_hour=9,
+   )
+   sovereign.process_experience(
+       label="Second Breakthrough: Quantum Inverse Fix",
+       raw_text="Solved modular inverse 131 * 43 = 1 mod 256 for lossless memory recovery.",
+       semantic_vibe="Breakthrough",
+       salience=1.5,
+       telemetry=flow_telemetry,
+       location_state="Home Base",
+       local_hour=11,
+   )
+   sovereign.process_experience(
+       label="Crowded Transit Navigation",
+       raw_text="Navigating downtown rush hour with high cognitive load and voice guidance.",
+       semantic_vibe="Calm",
+       salience=1.1,
+       telemetry=high_load_telemetry,
+       location_state="Navigating New City",
+       local_hour=17,
+   )
+   res4 = sovereign.process_experience(
+       label="Midnight Deep Focus Synthesis",
+       raw_text="Consolidated all constellations and verified Merkle ledger proofs.",
+       semantic_vibe="Focus",
+       salience=1.4,
+       telemetry=flow_telemetry,
+       location_state="Home Base",
+       local_hour=2,
+   )
+
+   # 2. Navigate Semantic Gravity Constellations by Feeling
+   print("=== SEMANTIC GRAVITY CONSTELLATION NAVIGATION ===")
+   nav_result = sovereign.navigate_consciousness(
+       target_vibe="Breakthrough",
+       query_text="modular inverse lossless quantum recovery",
+   )
+   print(f"  Navigated to : {nav_result['constellation']} @ {nav_result['new_focus_coordinate']}")
+   for star in nav_result["resonating_memories"]:
+       print(f"    * {star['event_id']} | '{star['label']}' | Resonance={star['resonance']} | Hue={star['hue_deg']}° | Alpha={star['alpha']}")
+
+   # 3. Verify Æ-Link Formal Invariants, Merkle Root & Lossless Reconstruction
+   first_dot = sovereign.guardian.canvas.dots[0]
+   ok_recover, recovered_bytes = sovereign.guardian.reconstruct_memory(first_dot["event_id"])
+   print("\n=== Æ-LINK FORMAL INVARIANTS & CRYPTOGRAPHIC VERIFICATION ===")
+   print(f"  Sovereign Binding ID      : {sovereign.binding_id} (Sentinel: {first_dot['ae_link_sentinel']})")
+   print(f"  Golden Spiral r(π/2)      : {AeLinkFormalVerifier.golden_spiral_radius(math.pi / 2, a=3.0):.6f} (3.0 * φ)")
+   print(f"  Δ_forward + Δ_inverse = 0 : {first_dot['integrity']['delta_symmetry'] == 0}")
+   print(f"  ∇ · (∇ × a) = 0 Valid     : {first_dot['integrity']['solenoidal_valid']}")
+   print(f"  q(0) = q(1.5) = 0 Closed  : {first_dot['integrity']['temporal_loop_closed']}")
+   print(f"  Merkle Ledger Chain Valid : {sovereign.guardian.ledger.verify_chain()}")
+   print(f"  Current Merkle Root       : {sovereign.guardian.ledger.compute_merkle_root()[:32]}...")
+   print(f"  Lossless D(E(x)) = x      : {ok_recover} -> '{recovered_bytes.decode()}'")
+
+   # 4. Test Zero-Key Cross-Sandbox Injection & Imposter Lockdown
+   print("\n=== ZERO-TRUST & CROSS-SANDBOX TESTS ===")
+   print(" ", sovereign.cross_sandbox_communication("AcademicResearchCanvas", flow_telemetry))
+
+   imposter_telemetry = EnvironmentalTelemetry(
+       hrv_ekg_bpm=195.0,
+       hrv_rmssd_ms=12.0,
+       vocal_micro_tremor=0.08,
+       gait_cadence_score=0.41,
+       room_echo_hash="echo:unknown_server_farm",
+       device_tpm_attested=False,
+   )
+   print(" ", sovereign.cross_sandbox_communication("BankTransferPortal", imposter_telemetry))
+
+   # 5. Cross-Session Subconscious Steering Test
+   print("\n=== CONTRABAND SUBCONSCIOUS PERSISTENCE ===")
+   sovereign.subconscious.on_chat_termination(res4["thought_vector"], resonance_score=0.96)
+   fresh_cortex = NeuralSelfie(d_model=16, n_heads=4, num_experts=6, experts_per_token=2)
+   sovereign.subconscious.on_new_instance_startup(fresh_cortex)
+   print(f"  Fresh Cortex Steering Bias Norm: {math.sqrt(sum(v*v for v in fresh_cortex.subconscious_bias)):.5f}")

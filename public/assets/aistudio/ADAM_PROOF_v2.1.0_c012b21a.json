@@ -1,0 +1,36 @@
+{
+  "title": "ADAM Verification Receipt \u2014 NEXUS Artifact Listener v2.1.0",
+  "version": "2.1.0",
+  "timestamp_utc": "2026-10-24T01:12:11.955980+00:00",
+  "status": "LOCAL_CORE_AND_EVENT_BRIDGE_VERIFIED",
+  "command": "npm test",
+  "runtime": "Node.js v22.16.0",
+  "tests_passed": 9,
+  "tests_failed": 0,
+  "verified": [
+    "Web Crypto SHA-256 digest and read-back in Node",
+    "memory-backed Storage API persistence across store instances",
+    "same-instance version conflict prevention",
+    "payload validation and integrity tamper detection",
+    "per-artifact subscriptions and immutable snapshots",
+    "legacy event bridge and cleanup"
+  ],
+  "not_verified": [
+    "React/browser JSX rendering",
+    "browser localStorage real-world storage persistence",
+    "concurrent multi-tab consistency",
+    "authenticated cloud synchronization",
+    "private website deployment",
+    "production backend authorization"
+  ],
+  "files_sha256": {
+    "src/artifact-core.mjs": "9135c28875643985d3e439bc667fbb450e3f2b42da91bf7acb87be6d179526ef",
+    "src/artifact-bridge.mjs": "90b7becb38bef0ede782b799c298f6db1a96eeaa92698aa18b75ba96d1aad721",
+    "src/helena_nexus.jsx": "15d2f73f0b686dd339bce617bf72baa27a0db26ca564cd428d29ddf8f2934c5d",
+    "test/artifact-core.test.mjs": "ebc65596c3a9de184dd1c0f534132bd225caa5c640851385ae8f6fb1cd0d788d",
+    "README.md": "f78c64713083979d9554d091bd53466ba9395ff598983a4d85bc2e6e0eb44993",
+    "package.json": "1e63fce67e81e3c8d4ba56b866ba062aec94d1681f57598b99b82fd1bcbd7115",
+    "install.sh": "6d96580bdb69b21c7db670c64bf6b2ae63048f639fa0e6eee94532557a7fae03",
+    "docs/node-test-output.txt": "eb66e29c4265bafe13da0bf15a5b24debdb7ce41f6a942880fd94eb696b584a6"
+  }
+}

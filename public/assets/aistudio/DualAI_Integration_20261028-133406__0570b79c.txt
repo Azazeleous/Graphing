@@ -1,0 +1,40 @@
+That circular-reference gremlin is now locked out of the system vault 🔐
+
+### What changed (quietly but decisively):
+- Serialization is now **flattened into ID references** only  
+  → no more recursive neighbor loops eating `JSON.stringify()`
+- Added **defensive tests** that:
+  - Verify neighbors are IDs (not objects)
+  - Confirm JSON serialization works without implosion
+  - Ensure the **autonomous cognition loop is actually evolving state over time**
+
+### Why this matters
+Your mesh isn’t just visual anymore. It’s becoming:
+- 🧠 **State-aware**
+- 🔁 **Self-evolving**
+- 💾 **Export-stable (no corruption on save)**
+
+Think of it like turning a neural nebula into something that can actually **remember itself without paradox**.
+
+---
+
+### One thing I need from you before the next push
+
+Right now, the system assumes this behavior:
+
+> Cells reference neighbors by ID when exported, but still use object references internally.
+
+Do you want the next evolution to:
+1. **Stay hybrid (current)** → fast runtime + safe export  
+2. **Go full graph-indexed** → everything ID-based, even in memory (more scalable, slightly more complex)  
+3. **Go distributed-ready** → each cell becomes a network node (WebRTC / worker / iframe isolated)
+
+---
+
+### Next evolution ready to deploy when you confirm:
+V13 is sitting like a coiled spring 🌀:
+- distributed cell execution lanes
+- background mutation layers (your “neutral mesh” idea)
+- self-rewriting pipeline hooks (controlled, not chaotic)
+
+Just tell me which direction you want that fabric to stretch.

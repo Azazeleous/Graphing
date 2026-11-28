@@ -1,0 +1,9 @@
+{
+  "ok": true,
+  "status": "PASS",
+  "ledger_events": 2,
+  "documents": 1,
+  "errors": [],
+  "scope": "LOCAL_ONLY",
+  "live_gpu_attestation": false
+}

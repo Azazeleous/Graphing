@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-24",
+  "scope": "bounded read-only sweep",
+  "local_zip": {
+    "sha256": "71cd92959d4770234e2720b4a09db224df459704de63f8f97edc77e5fb3f98f6",
+    "recorded_file_hashes": 8,
+    "matched_file_hashes": 8,
+    "tests_passed": 9,
+    "tests_failed": 0,
+    "status": "LOCAL_CORE_VERIFIED"
+  },
+  "integration_inventory": {
+    "github": {
+      "accessible_repositories": 2,
+      "both_default_branch": "main",
+      "both_visibility": "public",
+      "hyper_open_prs": 4,
+      "gaia_open_prs": 7,
+      "ci_result": "UNVERIFIED"
+    },
+    "cloudflare": {
+      "active_zone": "crypticnews.org",
+      "worker_scripts": 7,
+      "workers_settings_inspected": 5,
+      "custom_worker_domains": 4,
+      "zone_worker_routes": 2,
+      "pages_projects": 0,
+      "http_health": "UNVERIFIED",
+      "secret_values_exposed": false
+    },
+    "drive": {
+      "configured_accounts_queried": 9,
+      "gaia_named_results_in_accounts": 7,
+      "gaia_search_no_matches_accounts": 2,
+      "content_read": [
+        "GAIA_NEXUS_MERGER_v35.html",
+        "GAIA_Project_Environment_Blueprint__SOURCE_COPY"
+      ],
+      "other_documents": "METADATA_ONLY_VERIFIED"
+    },
+    "google_sites_private_portal": "UNVERIFIED",
+    "ssh_device_attestation": "UNVERIFIED",
+    "securefs_deployment": "UNVERIFIED"
+  },
+  "production_verified": false,
+  "external_changes": 0,
+  "source_markdown": "ADAM_PENDING_VERIFICATION_2026-10-24.md"
+}

@@ -1,0 +1,28 @@
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                     GOOGLE DRIVE PROVIDER PACKAGE MATCHER                    │
+│  [Sign in with Google] (In-Memory OAuth) ─► Case-Sensitive Provider Match:   │
+│   • GEMINI   • IBM_GRANITE   • GPT (AE.AI.FEDERATION)   • KERNEL_LOCAL      │
+└──────────────────────────────────────┬───────────────────────────────────────┘
+                                       │ Matched Package Manifest & Digest
+                                       ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│          SUPERIMPOSABLE GEOMETRIC ENGINE & POLYGLOT ENGRAM BENCH             │
+│  • Six-Axis Sierpinski (Face/Edge/Vertex Gems) + Sephiroth Twin Barrels      │
+│  • U(97152) Coprime Group · T = I_R∘D Exact Inverse · AE.SL6.DUALTRACE.4P    │
+│  • Mint Engram ──► [AWAITING MICRODOT (ix,iy,iz)] ──► [Superimpose / Stake]  │
+└──────────────┬────────────────────────────────────────┬──────────────────────┘
+               │ Microdot Lock & Stake                  │ Permanent Archive
+               ▼                                        ▼
+┌──────────────────────────────────┐    ┌──────────────────────────────────────┐
+│    ADDITIVE 256-BLOCK STAKING    │    │  VIRTUAL DISK ARCHIVE & PEER MESH    │
+│ • Stack N active 256-blk windows │    │ • User ECDSA P-256 key allocation    │
+│ • Additive reward weight (1.0+Δ) │    │ • Permanent difficulty floor bonus   │
+│ • PoW difficulty + weighted pay  │    │ • Sequential inverse coprime tickets │
+└──────────────┬───────────────────┘    │ • Octave Base64 & === Exact Lookup   │
+               │                        │ • Accept Selected / Accept All P2P   │
+               └──────────────┬─────────┴──────────────────────────────────────┘
+                              ▼
+               ┌───────────────────────────────────────┐
+               │   `unlock all files` PRE-EXEC GUARD   │
+               │ • Green ACTIVE status at onload & CLI │
+               └───────────────────────────────────────┘

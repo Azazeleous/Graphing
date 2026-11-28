@@ -1,0 +1,356 @@
+# Consolidated status and enhancement consult
+
+**27 November 2026 — evidence-led review**
+
+The central distinction is this: **the architecture is substantially specified, parts of the miner and governance infrastructure are implemented, but the two AI Studio builds are not yet independently verified as complete mining systems.** The relay's phase descriptions are useful current-state reports, not proof that the phases have passed.
+
+One important live update: the CRYPTIC miner hardening PR has now received green GitHub Actions checks. That advances its verification status, but does not establish that the AI Studio mining paths are registry-connected, mock-free, or production-ready.
+
+## 1. Consolidated progress: what is built, verified, and still unproven
+
+### A. The three implementation surfaces
+
+| Surface                                        | What is established                                                                                                                                                                                    | What is not yet established                                                                                                                                                                                                 |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **GAIA-NEXUS-4D / Sierpinski** — TypeScript    | Existing app components include `creedAdmittance.ts`, `hamiltonianCore.ts`, `adlScheduler.ts`, and `memoryFabric.ts`. Prior reported runtime evidence included 16 FPS, BLKS 4096/4096, and V5 625/625. | Corrections A+B have not been independently inspected. Earlier error-count disagreement (2 versus 4) remains a reconciliation issue. Those rendering metrics do not prove mining correctness or consensus.                  |
+| **Cryptic-Nexus-Axis** — Kotlin                | Prior inspection reported an Android emulator run with 15 engines. The governance engine and tamper-gate work are in scope.                                                                            | `GreenGateTamperEngine` was reported YELLOW with 1/5 passes. The current Phase 2 correction has not been independently inspected or tested here. A running emulator is not proof that every engine entry point is governed. |
+| **Azazeleous/CRYPTIC** — Python miner and pool | Repository contains separate SHA-256d/80, four-lane SHA-256, and HCCGN-WORK/1 mining paths, plus pool job/share, admission, and settlement components.                                                 | The current hardening PR is not merged. End-to-end real-registry mining, production payout, and the Phase 5 atomic admission/benchmark requirements are not established by that PR.                                         |
+
+The Android app and the Python miner repository are distinct implementation surfaces. They should share explicit contracts, not be treated as if one already proves the other.
+
+### B. Live GitHub verification: CRYPTIC PR #45
+
+PR #45 — fix(miner): harden four-lane input validation
+
+| Check                     | Current result                                       |
+| ------------------------- | ---------------------------------------------------- |
+| Branch                    | `feat/miner-input-hardening-v1`                      |
+| Head commit               | `80a201bab19b3d0d202dfd0db7fdebd105d403a8`           |
+| Base                      | `main` at `c4708f92d8aa1489e78c2e75aebb26623de1df6c` |
+| Changed files             | 3                                                    |
+| GitHub Actions check runs | **17 / 17 completed successfully**                   |
+| PR state                  | Open, draft                                          |
+| Merge                     | Not merged                                           |
+
+The patch hardens input validation in `mining/miner.py` and `mining/scheduler.py`, and adds regression tests. It rejects Boolean values where integer nonce, target, count, lane, and scheduler values are required, and validates four-lane candidate metadata.
+
+That is real progress, and the checks are real CI evidence. But the patch deliberately leaves the hash preimage, HCCGN wire format, target comparison, nonce scheduling order, pool protocol, and consensus rules unchanged. It is a correctness-hardening patch, not a completed mining integration.
+
+One nuance: GitHub's commit-status endpoint still reported `pending` with zero legacy status entries, while the 17 check runs were all successful. I would record the check-run results as green, but not silently equate that with every possible branch-protection requirement being satisfied.
+
+### C. What is genuinely implemented versus still design
+
+**Implemented or previously inspected:**
+
+- Four-lane SHA-256 reference mining and deterministic lane scheduling.
+- HCCGN-WORK/1 header, nonce mining, proof verification, and sequential/symplectic scheduling.
+- Pool job/share protocol and independent share verification.
+- Admission and settlement components that distinguish accepted shares from finalized blocks.
+- Internal nonredeemable credits distinguished from actual external payouts.
+- Governance and mathematical components in the two AI Studio applications, at least at the source/component level reported in prior inspections.
+
+**Still requiring proof:**
+
+- Every Kotlin engine entry point actually passes through `AdmittanceGovernanceEngine`.
+- Sierpinski Corrections A+B have reconciled the prior error-state discrepancy.
+- TypeScript and Kotlin agree on the same canonical manifests, event contracts, and admission semantics.
+- The mining job originates from a real, authenticated registry record and cannot fall back to generated data.
+- The same candidate is independently verified by the receiving side.
+- `find = verify = receipt = internal credit` occurs atomically under one timestamp.
+- The benchmark reports measured solver performance on a fixed, provenance-backed fixture.
+- A production deployment, real payout, or production-scale mining result has been demonstrated.
+
+The architecture's governing principle remains sound: deterministic code enforces authority; mathematical specifications define invariants; AI can assist within bounded permissions, but cannot authorize itself or bypass evidence and fencing.
+
+## 2. Specific enhancements for both apps
+
+I recommend treating the new value gate as a **release invariant**, not a documentation requirement. A phase cannot pass because the code looks correct or because an AI Studio agent reports success. It passes only when the implementation, executed evidence, and ledger agree.
+
+### A. Sierpinski — GAIA-NEXUS-4D, TypeScript
+
+**Current gate: Corrections A+B, then Phase 3.**
+
+I would keep the current order. Do not start Phase 3 while either correction remains unresolved.
+
+**Corrections A+B: close the evidence gaps first**
+
+1. **Reconcile the error registry.** The earlier app review reported conflicting error totals (2 versus 4). Establish one authoritative error registry, one count, and one severity mapping. Each error should have a stable code, source component, timestamp, and resolution state.
+2. **Make admission state authoritative.** `creedAdmittance.ts` should own the canonical admission decision. `hamiltonianCore.ts`, `adlScheduler.ts`, and `memoryFabric.ts` should consume that decision rather than maintaining separate, potentially divergent admission states.
+3. **Prove denial behavior.** Test missing provenance, expired registry records, invalid signatures, insufficient capacity, invalid boundaries, and failed verification. Each must deny admission and emit a reason-bearing record.
+4. **Preserve the rendering/runtime distinction.** The reported 16 FPS and node counts are useful performance observations. Keep them in a rendering telemetry category; do not allow them to count as mining or consensus proof.
+
+**Phase 3: shared manifests, events, and contracts**
+
+I recommend a versioned contract package with:
+
+- A canonical `MiningJobEnvelope`.
+- A `RegistryRecordRef` containing registry identity, record ID, version, and content hash.
+- A `ProofSubmission` with algorithm ID, job ID, nonce, proof digest, and verifier version.
+- A `Receipt` with a unique receipt ID, decision, and canonical timestamp.
+- Explicit schema versions and canonical serialization rules.
+
+The TypeScript app should not create its own mining jobs as a convenience fallback. It should resolve a job through the approved registry adapter, validate the record, and pass the resulting immutable job envelope to the solver.
+
+**Sierpinski phase exit condition:** Corrections A+B have diff evidence, executable tests, reconciled error counts, and ledger entries; Phase 3 has contract compatibility tests against the actual Kotlin and CRYPTIC contract definitions.
+
+### B. Cryptic-Nexus-Axis — Kotlin
+
+**Current gate: Phase 2 correction, then Phase 3.**
+
+The immediate priority is exactly the correction reported by the relay: wire `AdmittanceGovernanceEngine` to every engine entry point.
+
+I would make that difficult to bypass by design.
+
+1. **Inventory all entry points.** Build a list of every public engine invocation path, including UI actions, background workers, scheduled tasks, service calls, and inter-engine calls where present.
+2. **Centralize dispatch.** Route engine execution through a governed dispatcher or facade. Direct invocation should not be the normal production path.
+3. **Fail closed.** If the governance engine is unavailable, returns an indeterminate result, or cannot verify provenance, the engine operation must not proceed.
+4. **Test every engine.** For the reported 15-engine set, require an explicit entry-point coverage matrix. Every engine needs a positive authorized case and negative denial cases.
+5. **Resolve the YELLOW tamper gate.** The earlier `GreenGateTamperEngine` result was YELLOW with 1/5 passes. It should not be relabelled green merely because Phase 2 wiring compiles. The five checks need named outcomes, evidence, and a clear pass threshold.
+
+**Phase 3: shared contracts**
+
+Kotlin should consume the same versioned contract semantics as Sierpinski. It should not independently reinterpret a TypeScript admission result or trust a client-supplied `authorized: true` field.
+
+The receiving side must verify the signed job and its provenance locally. A request body cannot authorize itself.
+
+**Kotlin phase exit condition:** all engine entry points are accounted for; tests demonstrate that no production entry point bypasses governance; the tamper gate has a fully evidenced result; and the shared contract tests pass.
+
+### C. The Phase 5 mining-path guarantee: zero mock or simulated inputs
+
+This is the most important enhancement. I would implement it as a provenance boundary with no production fallback.
+
+```
+REAL REGISTRY
+     |
+     v
+Registry adapter
+     |
+     v
+Signature + schema + freshness verification
+     |
+     v
+Immutable, provenance-bearing job
+     |
+     v
+Solver (real implementation)
+     |
+     v
+Candidate proof
+     |
+     v
+Independent verifier
+     |
+     v
+Atomic admit()
+     |
+     +----> Receipt
+     |
+     +----> Internal credit
+     |
+     v
+Append-only evidence ledger
+```
+
+The production mining path must enforce all of these:
+
+| Control         | Required behavior                                                                                                                         |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Registry origin | Every job resolves to an actual registry record.                                                                                          |
+| Provenance      | Record ID, version, hash, signature/key identity, and retrieval time are retained.                                                        |
+| Freshness       | Expired, revoked, or stale records are rejected.                                                                                          |
+| Schema          | Unknown versions and malformed fields are rejected.                                                                                       |
+| Fallback        | No synthetic job, default target, generated nonce window, or fabricated registry response.                                                |
+| Solver          | The actual configured solver runs against the admitted job.                                                                               |
+| Verification    | A separate verifier recomputes the proof from the canonical job and submitted candidate.                                                  |
+| Accounting      | No internal credit is created before proof acceptance and receipt creation.                                                               |
+| Failure         | Missing registry, invalid proof, unavailable verifier, or ledger failure produces a denial/error record, not a success-shaped substitute. |
+
+**Important distinction about the requested mock ledger:** keep it as a separate test artifact used to demonstrate ledger behavior. It must be clearly marked synthetic, stored in an isolated test namespace, and technically unable to feed the production mining path. A mock ledger is evidence about test behavior; it is not mining input or proof of a real registry transaction.
+
+I would also add a static production-build check that rejects test adapters, fixture providers, mock registries, and simulation implementations from the production dependency graph. Runtime checks alone are not enough: an accidentally bundled fallback is still a possible route.
+
+### D. Phase 5 atomic `admit()`
+
+The requested invariant is:
+
+\\[ \text{find} = \text{verify} = \text{receipt} = \text{internal credit} \\]
+
+I would implement this as one transactional state change, not four independent operations that happen to be called in sequence.
+
+The operation should:
+
+1. Resolve the job from the real registry.
+2. Verify the job and candidate against the canonical job definition.
+3. Create the accepted receipt.
+4. Create the corresponding internal credit.
+5. Commit the complete result atomically.
+
+**One timestamp:** generate one canonical UTC timestamp for the admission transaction and use that exact value in the receipt, credit record, and ledger event. Do not generate a fresh timestamp in each sub-operation.
+
+Additional safeguards:
+
+- A unique idempotency key for each job/candidate/admission.
+- A uniqueness constraint preventing the same accepted proof from earning credit twice.
+- A database transaction that rolls back receipt and credit together on failure.
+- A durable append-only event or transactional outbox for downstream ledger publication.
+- Explicit distinction between accepted proof, finalized block, internal credit, and actual payout.
+
+A failed commit must not leave a receipt without its credit, or a credit without its receipt.
+
+### E. Fixed-fixture solver benchmark
+
+The benchmark fixture should be a **fixed, immutable job obtained from the real registry**, not a synthetic mining job disguised as a fixture.
+
+Capture and publish:
+
+- Registry record ID, version, content hash, signature verification result.
+- Algorithm and solver version.
+- Target and candidate-window parameters.
+- Hardware, operating environment, and concurrency settings.
+- Warm-up policy, trial count, elapsed times, and verified solution counts.
+
+Measure at least:
+
+\\[ H/s = \frac{\text{actual candidate hashes evaluated}}{\text{measured elapsed seconds}} \\]\\[ \text{Mean TTS} = \frac{\sum\_{i=1}^{n}t_i}{n} \\]
+
+Count only actual candidate evaluations. Do not derive H/s from configured capacity, simulated work, or UI frame rate.
+
+For a fair before/after comparison, run the same fixture, hardware, solver configuration, and measurement procedure against both versions. If a trial finds no solution within its allowed window, report that outcome explicitly; do not fabricate a time-to-solution.
+
+The benchmark report should include raw trial observations, not just an attractive summary number.
+
+### F. The new phase gate — required evidence bundle
+
+Every phase should produce these three artifacts:
+
+| Artifact           | Required contents                                                                                              |
+| ------------------ | -------------------------------------------------------------------------------------------------------------- |
+| **Diff evidence**  | Commit SHA, changed-file list, actual diff, and a clear mapping from changes to requirements.                  |
+| **Executed proof** | Exact command/test, environment, exit result, raw output, and real numeric observations.                       |
+| **Mock ledger**    | Segregated test ledger showing test transactions and expected outcomes, with explicit synthetic/test labeling. |
+
+For mining-related phases, add a fourth artifact: **registry provenance evidence**. It should identify the actual source record and prove that the job used by the solver is the job that was verified.
+
+A useful gate predicate is:
+
+\\[ G = D \land P \land L \land R \\]
+
+where:
+
+- \\(D\\) = diff evidence is present and reviewed.
+- \\(P\\) = executable proof passes.
+- \\(L\\) = segregated test ledger reconciles.
+- \\(R\\) = real registry provenance is verified for mining operations.
+
+If any required term is false or indeterminate, the phase does not pass.
+
+## 3. What has gone wrong or drifted from the plan?
+
+I see several risks. Some are demonstrated by earlier inspection; others are architectural weaknesses the new gates should catch.
+
+### A. The biggest drift: visible activity has sometimes been mistaken for verified capability
+
+Examples:
+
+- Sierpinski's visual rendering and node counts are not evidence that its mining pipeline is functioning.
+- An Android emulator showing 15 engines does not establish that all 15 are governed.
+- A successful build does not establish that the application is using real registry data.
+- A green CI run does not establish real-world solver throughput or successful pool admission.
+
+This is probably the most important cultural correction: **a feature is not complete because it appears to work; it is complete when its claimed behavior has reproducible evidence.**
+
+### B. Governance exists as a component, but enforcement may be incomplete
+
+The Kotlin Phase 2 correction itself suggests a significant gap: the governance engine existed, but its connection to all execution entry points needed further work.
+
+That is an architectural warning. A security or authorization component is not an effective boundary if one engine can be invoked without it.
+
+The same applies to Sierpinski: several components can share admission terminology while still making independent decisions. One authoritative decision and a traceable inheritance model are necessary.
+
+### C. The tamper gate is not ready to be treated as green
+
+The earlier YELLOW / 1-of-5 result is a concrete unresolved issue.
+
+I would require the five checks to be separately identifiable, with:
+
+- Their intended security property.
+- Their executed test.
+- Their observed result.
+- Their evidence reference.
+- Their remediation status.
+
+A weighted average should not allow a critical failure to disappear inside an overall score.
+
+### D. The mining architecture has multiple distinct paths that could be accidentally conflated
+
+The Python CRYPTIC repository contains distinct mining approaches:
+
+- SHA-256d/80.
+- Four-lane SHA-256.
+- HCCGN-WORK/1.
+
+These are not interchangeable algorithms. They have different candidate/proof semantics and should remain distinct protocol profiles.
+
+PR #45 improves four-lane input validation. It does not prove that HCCGN jobs, symplectic schedules, Kotlin mining, and pool admission all agree on one verified execution path.
+
+The integration needs an explicit algorithm identifier and verifier selection. Never silently reinterpret one algorithm's proof as another's.
+
+### E. The benchmark and accounting requirements were not sufficiently explicit before
+
+The new Phase 5 requirement corrects an important omission.
+
+Previously, the existence of a solver, pool worker, and settlement components could make the system look closer to completion than it was. The remaining question is whether an actual registry-sourced job can travel through the entire path and produce one independently verified, atomic admission result.
+
+Likewise, internal credit is not an external payout. The distinction must remain visible in UI, ledger, documentation, and test results.
+
+### F. The project has accumulated too many parallel surfaces
+
+There are three important codebases/surfaces, each with a different responsibility:
+
+- Sierpinski: TypeScript visualization, mathematical structures, and GAIA governance.
+- Cryptic-Nexus-Axis: Kotlin execution environment and engine governance.
+- CRYPTIC: canonical mining algorithms, proof verification, and pool protocol.
+
+The danger is duplicated logic and competing sources of truth.
+
+I recommend a shared, versioned contract specification, with each implementation independently conforming to it. Do not try to make all three codebases one giant implementation. Preserve the distinct responsibilities.
+
+### G. The mirror environment needs a strict evidence boundary
+
+The Golden Mirror / hot-swappable continuation concept is valuable, but it creates another possible source of drift.
+
+A mirror should only replace a failed component when it has:
+
+1. A verified compatible version.
+2. Matching protocol and schema versions.
+3. A valid integrity measurement.
+4. Its own passing admission and execution tests.
+5. A recorded transition event.
+
+It must not become a mechanism for silently switching to an unverified implementation because the primary system failed.
+
+The mirror should inherit verified state, not manufacture success.
+
+---
+
+### Recommended unified phase progression
+
+\#chatgpt-mermaid-\_r_2f4\_{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,Segoe UI,Helvetica,Apple Color Emoji,Arial,sans-serif,Segoe UI Emoji,Segoe UI Symbol;font-size:16px;fill:rgb(237, 237, 237);}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#chatgpt-mermaid-\_r_2f4\_ .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2f4\_ .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#chatgpt-mermaid-\_r_2f4\_ .error-icon{fill:rgb(48, 48, 48);}#chatgpt-mermaid-\_r_2f4\_ .error-text{fill:rgb(237, 237, 237);stroke:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2f4\_ .edge-thickness-normal{stroke-width:1px;}#chatgpt-mermaid-\_r_2f4\_ .edge-thickness-thick{stroke-width:3.5px;}#chatgpt-mermaid-\_r_2f4\_ .edge-pattern-solid{stroke-dasharray:0;}#chatgpt-mermaid-\_r_2f4\_ .edge-thickness-invisible{stroke-width:0;fill:none;}#chatgpt-mermaid-\_r_2f4\_ .edge-pattern-dashed{stroke-dasharray:3;}#chatgpt-mermaid-\_r_2f4\_ .edge-pattern-dotted{stroke-dasharray:2;}#chatgpt-mermaid-\_r_2f4\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2f4\_ .marker.cross{stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2f4\_ svg{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,Segoe UI,Helvetica,Apple Color Emoji,Arial,sans-serif,Segoe UI Emoji,Segoe UI Symbol;font-size:16px;}#chatgpt-mermaid-\_r_2f4\_ p{margin:0;}#chatgpt-mermaid-\_r_2f4\_ .label{font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,Segoe UI,Helvetica,Apple Color Emoji,Arial,sans-serif,Segoe UI Emoji,Segoe UI Symbol;color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2f4\_ .cluster-label text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2f4\_ .cluster-label span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2f4\_ .cluster-label span p{background-color:transparent;}#chatgpt-mermaid-\_r_2f4\_ .label text,#chatgpt-mermaid-\_r_2f4\_ span{fill:rgb(237, 237, 237);color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2f4\_ .node rect,#chatgpt-mermaid-\_r_2f4\_ .node circle,#chatgpt-mermaid-\_r_2f4\_ .node ellipse,#chatgpt-mermaid-\_r_2f4\_ .node polygon,#chatgpt-mermaid-\_r_2f4\_ .node path{fill:rgb(51, 24, 37);stroke:rgb(171, 79, 122);stroke-width:1px;}#chatgpt-mermaid-\_r_2f4\_ .rough-node .label text,#chatgpt-mermaid-\_r_2f4\_ .node .label text,#chatgpt-mermaid-\_r_2f4\_ .image-shape .label,#chatgpt-mermaid-\_r_2f4\_ .icon-shape .label{text-anchor:middle;}#chatgpt-mermaid-\_r_2f4\_ .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#chatgpt-mermaid-\_r_2f4\_ .rough-node .label,#chatgpt-mermaid-\_r_2f4\_ .node .label,#chatgpt-mermaid-\_r_2f4\_ .image-shape .label,#chatgpt-mermaid-\_r_2f4\_ .icon-shape .label{text-align:center;}#chatgpt-mermaid-\_r_2f4\_ .node.clickable{cursor:pointer;}#chatgpt-mermaid-\_r_2f4\_ .root .anchor path{fill:rgb(175, 175, 175)!important;stroke-width:0;stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2f4\_ .arrowheadPath{fill:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2f4\_ .edgePath .path{stroke:rgb(175, 175, 175);stroke-width:1px;}#chatgpt-mermaid-\_r_2f4\_ .flowchart-link{stroke:rgb(175, 175, 175);fill:none;}#chatgpt-mermaid-\_r_2f4\_ .edgeLabel{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2f4\_ .edgeLabel p{background-color:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2f4\_ .edgeLabel rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2f4\_ .labelBkg{background-color:rgba(0, 0, 0, 0.5);}#chatgpt-mermaid-\_r_2f4\_ .cluster rect{fill:rgb(48, 48, 48);stroke:rgba(255, 255, 255, 0.15);stroke-width:1px;}#chatgpt-mermaid-\_r_2f4\_ .cluster text{fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2f4\_ .cluster span{color:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2f4\_ div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,Segoe UI,Helvetica,Apple Color Emoji,Arial,sans-serif,Segoe UI Emoji,Segoe UI Symbol;font-size:12px;background:rgb(48, 48, 48);border:1px solid rgba(255, 255, 255, 0.15);border-radius:2px;pointer-events:none;z-index:100;}#chatgpt-mermaid-\_r_2f4\_ .flowchartTitleText{text-anchor:middle;font-size:18px;fill:rgb(237, 237, 237);}#chatgpt-mermaid-\_r_2f4\_ rect.text{fill:none;stroke-width:0;}#chatgpt-mermaid-\_r_2f4\_ .icon-shape,#chatgpt-mermaid-\_r_2f4\_ .image-shape{background-color:rgb(0, 0, 0);text-align:center;}#chatgpt-mermaid-\_r_2f4\_ .icon-shape p,#chatgpt-mermaid-\_r_2f4\_ .image-shape p{background-color:rgb(0, 0, 0);padding:2px;}#chatgpt-mermaid-\_r_2f4\_ .icon-shape .label rect,#chatgpt-mermaid-\_r_2f4\_ .image-shape .label rect{opacity:0.5;background-color:rgb(0, 0, 0);fill:rgb(0, 0, 0);}#chatgpt-mermaid-\_r_2f4\_ .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#chatgpt-mermaid-\_r_2f4\_ .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#chatgpt-mermaid-\_r_2f4\_ .node .neo-node{stroke:rgb(171, 79, 122);}#chatgpt-mermaid-\_r_2f4\_ [data-look="neo"].node rect,#chatgpt-mermaid-\_r_2f4\_ [data-look="neo"].cluster rect,#chatgpt-mermaid-\_r_2f4\_ [data-look="neo"].node polygon{stroke:url(#chatgpt-mermaid-\_r_2f4\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2f4\_ [data-look="neo"].swimlane.cluster rect{filter:none;}#chatgpt-mermaid-\_r_2f4\_ [data-look="neo"].node path{stroke:url(#chatgpt-mermaid-\_r_2f4\_-gradient);stroke-width:1px;}#chatgpt-mermaid-\_r_2f4\_ [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2f4\_ [data-look="neo"].node .neo-line path{stroke:rgb(171, 79, 122);filter:none;}#chatgpt-mermaid-\_r_2f4\_ [data-look="neo"].node circle{stroke:url(#chatgpt-mermaid-\_r_2f4\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2f4\_ [data-look="neo"].node circle .state-start{fill:#000000;}#chatgpt-mermaid-\_r_2f4\_ [data-look="neo"].icon-shape .icon{fill:url(#chatgpt-mermaid-\_r_2f4\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2f4\_ [data-look="neo"].icon-shape .icon-neo path{stroke:url(#chatgpt-mermaid-\_r_2f4\_-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#chatgpt-mermaid-\_r_2f4\_ .node text{font-size:14px;font-weight:600;letter-spacing:normal;fill:rgb(255, 186, 218);}#chatgpt-mermaid-\_r_2f4\_ .edgeLabels text{font-size:13px;font-weight:600;letter-spacing:-0.08px;fill:rgb(255, 186, 218);}#chatgpt-mermaid-\_r_2f4\_ .node tspan[font-weight="normal"],#chatgpt-mermaid-\_r_2f4\_ .edgeLabels tspan[font-weight="normal"]{font-weight:600;}#chatgpt-mermaid-\_r_2f4\_ .edgeLabel .label rect{opacity:1;rx:13px;ry:13px;fill:rgb(41, 16, 28);stroke:rgb(95, 53, 72);stroke-width:1px;}#chatgpt-mermaid-\_r_2f4\_ .node rect,#chatgpt-mermaid-\_r_2f4\_ .node circle,#chatgpt-mermaid-\_r_2f4\_ .node ellipse,#chatgpt-mermaid-\_r_2f4\_ .node polygon,#chatgpt-mermaid-\_r_2f4\_ .node path{fill:rgb(77, 31, 52);stroke:rgba(255, 255, 255, 0.1);stroke-width:1px;}#chatgpt-mermaid-\_r_2f4\_ .node rect{rx:16px;ry:16px;}#chatgpt-mermaid-\_r_2f4\_ .mermaid-decision .label-container{fill:rgb(41, 16, 28);stroke:rgb(95, 53, 72);stroke-dasharray:2,2;}#chatgpt-mermaid-\_r_2f4\_ .edgePaths .flowchart-link{stroke:rgb(175, 175, 175);stroke-width:1px;stroke-linecap:round;stroke-linejoin:round;}#chatgpt-mermaid-\_r_2f4\_ .marker{fill:rgb(175, 175, 175);stroke:rgb(175, 175, 175);}#chatgpt-mermaid-\_r_2f4\_ :root{--mermaid-font-family:-apple-system-body,ui-sans-serif,-apple-system,system-ui,Segoe UI,Helvetica,Apple Color Emoji,Arial,sans-serif,Segoe UI Emoji,Segoe UI Symbol;}Phase 1: Baseline andreconciliationPhase 2: GovernanceenforcementPhase 3: Shared contracts andmanifestsPhase 4: Mathematical andproof invariantsPhase 5: Real registry miningIndependent proof verificationAtomic admit(): receipt +internal creditFixed-fixture benchmarkPhase 6: Memory Fabric andconvergencePhase 7: Golden MirrorRelease verificationDiff evidenceExecuted proofSegregated mock ledgerRegistry provenanceDeny, record, investigateFailureFailureTransaction failureInvalid benchmark evidence
+
+### My recommended priorities, in order
+
+| Priority | Action                                       | Why                                                                   |
+| -------- | -------------------------------------------- | --------------------------------------------------------------------- |
+| 1        | Finish Sierpinski Corrections A+B            | Resolve contradictory state before adding shared contracts.           |
+| 2        | Finish Kotlin Phase 2 governance wiring      | Close execution bypasses before extending functionality.              |
+| 3        | Complete Phase 3 shared contracts            | Stop the three surfaces from developing incompatible interpretations. |
+| 4        | Establish real-registry-only mining boundary | Prevent synthetic inputs from entering production execution.          |
+| 5        | Implement atomic `admit()`                   | Ensure proof acceptance and internal accounting cannot diverge.       |
+| 6        | Run the fixed-fixture benchmark              | Establish actual, reproducible solver performance.                    |
+| 7        | Advance Memory Fabric and Golden Mirror      | Build recovery on verified state, not assumptions.                    |
+
+**My overall assessment:** the project has made meaningful progress, particularly in the Python miner and the underlying governance architecture. But the most important remaining work is not adding more engines or visual features. It is closing the boundary between *a declared capability* and *a demonstrated capability*.
+
+The new evidence gate is the right correction. I would make it mandatory across all three codebases, with no Phase 5 approval until the real-registry-to-atomic-admission path has been executed and independently verified.
+
+**Current miner checkpoint:** PR #45 is green on all 17 reported GitHub Actions checks, but remains an open draft. Keep it separate from the AI Studio Phase 5 work until its merge and the broader HCCGN integration are independently reviewed.

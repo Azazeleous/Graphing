@@ -1,0 +1,2159 @@
+# NEXUS OMNI · Unified Sierpinski-Tesseract Geodesic -4D & Cryptics Fieyld Optics
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NEXUS OMNI · Sierpinski-Tesseract Geodesic -4D & Cryptics Fieyld Optics</title>
+  <style>
+    :root {
+      --bg: #04050a;
+      --panel: rgba(9, 13, 24, 0.88);
+      --line: rgba(0, 243, 255, 0.26);
+      --cyan: #00f3ff;
+      --magenta: #ff44cc;
+      --emerald: #34d399;
+      --amber: #efca7a;
+      --error: #ff8a93;
+      --text: #e6eef8;
+      --muted: #8a9ab8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      user-select: none;
+    }
+
+    /* Layer 0: 250x Cryptics Fieyld Optics Radial Background Canvas */
+    #fieldCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 1;
+      display: block;
+    }
+
+    /* Layer 1: Three.js 3D/4D Geodesic Sierpinski-Tesseract Orb */
+    #orbContainer {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 2;
+    }
+
+    /* Launch Flash Overlay */
+    #launch-flash {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle, rgba(0, 243, 255, 0.45) 0%, rgba(168, 85, 247, 0.16) 50%, transparent 80%);
+      z-index: 15;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.85s ease-out;
+    }
+
+    /* Top-Left Unified Masthead HUD */
+    .hud-header {
+      position: fixed;
+      top: 16px;
+      left: 18px;
+      z-index: 10;
+      pointer-events: none;
+      max-width: calc(100vw - 36px);
+    }
+
+    .symbol-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(0, 243, 255, 0.09);
+      border: 1px solid rgba(0, 243, 255, 0.34);
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 6px;
+      backdrop-filter: blur(10px);
+    }
+
+    .hud-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      background: linear-gradient(90deg, #ffffff, #88aaff, #ff44cc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hud-subtitle {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Floating 3D Projected Anchor Reticle */
+    #point-reticle {
+      position: fixed;
+      z-index: 8;
+      pointer-events: none;
+      transform: translate(-50%, -135%);
+      background: rgba(5, 9, 20, 0.9);
+      border: 1px solid var(--cyan);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      color: var(--cyan);
+      white-space: nowrap;
+      box-shadow: 0 0 12px rgba(0, 243, 255, 0.4);
+    }
+
+    /* Bottom-Left Point Encoding & Geodesic Telemetry HUD */
+    .encoding-panel {
+      position: fixed;
+      bottom: 18px;
+      left: 18px;
+      z-index: 10;
+      width: 345px;
+      max-width: calc(100vw - 110px);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 13px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.68);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 9px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .panel-header span {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+      color: var(--cyan);
+    }
+
+    .mini-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #fff;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .mini-btn:hover {
+      background: rgba(0, 243, 255, 0.22);
+      border-color: var(--cyan);
+    }
+
+    .encoding-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .enc-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 5px 7px;
+    }
+
+    .enc-card-title {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: #94a3b8;
+      margin-bottom: 2px;
+    }
+
+    .enc-card-val {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    .enc-card-val.cyan { color: var(--cyan); }
+    .enc-card-val.magenta { color: var(--magenta); }
+    .enc-card-val.emerald { color: var(--emerald); }
+
+    .vertex-selector-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      background: rgba(0, 243, 255, 0.08);
+      border: 1px solid rgba(0, 243, 255, 0.24);
+      border-radius: 8px;
+      padding: 4px 8px;
+      margin-bottom: 7px;
+    }
+
+    .nav-pt-btn {
+      background: rgba(0, 243, 255, 0.18);
+      border: 1px solid rgba(0, 243, 255, 0.4);
+      color: var(--cyan);
+      border-radius: 5px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .nav-pt-btn:hover {
+      background: var(--cyan);
+      color: #04040a;
+    }
+
+    .vertex-id-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+    }
+
+    .telemetry-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+
+    .telemetry-table td {
+      padding: 3px 3px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .telemetry-table td.lbl { color: #94a3b8; }
+    .telemetry-table td.val { text-align: right; color: #f8fafc; font-weight: 600; }
+
+    /* Bottom-Right ◆ CrypticGem · 1:.bit Sprocket Popout Widget */
+    #cryptic-bubble-trigger {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      z-index: 30;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      background: linear-gradient(135deg, rgba(10, 18, 34, 0.94), rgba(22, 14, 42, 0.94));
+      border: 1px solid rgba(0, 243, 255, 0.55);
+      color: #fff;
+      padding: 10px 15px;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.75), 0 0 18px rgba(0, 243, 255, 0.25);
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #cryptic-bubble-trigger:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 243, 255, 0.45);
+    }
+
+    .sprocket-icon {
+      display: inline-block;
+      font-size: 16px;
+      color: var(--cyan);
+      animation: spinSprocket 9s linear infinite;
+    }
+
+    @keyframes spinSprocket {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .bit-badge {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: #04050a;
+      background: var(--cyan);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    /* Popout Annotation Bubble Drawer (CrypticGem · SYNAPSE · Portal) */
+    #cryptic-popover {
+      position: fixed;
+      bottom: 72px;
+      right: 18px;
+      z-index: 29;
+      width: 460px;
+      max-width: calc(100vw - 36px);
+      max-height: calc(100vh - 96px);
+      background: rgba(8, 12, 22, 0.94);
+      border: 1px solid rgba(0, 243, 255, 0.38);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), inset 0 0 24px rgba(0, 243, 255, 0.06);
+      backdrop-filter: blur(18px);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+
+    #cryptic-popover.closed {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(14px) scale(0.97);
+    }
+
+    .pop-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 15px;
+      background: rgba(0, 243, 255, 0.07);
+      border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+    }
+
+    .pop-head-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      color: var(--cyan);
+    }
+
+    .pop-tabs {
+      display: flex;
+      background: rgba(4, 7, 15, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      overflow-x: auto;
+    }
+
+    .pop-tab {
+      flex: 1;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 9px 8px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .pop-tab.active {
+      color: var(--cyan);
+      border-bottom-color: var(--cyan);
+      background: rgba(0, 243, 255, 0.06);
+    }
+
+    .pop-body {
+      padding: 14px;
+      overflow-y: auto;
+      flex: 1;
+      font-size: 12px;
+      user-select: text;
+    }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .control-group { margin-bottom: 10px; }
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #cbd5e1;
+      margin-bottom: 4px;
+    }
+    .control-value {
+      color: var(--cyan);
+      font-family: monospace;
+      font-weight: 700;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 5px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--cyan);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--cyan);
+    }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-top: 8px;
+    }
+
+    .action-btn {
+      background: rgba(0, 243, 255, 0.12);
+      border: 1px solid rgba(0, 243, 255, 0.36);
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+    .action-btn:hover { background: rgba(0, 243, 255, 0.25); }
+    .action-btn.active {
+      background: var(--cyan);
+      color: #04050a;
+      border-color: var(--cyan);
+    }
+
+    .depth-row { display: flex; gap: 6px; }
+    .depth-btn {
+      flex: 1;
+      padding: 5px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .depth-btn.active {
+      background: rgba(0, 243, 255, 0.22);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    /* Terminal & Ledger Styling */
+    .term-log {
+      background: #03060c;
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      border-radius: 8px;
+      padding: 9px;
+      height: 185px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10.5px;
+      line-height: 1.5;
+      margin-bottom: 8px;
+      white-space: pre-wrap;
+    }
+    .term-line.sys { color: var(--cyan); }
+    .term-line.usr { color: var(--amber); }
+    .term-line.err { color: var(--error); }
+    .term-line.mut { color: var(--muted); }
+
+    .term-form {
+      display: flex;
+      gap: 6px;
+    }
+    .term-input {
+      flex: 1;
+      background: #03060c;
+      border: 1px solid rgba(0, 243, 255, 0.35);
+      color: #fff;
+      border-radius: 6px;
+      padding: 6px 9px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      outline: none;
+    }
+
+    .gate-box {
+      background: rgba(239, 202, 122, 0.08);
+      border: 1px solid rgba(239, 202, 122, 0.35);
+      border-radius: 8px;
+      padding: 9px;
+      margin-bottom: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10.5px;
+    }
+    .gate-box.green {
+      background: rgba(52, 211, 153, 0.08);
+      border-color: rgba(52, 211, 153, 0.4);
+    }
+
+    .math-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-left: 2px solid var(--cyan);
+      padding: 8px 10px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 9px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10.5px;
+      line-height: 1.55;
+    }
+
+    .tag-pill {
+      display: inline-block;
+      font-size: 9px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-weight: 700;
+      margin-right: 4px;
+    }
+    .tag-you { background: rgba(239, 202, 122, 0.2); color: var(--amber); }
+    .tag-file { background: rgba(0, 243, 255, 0.18); color: var(--cyan); }
+    .tag-syn { background: rgba(168, 85, 247, 0.25); color: #d8b4fe; }
+    .tag-unavail { background: rgba(255, 138, 147, 0.2); color: var(--error); }
+
+    .inv-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      margin-top: 6px;
+    }
+    .inv-table th, .inv-table td {
+      text-align: left;
+      padding: 5px 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      vertical-align: top;
+    }
+    .inv-table th { color: var(--cyan); }
+
+    .sig-block {
+      margin-top: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    @media (max-width: 640px) {
+      .encoding-panel {
+        top: 84px;
+        bottom: auto;
+        left: 12px;
+        width: calc(100vw - 24px);
+        max-width: none;
+        padding: 10px;
+      }
+      #cryptic-popover {
+        right: 12px;
+        left: 12px;
+        width: auto;
+        bottom: 68px;
+      }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <!-- 250x Cryptics Fieyld Optics Radial Background Canvas (Continuous) -->
+  <canvas id="fieldCanvas"></canvas>
+
+  <!-- 3D/4D Geodesic Sierpinski-Tesseract Spherical Orb Canvas -->
+  <div id="orbContainer"></div>
+
+  <div id="launch-flash"></div>
+  <div id="point-reticle">V00 [-4D:0000] • G00</div>
+
+  <!-- Top-Left Unified Masthead -->
+  <div class="hud-header">
+    <div class="symbol-badge">◆ NEXUS OMNI // GEODESIC -4D × 250x FIEYLD OPTICS</div>
+    <div class="hud-title">Sierpinski-Tesseract Spherical Orb · SYNAPSE Conductor</div>
+    <div class="hud-subtitle" id="fieldStatsLine">250x Radial Optic Field · Continuous Runtime · SHA-256 Append-Only Ledger</div>
+  </div>
+
+  <!-- Bottom-Left Encoded -4D & Geodesic Point Telemetry -->
+  <div class="encoding-panel" id="encoding-panel">
+    <div class="panel-header">
+      <span>Encoded -4D & Geodesic Spaces</span>
+      <button class="mini-btn" id="toggle-enc-btn">Hide</button>
+    </div>
+
+    <div id="encoding-body">
+      <div class="encoding-grid">
+        <div class="enc-card">
+          <div class="enc-card-title">-4D Polarity & Gate</div>
+          <div class="enc-card-val emerald" id="enc-polarity">-4D INV (-W) · YELLOW</div>
+        </div>
+        <div class="enc-card">
+          <div class="enc-card-title">Geodesic Lattice Spaces</div>
+          <div class="enc-card-val cyan" id="enc-geo-info">42 Nodes | 120 Edges</div>
+        </div>
+        <div class="enc-card">
+          <div class="enc-card-title">L1:L2 Ratio & Cap</div>
+          <div class="enc-card-val magenta" id="enc-ratio-cap">1.38x | R2.90→4.00</div>
+        </div>
+        <div class="enc-card">
+          <div class="enc-card-title">250x Field Cycle</div>
+          <div class="enc-card-val" id="enc-field-pct">FILL · 0% · 0.0s</div>
+        </div>
+      </div>
+
+      <div class="vertex-selector-bar">
+        <button class="nav-pt-btn" id="prev-vertex-btn">◀</button>
+        <div class="vertex-id-label" id="selected-vertex-title">ANCHOR V00 • -4D [0000]</div>
+        <button class="nav-pt-btn" id="next-vertex-btn">▶</button>
+      </div>
+
+      <table class="telemetry-table">
+        <tr>
+          <td class="lbl">-4D Encoded Basis (-x,-y,-z,-w)</td>
+          <td class="val" id="enc-v4">(+1, +1, +1, +1)</td>
+        </tr>
+        <tr>
+          <td class="lbl">L1 Primary -4D Pos (X,Y,Z)</td>
+          <td class="val" id="enc-l1-pos">0.00, 0.00, 0.00</td>
+        </tr>
+        <tr>
+          <td class="lbl">L2 Next-Layer -4D Pos (X,Y,Z)</td>
+          <td class="val" id="enc-l2-pos">0.00, 0.00, 0.00</td>
+        </tr>
+        <tr>
+          <td class="lbl">Linear Vector Velocity & Span</td>
+          <td class="val" id="enc-span-vel">Δr 0.00 | 0.00 u/s</td>
+        </tr>
+        <tr>
+          <td class="lbl">Marked Geodesic & 1:1:1 Space</td>
+          <td class="val" id="enc-geo-space">G00 • S000000</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bottom-Right ◆ CrypticGem · 1:.bit Sprocket Popout Trigger (No Pause/Reset UI) -->
+  <button id="cryptic-bubble-trigger" title="Expand CrypticGem · SYNAPSE Sprocket Interface">
+    <span class="sprocket-icon">⚙</span>
+    <span style="font-weight:700; font-size:12px; letter-spacing:0.5px;">◆ CrypticGem</span>
+    <span class="bit-badge">1:.bit</span>
+  </button>
+
+  <!-- Popout Annotation Bubble Drawer -->
+  <div id="cryptic-popover" class="closed" role="dialog" aria-label="CrypticGem Interface through Cryptic Sprocket">
+    <div class="pop-head">
+      <div class="pop-head-title">◆ CrypticGem · Sprocket Conductor & Portal</div>
+      <button class="mini-btn" id="close-popover-btn">✕</button>
+    </div>
+
+    <div class="pop-tabs">
+      <button class="pop-tab active" data-tab="optics">Optics & -4D</button>
+      <button class="pop-tab" data-tab="terminal">SYNAPSE & Sprocket</button>
+      <button class="pop-tab" data-tab="portal">NEXUS Portal (17)</button>
+      <button class="pop-tab" data-tab="inventory">Inventory & Proofs</button>
+    </div>
+
+    <div class="pop-body">
+      <!-- TAB 1: Unified Optics, Geodesic & 250x Field Parameters -->
+      <div class="tab-pane active" id="tab-optics">
+        <div class="control-group">
+          <div class="control-label">
+            <span>Spherical Morph (1:1:1 Cube ↔ Orb)</span>
+            <span class="control-value" id="val-morph">0.78</span>
+          </div>
+          <input type="range" id="slider-morph" min="0" max="1" step="0.01" value="0.78">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Geodesic Lattice Coupling (42 Nodes / 120 Edges)</span>
+            <span class="control-value" id="val-geodesic">0.85</span>
+          </div>
+          <input type="range" id="slider-geodesic" min="0" max="1" step="0.01" value="0.85">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Anchored Layer Ratio (L1 : L2)</span>
+            <span class="control-value" id="val-ratio">1.38x</span>
+          </div>
+          <input type="range" id="slider-ratio" min="1.15" max="1.75" step="0.01" value="1.38">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Oval Diameter Scale Pulse</span>
+            <span class="control-value" id="val-oval">0.32</span>
+          </div>
+          <input type="range" id="slider-oval" min="0" max="1" step="0.01" value="0.32">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Max Circumference Radius Cap</span>
+            <span class="control-value" id="val-cap">2.90</span>
+          </div>
+          <input type="range" id="slider-cap" min="2.2" max="3.4" step="0.05" value="2.90">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>-4D Hyperspace W-Rotation</span>
+            <span class="control-value" id="val-wrot">1.00x</span>
+          </div>
+          <input type="range" id="slider-wrot" min="0" max="3" step="0.05" value="1.0">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>250x Fieyld Optic Cell Density</span>
+            <span class="control-value" id="val-cellsize">24px (÷√250)</span>
+          </div>
+          <input type="range" id="slider-cellsize" min="16" max="56" step="1" value="24">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>250x Fieyld Radial Sweep Rate</span>
+            <span class="control-value" id="val-rate">1 × 250</span>
+          </div>
+          <input type="range" id="slider-rate" min="1" max="20" step="1" value="1">
+        </div>
+
+        <div class="control-group">
+          <div class="control-label">
+            <span>Menger-Sierpinski Recursion</span>
+            <span class="control-value" id="val-depth">Level 3</span>
+          </div>
+          <div class="depth-row">
+            <button class="depth-btn" data-depth="1">L1</button>
+            <button class="depth-btn" data-depth="2">L2</button>
+            <button class="depth-btn active" data-depth="3">L3</button>
+          </div>
+        </div>
+
+        <div class="btn-grid">
+          <button class="action-btn" id="btn-relaunch">◆ Re-Launch Orb</button>
+          <button class="action-btn active" id="btn-polarity">-4D Mode: INV (-W)</button>
+          <button class="action-btn active" id="btn-autorotate">Auto-Orbit: ON</button>
+          <button class="action-btn active" id="btn-reticle">Space Markers: ON</button>
+        </div>
+      </div>
+
+      <!-- TAB 2: SYNAPSE Conductor Terminal & GAIA Master Key Gate -->
+      <div class="tab-pane" id="tab-terminal">
+        <div class="gate-box" id="admit-gate-box">
+          <div style="font-weight:700; color:var(--amber); margin-bottom:4px;">
+            CREED OF ADMITTANCE: ADMIT(x) = Aₓ ∧ Cₓ ∧ Vₓ ∧ Bₓ ∧ Pₓ
+          </div>
+          <div id="admit-status-text">
+            STATUS: YELLOW — UNVERIFIED (No external key stored or transmitted; browser-local SHA-256 receipts active).
+          </div>
+          <div style="display:flex; gap:6px; margin-top:6px;">
+            <input type="password" id="seed-genesis-input" class="term-input" placeholder="Local Session Seed / Passphrase (never sent)">
+            <button class="mini-btn" id="verify-seed-btn">Hash Seed</button>
+          </div>
+        </div>
+
+        <div class="term-log" id="synapse-log"></div>
+
+        <form class="term-form" id="synapse-form">
+          <input type="text" id="synapse-input" class="term-input" placeholder="help · checks · primes 100 6 · resources · spectral · receipts">
+          <button type="submit" class="action-btn">Execute</button>
+        </form>
+
+        <div class="btn-grid" style="margin-top:8px;">
+          <button class="action-btn" id="btn-run-checks">Run Real Checks</button>
+          <button class="action-btn" id="btn-verify-ledger">Verify SHA-256 Chain</button>
+        </div>
+      </div>
+
+      <!-- TAB 3: Unified NEXUS OMNI Portal (All 17 Sections + 6 Layers) -->
+      <div class="tab-pane" id="tab-portal">
+        <div class="math-card">
+          <strong style="color:var(--cyan);">6-LAYER UNIFIED ARCHITECTURE</strong><br>
+          <strong>L1 S.O.S.:</strong> DISCOVER → VERIFY → UNPACK → SELECT → AUTHORIZE → EXECUTE → CAPTURE → ACKNOWLEDGE → CONTINUE<br>
+          <strong>L2 HAMILTONIAN:</strong> Canonical state, forward/reverse traversal, measured elapsed time.<br>
+          <strong>L3 CRYPTIC:</strong> Number theory, coprime indexing, SHA-256 receipts.<br>
+          <strong>L4 GAIA Visual:</strong> 250x Fieyld Optics + -4D Geodesic Sierpinski-Tesseract Orb.<br>
+          <strong>L5 ADAM Control:</strong> Observe → Propose → Validate → Promote → Roll back → Record → Report.<br>
+          <strong>L6 MEMORY / Ledger:</strong> Append-only SHA-256 chain; original failure records preserved.
+        </div>
+
+        <div class="math-card">
+          <strong style="color:var(--magenta);">FOUR-LANE FABRIC: AE.SL6.DUALTRACE.4P</strong><br>
+          Retains independent execution identity, cursor, source ticket, direction/polarity, input/output state, timestamp, and verification result. Forward and reverse lanes compare reconstructed states without silently rewriting histories.
+        </div>
+
+        <div class="math-card">
+          <strong style="color:var(--amber);">17-SECTION MASTER PORTAL INDEX</strong><br>
+          01. Master Architecture · 02. System Map · 03. Source & Branch Inventory · 04. Hamiltonian Graph · 05. Quine / Genesis Seed · 06. S.O.S. Boot & Recovery · 07. CRYPTIC Mathematical Engine · 08. Four-Lane DUALTRACE · 09. GAIA 4D Visual Engine · 10. ADAM Runtime Control · 11. Memory & Provenance Ledger · 12. Polyglot SDK · 13. Device Mesh · 14. Workflow & CI/CD Registry · 15. Test & Verification Dashboard · 16. Experimental Research · 17. Release & Version History.
+        </div>
+
+        <div class="sig-block">
+          The Architect / Nexus / Cryptic News LLC<br>
+          Project: The Nexus Generation: GaiaSSoul<br>
+          SERIES: The Nexus of Gaia<br>
+          ID: 137451921129154222|040592|433855274<br>
+          Preserved Identifier: militumituluնulutimutilim
+        </div>
+      </div>
+
+      <!-- TAB 4: Source Inventory, Provenance Tags & Mathematical Boundaries -->
+      <div class="tab-pane" id="tab-inventory">
+        <div class="math-card">
+          <div><span class="tag-pill tag-you">YOU (VERBATIM)</span> $F^{-1}(F(S)) = S$, $R^{-1}(R(S)) = S$, $H(S_3) = D$</div>
+          <div><span class="tag-pill tag-you">YOU (VERBATIM)</span> $V = [F^{-1}(F(S_0)) = S_0] \land [R^{-1}(R(S)) = S] \land [H(S_3) = D]$</div>
+          <div style="margin-top:4px;"><span class="tag-pill tag-syn">SYNTHESIS (AUDIT + ARCH)</span> SHA-256 itself is not claimed inverted. Reversible transform ≠ cryptographic digest inversion.</div>
+          <div style="margin-top:4px;"><span class="tag-pill tag-you">DIRECTIVE §4/§6/§8</span> Layer 6 MEMORY / Ledger append-only; original failures preserved alongside corrections.</div>
+        </div>
+
+        <table class="inv-table">
+          <thead>
+            <tr>
+              <th>Artifact / Source</th>
+              <th>Classification & Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Project_X_Architecture.docx / PDF</td>
+              <td><span class="tag-pill tag-file">VERIFIED</span> GAIA adapters, AURORA, ADAM gates, TDOC (mp4_attachments: [])</td>
+            </tr>
+            <tr>
+              <td>PROVENANCE_AUDIT.md & manifest.json</td>
+              <td><span class="tag-pill tag-file">VERIFIED</span> TDOC-PROJECT-X-10026; unsigned SHA-256 hash chain</td>
+            </tr>
+            <tr>
+              <td>Project_X_ADAM_Gates.xlsx</td>
+              <td><span class="tag-pill tag-file">LOCAL PASS</span> REVERIFY / GPU / PRODUCTION gates: BLOCKED</td>
+            </tr>
+            <tr>
+              <td>ai_studio_code.txt & (1).txt</td>
+              <td><span class="tag-pill tag-file">VERIFIED</span> Polyglot Engram Workbench & AE.SL6.DUALTRACE.4P</td>
+            </tr>
+            <tr>
+              <td>index.html (SYNAPSE v37.0.0)</td>
+              <td><span class="tag-pill tag-file">VERIFIED</span> Browser-local Conductor, WebRTC, bounded workers, CSP</td>
+            </tr>
+            <tr>
+              <td>Cryptics Fieyld Optics HTML</td>
+              <td><span class="tag-pill tag-file">ACTIVE</span> 250x radial fill & inverse drain canvas (running live)</td>
+            </tr>
+            <tr>
+              <td>hamiltonian_quine.html / paradox_graph / v6.0 & v6.0.1 workflows</td>
+              <td><span class="tag-pill tag-unavail">UNAVAILABLE</span> Not supplied in session attachments; contents not invented</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function () {
+      // =========================================================================
+      // PART 1: BOUNDED CRYPTOGRAPHIC LEDGER & NUMERICAL KERNELS (SYNAPSE CORE)
+      // =========================================================================
+      const encoder = new TextEncoder();
+
+      function canonical(value) {
+        function normalize(v) {
+          if (v === null || typeof v === "string" || typeof v === "boolean") return v;
+          if (typeof v === "number" && Number.isFinite(v)) return v;
+          if (Array.isArray(v)) return v.map(normalize);
+          if (v && Object.getPrototypeOf(v) === Object.prototype) {
+            return Object.fromEntries(Object.keys(v).sort().map(k => [k, normalize(v[k])]));
+          }
+          throw Error("Evidence requires finite JSON values");
+        }
+        return JSON.stringify(normalize(value));
+      }
+
+      async function sha256Hex(value) {
+        const bytes = typeof value === "string" ? encoder.encode(value) : value;
+        const digest = await crypto.subtle.digest("SHA-256", bytes);
+        return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
+      }
+
+      class EvidenceLedger {
+        constructor(limit = 128) {
+          this.limit = limit;
+          this.records = [];
+          this.queue = Promise.resolve();
+        }
+        append(kind, input, output, status = "completed", error = null) {
+          const op = this.queue.then(async () => {
+            if (this.records.length >= this.limit) this.records.shift();
+            const entry = {
+              sequence: this.records.length + 1,
+              kind,
+              status,
+              input,
+              output,
+              input_sha256: await sha256Hex(canonical(input)),
+              output_sha256: await sha256Hex(canonical(output)),
+              recorded_at: new Date().toISOString(),
+              parent_hash: this.records.at(-1)?.hash ?? null
+            };
+            if (error) entry.error = error;
+            entry.hash = await sha256Hex(canonical(entry));
+            this.records.push(entry);
+            return entry;
+          });
+          this.queue = op.catch(() => {});
+          return op;
+        }
+        async verify() {
+          await this.queue;
+          let parent = null;
+          for (let i = 0; i < this.records.length; i++) {
+            const { hash: stored, ...body } = this.records[i];
+            if (body.parent_hash !== parent || stored !== await sha256Hex(canonical(body))) {
+              throw Error("Chain integrity mismatch at sequence " + (i + 1));
+            }
+            parent = stored;
+          }
+          return { status: "integrity_verified", count: this.records.length, head: parent };
+        }
+      }
+
+      const ledger = new EvidenceLedger();
+
+      // Exact BigInt Prime Kernel
+      function isPrimeBig(n) {
+        if (n < 2n) return false;
+        if (n === 2n || n === 3n) return true;
+        if (n % 2n === 0n || n % 3n === 0n) return false;
+        for (let d = 5n; d * d <= n; d += 6n) {
+          if (n % d === 0n || n % (d + 2n) === 0n) return false;
+        }
+        return true;
+      }
+
+      function computePrimes(startStr, count) {
+        if (!/^\d{1,10}$/.test(String(startStr))) throw Error("Start must be a decimal integer");
+        const c = Math.max(1, Math.min(16, Number(count) || 6));
+        let candidate = BigInt(startStr) + 1n;
+        const primes = [];
+        let product = 1n;
+        while (primes.length < c) {
+          if (candidate > 4294967295n) throw Error("Exceeded 32-bit prime domain");
+          if (isPrimeBig(candidate)) {
+            primes.push(candidate.toString());
+            product *= candidate;
+          }
+          candidate++;
+        }
+        return { scope: "exact_integer_arithmetic", start: String(startStr), primes, product: product.toString() };
+      }
+
+      // Conservative Resource Flow Kernel
+      function computeResources() {
+        const n = 12, ticks = 120, capacity = 12.9, supply = 4, halfLife = 3.5, dt = 0.1, share = 0.45;
+        let balances = Array(n).fill(0), carry = Array(n).fill(0), pools = Array(n).fill(0);
+        const rates = Array.from({ length: n }, (_, i) => supply * (1 + 0.25 * Math.sin(2 * Math.PI * i / n)));
+        let sink = 0, supplied = 0;
+        const decay = Math.LN2 / halfLife;
+        const phi = -Math.expm1(-decay * dt) / (decay * dt);
+        for (let t = 0; t < ticks; t++) {
+          const avail = balances.map((b, i) => b + carry[i] + rates[i] * dt);
+          const retained = avail.map(x => Math.min(capacity, x));
+          const overflow = avail.map((x, i) => Math.max(0, x - retained[i]));
+          const routed = overflow.map((_, i) => overflow[(i - 1 + n) % n] * share);
+          const nextPools = pools.map((x, i) => {
+            const inc = overflow[i] * (1 - share);
+            const nxt = x * Math.exp(-decay * dt) + inc * phi;
+            sink += Math.max(0, x + inc - nxt);
+            return nxt;
+          });
+          supplied += rates.reduce((a, b) => a + b, 0) * dt;
+          balances = retained; carry = routed; pools = nextPools;
+        }
+        const totalRemaining = [...balances, ...carry, ...pools].reduce((a, b) => a + b, 0);
+        return {
+          scope: "computed_resource_accounting",
+          sectors: n,
+          ticks,
+          pool: Number(pools.reduce((a, b) => a + b, 0).toFixed(4)),
+          retained: Number(balances.reduce((a, b) => a + b, 0).toFixed(4)),
+          decay_sink: Number(sink.toFixed(4)),
+          supplied: Number(supplied.toFixed(4)),
+          global_residual: Number((totalRemaining + sink - supplied).toExponential(2))
+        };
+      }
+
+      // =========================================================================
+      // PART 2: 250x CRYPTICS FIEYLD OPTICS CONTINUOUS RADIAL BACKGROUND CANVAS
+      // =========================================================================
+      const fieldCanvas = document.getElementById('fieldCanvas');
+      const fCtx = fieldCanvas.getContext('2d', { alpha: false });
+
+      const SCALE_FACTOR = 250;
+      const LINEAR_SUBDIVISION = Math.sqrt(SCALE_FACTOR);
+      const REFERENCE_FPS = 60;
+
+      const fieldState = {
+        baseCellSize: 24,
+        cellSize: 24 / LINEAR_SUBDIVISION,
+        baseRate: 1,
+        cols: 0,
+        rows: 0,
+        offsetX: 0,
+        offsetY: 0,
+        cellX: new Float32Array(0),
+        cellY: new Float32Array(0),
+        totalCells: 0,
+        activeCount: 0,
+        cellAccumulator: 0,
+        phase: 1, // 1 = Center -> Out Fill, -1 = Out -> Center Inverse Drain
+        holdTimerMs: 0,
+        phaseElapsedMs: 0
+      };
+
+      function initRadialField() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        fieldCanvas.width = Math.floor(width * dpr);
+        fieldCanvas.height = Math.floor(height * dpr);
+        fCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        fieldState.cellSize = fieldState.baseCellSize / LINEAR_SUBDIVISION;
+        fieldState.cols = Math.ceil(width / fieldState.cellSize);
+        fieldState.rows = Math.ceil(height / fieldState.cellSize);
+        fieldState.totalCells = fieldState.cols * fieldState.rows;
+
+        fieldState.offsetX = (width - fieldState.cols * fieldState.cellSize) / 2;
+        fieldState.offsetY = (height - fieldState.rows * fieldState.cellSize) / 2;
+
+        const cx0 = width / 2;
+        const cy0 = height / 2;
+        const sortBuf = new Array(fieldState.totalCells);
+        let ptr = 0;
+
+        for (let r = 0; r < fieldState.rows; r++) {
+          const y = fieldState.offsetY + r * fieldState.cellSize;
+          const dy = y + fieldState.cellSize * 0.5 - cy0;
+          const dySq = dy * dy;
+          for (let c = 0; c < fieldState.cols; c++) {
+            const x = fieldState.offsetX + c * fieldState.cellSize;
+            const dx = x + fieldState.cellSize * 0.5 - cx0;
+            sortBuf[ptr++] = { x, y, distSq: dx * dx + dySq, angle: Math.atan2(dy, dx) };
+          }
+        }
+
+        sortBuf.sort((a, b) => {
+          const diff = a.distSq - b.distSq;
+          return (diff > 0.00001 || diff < -0.00001) ? diff : (a.angle - b.angle);
+        });
+
+        fieldState.cellX = new Float32Array(fieldState.totalCells);
+        fieldState.cellY = new Float32Array(fieldState.totalCells);
+        for (let i = 0; i < fieldState.totalCells; i++) {
+          fieldState.cellX[i] = sortBuf[i].x;
+          fieldState.cellY[i] = sortBuf[i].y;
+        }
+
+        fieldState.activeCount = 0;
+        fieldState.cellAccumulator = 0;
+        fieldState.phase = 1;
+        fieldState.holdTimerMs = 0;
+        fieldState.phaseElapsedMs = 0;
+
+        fCtx.fillStyle = '#04050a';
+        fCtx.fillRect(0, 0, width, height);
+      }
+
+      function renderFieldSlice(startIdx, endIdx, isFilled, isLeading) {
+        if (startIdx >= endIdx) return;
+        const s = fieldState.cellSize;
+        const half = s * 0.5;
+        const dHalf = half - s * 0.22;
+
+        fCtx.fillStyle = '#04050a';
+        fCtx.beginPath();
+        for (let i = startIdx; i < endIdx; i++) {
+          fCtx.rect(fieldState.cellX[i], fieldState.cellY[i], s, s);
+        }
+        fCtx.fill();
+
+        if (isFilled) {
+          fCtx.fillStyle = isLeading ? 'rgba(0, 243, 255, 0.28)' : 'rgba(0, 243, 255, 0.075)';
+          fCtx.beginPath();
+          for (let i = startIdx; i < endIdx; i++) {
+            fCtx.rect(fieldState.cellX[i], fieldState.cellY[i], s, s);
+          }
+          fCtx.fill();
+
+          if (dHalf > 0.14) {
+            fCtx.fillStyle = isLeading ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 243, 255, 0.22)';
+            fCtx.beginPath();
+            for (let i = startIdx; i < endIdx; i++) {
+              const cx = fieldState.cellX[i] + half;
+              const cy = fieldState.cellY[i] + half;
+              fCtx.moveTo(cx, cy - dHalf);
+              fCtx.lineTo(cx + dHalf, cy);
+              fCtx.lineTo(cx, cy + dHalf);
+              fCtx.lineTo(cx - dHalf, cy);
+              fCtx.closePath();
+            }
+            fCtx.fill();
+          }
+        }
+      }
+
+      function stepRadialField(dtMs) {
+        if (fieldState.totalCells <= 0) return;
+        if (fieldState.holdTimerMs > 0) {
+          fieldState.holdTimerMs -= dtMs;
+          return;
+        }
+        fieldState.phaseElapsedMs += dtMs;
+        const cellsPerSec = fieldState.baseRate * SCALE_FACTOR * REFERENCE_FPS;
+        fieldState.cellAccumulator += (cellsPerSec * dtMs) / 1000;
+        const toProcess = Math.floor(fieldState.cellAccumulator);
+        if (toProcess > 0) {
+          fieldState.cellAccumulator -= toProcess;
+          if (fieldState.phase === 1) {
+            const prevStart = Math.max(0, fieldState.activeCount - fieldState.baseRate * SCALE_FACTOR);
+            renderFieldSlice(prevStart, fieldState.activeCount, true, false);
+            const next = Math.min(fieldState.totalCells, fieldState.activeCount + toProcess);
+            renderFieldSlice(fieldState.activeCount, next, true, true);
+            fieldState.activeCount = next;
+            if (fieldState.activeCount >= fieldState.totalCells) {
+              renderFieldSlice(prevStart, fieldState.totalCells, true, false);
+              fieldState.phase = -1;
+              fieldState.holdTimerMs = 400;
+              fieldState.cellAccumulator = 0;
+            }
+          } else {
+            const next = Math.max(0, fieldState.activeCount - toProcess);
+            renderFieldSlice(next, fieldState.activeCount, false, false);
+            fieldState.activeCount = next;
+            const newStart = Math.max(0, fieldState.activeCount - fieldState.baseRate * SCALE_FACTOR);
+            renderFieldSlice(newStart, fieldState.activeCount, true, true);
+            if (fieldState.activeCount <= 0) {
+              fieldState.phase = 1;
+              fieldState.holdTimerMs = 300;
+              fieldState.phaseElapsedMs = 0;
+              fieldState.cellAccumulator = 0;
+            }
+          }
+        }
+      }
+
+      // =========================================================================
+      // PART 3: 3D/4D GEODESIC SIERPINSKI-TESSERACT SPHERICAL ORB (-4D ENCODED)
+      // =========================================================================
+      const params = {
+        morph: 0.78,
+        geodesicCoupling: 0.85,
+        layerRatio: 1.38,
+        nextLayerPhase: 0.785,
+        ovalAmplitude: 0.32,
+        maxCircleRadius: 2.90,
+        wSpeed: 1.0,
+        wDistance: 2.65,
+        negative4D: true,
+        depth: 3,
+        autoRotate: true,
+        showMarkers: true,
+        selectedVertex: 0,
+        launchProgress: 0,
+        wAngleXW: 0,
+        wAngleYW: 0,
+        wAngleZW: 0
+      };
+
+      const orbContainer = document.getElementById('orbContainer');
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 0, 10.6);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setClearColor(0x000000, 0);
+      orbContainer.appendChild(renderer.domElement);
+
+      const masterGroup = new THREE.Group();
+      scene.add(masterGroup);
+
+      const ambientLight = new THREE.AmbientLight(0x222844, 1.6);
+      scene.add(ambientLight);
+      const coreLight = new THREE.PointLight(0x00f3ff, 3.8, 22);
+      masterGroup.add(coreLight);
+      const rimLight1 = new THREE.PointLight(0xff2a85, 2.5, 28);
+      rimLight1.position.set(7, 6, 7);
+      scene.add(rimLight1);
+
+      // Build Subdivided Icosahedral Geodesic Topology (42 Nodes, 120 Edges)
+      function buildGeodesicTopology() {
+        const icoGeo = new THREE.IcosahedronGeometry(1.0, 1);
+        const posAttr = icoGeo.attributes.position;
+        const uniqueVerts = [];
+        const vertLookup = new Map();
+        const edgeSet = new Set();
+        const edges = [];
+
+        function getOrAddVertex(vx, vy, vz) {
+          const v = new THREE.Vector3(vx, vy, vz).normalize();
+          const key = `${v.x.toFixed(4)},${v.y.toFixed(4)},${v.z.toFixed(4)}`;
+          if (vertLookup.has(key)) return vertLookup.get(key);
+          const idx = uniqueVerts.length;
+          uniqueVerts.push({
+            id: idx,
+            code: `G${String(idx).padStart(2, '0')}`,
+            unitVec: v,
+            posL1: new THREE.Vector3(),
+            posL2: new THREE.Vector3()
+          });
+          vertLookup.set(key, idx);
+          return idx;
+        }
+
+        function addEdge(a, b) {
+          if (a === b) return;
+          const key = `${Math.min(a, b)}_${Math.max(a, b)}`;
+          if (!edgeSet.has(key)) {
+            edgeSet.add(key);
+            edges.push({ a: Math.min(a, b), b: Math.max(a, b) });
+          }
+        }
+
+        for (let t = 0; t < posAttr.count / 3; t++) {
+          const i0 = getOrAddVertex(posAttr.getX(t * 3), posAttr.getY(t * 3), posAttr.getZ(t * 3));
+          const i1 = getOrAddVertex(posAttr.getX(t * 3 + 1), posAttr.getY(t * 3 + 1), posAttr.getZ(t * 3 + 1));
+          const i2 = getOrAddVertex(posAttr.getX(t * 3 + 2), posAttr.getY(t * 3 + 2), posAttr.getZ(t * 3 + 2));
+          addEdge(i0, i1); addEdge(i1, i2); addEdge(i2, i0);
+        }
+        icoGeo.dispose();
+        return { vertices: uniqueVerts, edges };
+      }
+
+      const geodesicTopology = buildGeodesicTopology();
+      const GEO_VERT_COUNT = geodesicTopology.vertices.length;
+      const GEO_EDGE_COUNT = geodesicTopology.edges.length;
+
+      function createGeodesicLineBuffer(opacity) {
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(GEO_EDGE_COUNT * 2 * 3), 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(GEO_EDGE_COUNT * 2 * 3), 3));
+        return new THREE.LineSegments(geo, new THREE.LineBasicMaterial({
+          vertexColors: true,
+          transparent: true,
+          opacity,
+          blending: THREE.AdditiveBlending
+        }));
+      }
+
+      const geodesicLinesL1 = createGeodesicLineBuffer(0.62);
+      const geodesicLinesL2 = createGeodesicLineBuffer(0.45);
+      masterGroup.add(geodesicLinesL1, geodesicLinesL2);
+
+      const GEO_PULSE_COUNT = GEO_EDGE_COUNT * 2;
+      const geoPulseMesh = new THREE.InstancedMesh(
+        new THREE.OctahedronGeometry(0.032, 0),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, blending: THREE.AdditiveBlending }),
+        GEO_PULSE_COUNT
+      );
+      geoPulseMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      for (let i = 0; i < GEO_PULSE_COUNT; i++) {
+        geoPulseMesh.setColorAt(i, new THREE.Color().setHSL(i >= GEO_EDGE_COUNT ? 0.82 : 0.50, 1.0, 0.65));
+      }
+      geoPulseMesh.instanceColor.needsUpdate = true;
+      masterGroup.add(geoPulseMesh);
+
+      const geoSpaceMarkersMesh = new THREE.InstancedMesh(
+        new THREE.OctahedronGeometry(0.055, 0),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending }),
+        GEO_VERT_COUNT * 2
+      );
+      geoSpaceMarkersMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      for (let i = 0; i < GEO_VERT_COUNT * 2; i++) {
+        geoSpaceMarkersMesh.setColorAt(i, new THREE.Color().setHSL(i >= GEO_VERT_COUNT ? 0.78 : 0.48, 0.95, 0.62));
+      }
+      geoSpaceMarkersMesh.instanceColor.needsUpdate = true;
+      masterGroup.add(geoSpaceMarkersMesh);
+
+      // Menger-Sierpinski 1:1:1 Lattice
+      let fractalMesh = null, duplicateShellMesh = null, latticeLines = null;
+      let fractalNodes = [], outerShellNodes = [], latticeSegments = [];
+      const dummy = new THREE.Object3D();
+      const tempColor = new THREE.Color();
+
+      function generateSierpinski111Grid(level) {
+        const points = [];
+        const gridDim = Math.pow(3, level);
+        const halfSpan = (gridDim - 1) / 2;
+        const cellStep = 2.45 / gridDim;
+        const pointMap = new Map();
+
+        function recurse(gx, gy, gz, span, depth) {
+          if (depth === 0) {
+            const idx = points.length;
+            const isExteriorShell = gx === 0 || gx === gridDim - 1 || gy === 0 || gy === gridDim - 1 || gz === 0 || gz === gridDim - 1;
+            const encodedAddress = `S${String(gx).padStart(2, '0')}${String(gy).padStart(2, '0')}${String(gz).padStart(2, '0')}`;
+            points.push({
+              idx, gx, gy, gz, encodedAddress,
+              x: (gx - halfSpan) * cellStep,
+              y: (gy - halfSpan) * cellStep,
+              z: (gz - halfSpan) * cellStep,
+              size: cellStep,
+              isExteriorShell
+            });
+            pointMap.set(`${gx},${gy},${gz}`, idx);
+            return;
+          }
+          const sub = span / 3;
+          for (let dx = 0; dx < 3; dx++) {
+            for (let dy = 0; dy < 3; dy++) {
+              for (let dz = 0; dz < 3; dz++) {
+                if ((dx === 1 ? 1 : 0) + (dy === 1 ? 1 : 0) + (dz === 1 ? 1 : 0) <= 1) {
+                  recurse(gx + dx * sub, gy + dy * sub, gz + dz * sub, sub, depth - 1);
+                }
+              }
+            }
+          }
+        }
+        recurse(0, 0, 0, gridDim, level);
+
+        const segments = [];
+        const dirs = [{ dx: 1, dy: 0, dz: 0, axis: 0 }, { dx: 0, dy: 1, dz: 0, axis: 1 }, { dx: 0, dy: 0, dz: 1, axis: 2 }];
+        for (let i = 0; i < points.length; i++) {
+          const p = points[i];
+          for (let d = 0; d < dirs.length; d++) {
+            const nIdx = pointMap.get(`${p.gx + dirs[d].dx},${p.gy + dirs[d].dy},${p.gz + dirs[d].dz}`);
+            if (nIdx !== undefined) {
+              segments.push({ a: i, b: nIdx, axis: dirs[d].axis, phase: (p.gx + p.gy + p.gz) * 0.25 + dirs[d].axis * (Math.PI / 3) });
+            }
+          }
+        }
+        return { points, segments };
+      }
+
+      function buildFractalOrb(level) {
+        if (fractalMesh) { masterGroup.remove(fractalMesh); fractalMesh.geometry.dispose(); fractalMesh.material.dispose(); }
+        if (duplicateShellMesh) { masterGroup.remove(duplicateShellMesh); duplicateShellMesh.geometry.dispose(); duplicateShellMesh.material.dispose(); }
+        if (latticeLines) { masterGroup.remove(latticeLines); latticeLines.geometry.dispose(); latticeLines.material.dispose(); }
+
+        const { points, segments } = generateSierpinski111Grid(level);
+        latticeSegments = segments;
+        outerShellNodes = [];
+
+        fractalNodes = points.map(pt => {
+          const cubeVec = new THREE.Vector3(pt.x, pt.y, pt.z);
+          const len = cubeVec.length();
+          const sphereVec = len > 0.0001 ? cubeVec.clone().normalize().multiplyScalar(2.05) : new THREE.Vector3();
+          const node = {
+            gx: pt.gx, gy: pt.gy, gz: pt.gz, encodedAddress: pt.encodedAddress,
+            cubeVec, sphereVec, currentPos: new THREE.Vector3(),
+            baseSize: pt.size * 0.72, normDist: Math.min(len / 2.15, 1.0)
+          };
+          if (pt.isExteriorShell) outerShellNodes.push(node);
+          return node;
+        });
+
+        fractalMesh = new THREE.InstancedMesh(
+          new THREE.BoxGeometry(0.68, 0.68, 0.68),
+          new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.22, metalness: 0.8, emissive: 0x0a192f, emissiveIntensity: 0.55 }),
+          fractalNodes.length
+        );
+        fractalMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        for (let i = 0; i < fractalNodes.length; i++) {
+          tempColor.setHSL(0.51 + fractalNodes[i].normDist * 0.35, 0.92, 0.56);
+          fractalMesh.setColorAt(i, tempColor);
+        }
+        fractalMesh.instanceColor.needsUpdate = true;
+        masterGroup.add(fractalMesh);
+
+        duplicateShellMesh = new THREE.InstancedMesh(
+          new THREE.OctahedronGeometry(0.32, 0),
+          new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.65, blending: THREE.AdditiveBlending }),
+          outerShellNodes.length
+        );
+        duplicateShellMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        for (let i = 0; i < outerShellNodes.length; i++) {
+          tempColor.setHSL(0.78 - outerShellNodes[i].normDist * 0.25, 0.95, 0.62);
+          duplicateShellMesh.setColorAt(i, tempColor);
+        }
+        duplicateShellMesh.instanceColor.needsUpdate = true;
+        masterGroup.add(duplicateShellMesh);
+
+        const lineGeo = new THREE.BufferGeometry();
+        lineGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(latticeSegments.length * 6), 3));
+        lineGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(latticeSegments.length * 6), 3));
+        latticeLines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({
+          vertexColors: true, transparent: true, opacity: level === 3 ? 0.28 : 0.55, blending: THREE.AdditiveBlending
+        }));
+        masterGroup.add(latticeLines);
+      }
+
+      // -4D Tesseract Point Registry & Dual-Layer Edges
+      const tesseractPointRegistry = [];
+      for (let i = 0; i < 16; i++) {
+        const b0 = (i & 1) ? 1 : 0, b1 = (i & 2) ? 1 : 0, b2 = (i & 4) ? 1 : 0, b3 = (i & 8) ? 1 : 0;
+        tesseractPointRegistry.push({
+          id: i, code: `V${String(i).padStart(2, '0')}`, binary: `${b3}${b2}${b1}${b0}`,
+          v4: [b0 ? 1 : -1, b1 ? 1 : -1, b2 ? 1 : -1, b3 ? 1 : -1],
+          prevL1: new THREE.Vector3(), prevL2: new THREE.Vector3(), velL1: 0, velL2: 0
+        });
+      }
+
+      const tesseractEdges = [];
+      for (let i = 0; i < 16; i++) {
+        for (let j = i + 1; j < 16; j++) {
+          const diff = i ^ j;
+          if (diff === 1 || diff === 2 || diff === 4 || diff === 8) tesseractEdges.push({ a: i, b: j });
+        }
+      }
+
+      function createEdgeSegments(opacity) {
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(tesseractEdges.length * 6), 3));
+        g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(tesseractEdges.length * 6), 3));
+        return new THREE.LineSegments(g, new THREE.LineBasicMaterial({
+          vertexColors: true, transparent: true, opacity, blending: THREE.AdditiveBlending
+        }));
+      }
+
+      const tesseractLines = createEdgeSegments(0.92);
+      const dupTesseractLines = createEdgeSegments(0.78);
+      masterGroup.add(tesseractLines, dupTesseractLines);
+
+      const anchorBridgeGeo = new THREE.BufferGeometry();
+      anchorBridgeGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(16 * 6), 3));
+      anchorBridgeGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(16 * 6), 3));
+      const anchorBridgeLines = new THREE.LineSegments(anchorBridgeGeo, new THREE.LineBasicMaterial({
+        vertexColors: true, transparent: true, opacity: 0.72, blending: THREE.AdditiveBlending
+      }));
+      masterGroup.add(anchorBridgeLines);
+
+      const beaconGeo = new THREE.RingGeometry(0.14, 0.20, 24);
+      const beaconL1 = new THREE.Mesh(beaconGeo, new THREE.MeshBasicMaterial({ color: 0x00f3ff, side: THREE.DoubleSide, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending }));
+      const beaconL2 = new THREE.Mesh(beaconGeo, new THREE.MeshBasicMaterial({ color: 0xff44cc, side: THREE.DoubleSide, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending }));
+      masterGroup.add(beaconL1, beaconL2);
+
+      const TOTAL_VERTICES = 32;
+      const TRAIL_LENGTH = 24;
+      const trailGeo = new THREE.BufferGeometry();
+      trailGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TOTAL_VERTICES * (TRAIL_LENGTH - 1) * 6), 3));
+      trailGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(TOTAL_VERTICES * (TRAIL_LENGTH - 1) * 6), 3));
+      const tesseractTrails = new THREE.LineSegments(trailGeo, new THREE.LineBasicMaterial({
+        vertexColors: true, transparent: true, opacity: 0.62, blending: THREE.AdditiveBlending
+      }));
+      masterGroup.add(tesseractTrails);
+
+      const vertexHistory = Array.from({ length: TOTAL_VERTICES }, () => []);
+      const tesseractNodesMesh = new THREE.InstancedMesh(
+        new THREE.OctahedronGeometry(0.08, 0),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, blending: THREE.AdditiveBlending }),
+        TOTAL_VERTICES
+      );
+      masterGroup.add(tesseractNodesMesh);
+
+      // Circumference Cap Circles & Oval Diameter Rings
+      function createCircleLoop(segments) {
+        const pts = [];
+        for (let i = 0; i <= segments; i++) {
+          const theta = (i / segments) * Math.PI * 2;
+          pts.push(new THREE.Vector3(Math.cos(theta), Math.sin(theta), 0));
+        }
+        return new THREE.BufferGeometry().setFromPoints(pts);
+      }
+
+      const capCircleGroup1 = new THREE.Group();
+      const capMat1 = new THREE.LineBasicMaterial({ color: 0x00f3ff, transparent: true, opacity: 0.28, blending: THREE.AdditiveBlending });
+      const c1XY = new THREE.Line(createCircleLoop(128), capMat1);
+      const c1XZ = new THREE.Line(createCircleLoop(128), capMat1); c1XZ.rotation.x = Math.PI / 2;
+      const c1YZ = new THREE.Line(createCircleLoop(128), capMat1); c1YZ.rotation.y = Math.PI / 2;
+      capCircleGroup1.add(c1XY, c1XZ, c1YZ);
+
+      const capCircleGroup2 = new THREE.Group();
+      const capMat2 = new THREE.LineBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.24, blending: THREE.AdditiveBlending });
+      const c2XY = new THREE.Line(createCircleLoop(128), capMat2);
+      const c2XZ = new THREE.Line(createCircleLoop(128), capMat2); c2XZ.rotation.x = Math.PI / 2;
+      const c2YZ = new THREE.Line(createCircleLoop(128), capMat2); c2YZ.rotation.y = Math.PI / 2;
+      capCircleGroup2.add(c2XY, c2XZ, c2YZ);
+
+      const ovalMat1 = new THREE.LineBasicMaterial({ color: 0xff44cc, transparent: true, opacity: 0.52, blending: THREE.AdditiveBlending });
+      const ovalRing1A = new THREE.Line(createCircleLoop(128), ovalMat1);
+      const ovalRing1B = new THREE.Line(createCircleLoop(128), ovalMat1); ovalRing1B.rotation.y = Math.PI / 2;
+
+      const ovalMat2 = new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending });
+      const ovalRing2A = new THREE.Line(createCircleLoop(128), ovalMat2);
+      const ovalRing2B = new THREE.Line(createCircleLoop(128), ovalMat2); ovalRing2B.rotation.y = Math.PI / 2;
+
+      masterGroup.add(capCircleGroup1, capCircleGroup2, ovalRing1A, ovalRing1B, ovalRing2A, ovalRing2B);
+
+      function computeOvalScaleVec(elapsed, phaseOffset) {
+        const amp = params.ovalAmplitude;
+        return new THREE.Vector3(
+          1 + Math.sin(elapsed * 2.1 + phaseOffset) * amp,
+          1 + Math.cos(elapsed * 2.1 + phaseOffset) * amp,
+          1 + Math.sin(elapsed * 2.1 + phaseOffset + Math.PI * 0.5) * (amp * 0.75)
+        );
+      }
+
+      function projectEncoded4Dto3D(v4, ovalScaleVec, layerScaleMultiplier, wPhaseShift) {
+        const s = params.negative4D ? -1 : 1;
+        let x = v4[0] * s, y = v4[1] * s, z = v4[2] * s, w = v4[3] * s;
+
+        const aXW = (params.wAngleXW + wPhaseShift) * s;
+        let nx = x * Math.cos(aXW) - w * Math.sin(aXW);
+        let nw = x * Math.sin(aXW) + w * Math.cos(aXW);
+        x = nx; w = nw;
+
+        const aYW = (params.wAngleYW + wPhaseShift * 0.7) * s;
+        let ny = y * Math.cos(aYW) - w * Math.sin(aYW);
+        nw = y * Math.sin(aYW) + w * Math.cos(aYW);
+        y = ny; w = nw;
+
+        const aZW = (params.wAngleZW + wPhaseShift * 0.5) * s;
+        let nz = z * Math.cos(aZW) - w * Math.sin(aZW);
+        nw = z * Math.sin(aZW) + w * Math.cos(aZW);
+        z = nz; w = nw;
+
+        const denom = params.negative4D ? (params.wDistance + w) : (params.wDistance - w);
+        const wFactor = 1 / Math.max(0.85, denom);
+        const baseScale = 2.4 * layerScaleMultiplier;
+        const projVec = new THREE.Vector3(x * wFactor * baseScale, y * wFactor * baseScale, z * wFactor * baseScale);
+
+        projVec.multiply(ovalScaleVec);
+
+        const layerCapRadius = params.maxCircleRadius * layerScaleMultiplier;
+        const sphereShell = projVec.clone().normalize().multiplyScalar(layerCapRadius * 0.86);
+        projVec.lerp(sphereShell, params.morph * 0.65);
+
+        const dist = projVec.length();
+        if (dist > layerCapRadius) projVec.multiplyScalar(layerCapRadius / dist);
+        return projVec;
+      }
+
+      function triggerLaunch() {
+        params.launchProgress = 0.01;
+        for (let i = 0; i < TOTAL_VERTICES; i++) vertexHistory[i].length = 0;
+        const flash = document.getElementById('launch-flash');
+        flash.style.transition = 'none';
+        flash.style.opacity = '0.85';
+        requestAnimationFrame(() => {
+          flash.style.transition = 'opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1)';
+          flash.style.opacity = '0';
+        });
+      }
+
+      initRadialField();
+      buildFractalOrb(params.depth);
+      triggerLaunch();
+
+      // =========================================================================
+      // PART 4: ORBIT CONTROLS, SPROCKET POPOUT UI & TERMINAL HANDLERS
+      // =========================================================================
+      let isDragging = false, prevPointer = { x: 0, y: 0 };
+      let targetRotX = 0.32, targetRotY = 0.52, currentRotX = 0.32, currentRotY = 0.52;
+
+      const domElem = renderer.domElement;
+      domElem.addEventListener('mousedown', e => { isDragging = true; prevPointer = { x: e.clientX, y: e.clientY }; });
+      window.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        targetRotY += (e.clientX - prevPointer.x) * 0.007;
+        targetRotX += (e.clientY - prevPointer.y) * 0.007;
+        prevPointer = { x: e.clientX, y: e.clientY };
+      });
+      window.addEventListener('mouseup', () => { isDragging = false; });
+
+      domElem.addEventListener('touchstart', e => {
+        if (e.touches.length === 1) { isDragging = true; prevPointer = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }
+      }, { passive: true });
+      window.addEventListener('touchmove', e => {
+        if (!isDragging || e.touches.length !== 1) return;
+        targetRotY += (e.touches[0].clientX - prevPointer.x) * 0.007;
+        targetRotX += (e.touches[0].clientY - prevPointer.y) * 0.007;
+        prevPointer = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }, { passive: true });
+      window.addEventListener('touchend', () => { isDragging = false; });
+
+      domElem.addEventListener('wheel', e => {
+        e.preventDefault();
+        camera.position.z = Math.max(4.5, Math.min(18.0, camera.position.z + e.deltaY * 0.006));
+      }, { passive: false });
+
+      // Sprocket Popout Drawer Controls
+      const popover = document.getElementById('cryptic-popover');
+      document.getElementById('cryptic-bubble-trigger').addEventListener('click', () => {
+        popover.classList.toggle('closed');
+      });
+      document.getElementById('close-popover-btn').addEventListener('click', () => {
+        popover.classList.add('closed');
+      });
+
+      document.querySelectorAll('.pop-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.pop-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+          tab.classList.add('active');
+          document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        });
+      });
+
+      // Optics & -4D Sliders
+      document.getElementById('slider-morph').addEventListener('input', e => {
+        params.morph = parseFloat(e.target.value);
+        document.getElementById('val-morph').textContent = params.morph.toFixed(2);
+      });
+      document.getElementById('slider-geodesic').addEventListener('input', e => {
+        params.geodesicCoupling = parseFloat(e.target.value);
+        document.getElementById('val-geodesic').textContent = params.geodesicCoupling.toFixed(2);
+        const vis = params.geodesicCoupling > 0.02;
+        geodesicLinesL1.visible = vis; geodesicLinesL2.visible = vis; geoPulseMesh.visible = vis;
+        geoSpaceMarkersMesh.visible = params.showMarkers && vis;
+      });
+      document.getElementById('slider-ratio').addEventListener('input', e => {
+        params.layerRatio = parseFloat(e.target.value);
+        document.getElementById('val-ratio').textContent = params.layerRatio.toFixed(2) + 'x';
+      });
+      document.getElementById('slider-oval').addEventListener('input', e => {
+        params.ovalAmplitude = parseFloat(e.target.value);
+        document.getElementById('val-oval').textContent = params.ovalAmplitude.toFixed(2);
+      });
+      document.getElementById('slider-cap').addEventListener('input', e => {
+        params.maxCircleRadius = parseFloat(e.target.value);
+        document.getElementById('val-cap').textContent = params.maxCircleRadius.toFixed(2);
+      });
+      document.getElementById('slider-wrot').addEventListener('input', e => {
+        params.wSpeed = parseFloat(e.target.value);
+        document.getElementById('val-wrot').textContent = params.wSpeed.toFixed(2) + 'x';
+      });
+      document.getElementById('slider-cellsize').addEventListener('input', e => {
+        fieldState.baseCellSize = parseInt(e.target.value, 10);
+        document.getElementById('val-cellsize').textContent = fieldState.baseCellSize + 'px (÷√250)';
+        initRadialField();
+      });
+      document.getElementById('slider-rate').addEventListener('input', e => {
+        fieldState.baseRate = parseInt(e.target.value, 10);
+        document.getElementById('val-rate').textContent = fieldState.baseRate + ' × 250';
+      });
+
+      document.querySelectorAll('.depth-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.depth-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          params.depth = parseInt(btn.dataset.depth, 10);
+          document.getElementById('val-depth').textContent = 'Level ' + params.depth;
+          buildFractalOrb(params.depth);
+          triggerLaunch();
+        });
+      });
+
+      let gateVerified = false;
+      function updateSelectedVertexHeader() {
+        const reg = tesseractPointRegistry[params.selectedVertex];
+        const s = params.negative4D ? -1 : 1;
+        const modeTag = params.negative4D ? '-4D' : '+4D';
+        document.getElementById('selected-vertex-title').textContent = `ANCHOR ${reg.code} • ${modeTag} [${reg.binary}]`;
+        document.getElementById('enc-v4').textContent = `(${reg.v4[0] * s}, ${reg.v4[1] * s}, ${reg.v4[2] * s}, ${reg.v4[3] * s})`;
+        document.getElementById('enc-polarity').textContent = `${params.negative4D ? '-4D INV (-W)' : '+4D POS (+W)'} · ${gateVerified ? 'LOCAL SEED' : 'YELLOW'}`;
+      }
+      updateSelectedVertexHeader();
+
+      document.getElementById('prev-vertex-btn').addEventListener('click', () => {
+        params.selectedVertex = (params.selectedVertex + 15) % 16;
+        updateSelectedVertexHeader();
+      });
+      document.getElementById('next-vertex-btn').addEventListener('click', () => {
+        params.selectedVertex = (params.selectedVertex + 1) % 16;
+        updateSelectedVertexHeader();
+      });
+
+      document.getElementById('btn-relaunch').addEventListener('click', triggerLaunch);
+
+      const btnPolarity = document.getElementById('btn-polarity');
+      btnPolarity.addEventListener('click', () => {
+        params.negative4D = !params.negative4D;
+        btnPolarity.textContent = params.negative4D ? '-4D Mode: INV (-W)' : '+4D Mode: POS (+W)';
+        btnPolarity.classList.toggle('active', params.negative4D);
+        updateSelectedVertexHeader();
+      });
+
+      const btnAutoRotate = document.getElementById('btn-autorotate');
+      btnAutoRotate.addEventListener('click', () => {
+        params.autoRotate = !params.autoRotate;
+        btnAutoRotate.textContent = params.autoRotate ? 'Auto-Orbit: ON' : 'Auto-Orbit: OFF';
+        btnAutoRotate.classList.toggle('active', params.autoRotate);
+      });
+
+      const btnReticle = document.getElementById('btn-reticle');
+      const reticleEl = document.getElementById('point-reticle');
+      btnReticle.addEventListener('click', () => {
+        params.showMarkers = !params.showMarkers;
+        btnReticle.textContent = params.showMarkers ? 'Space Markers: ON' : 'Space Markers: OFF';
+        btnReticle.classList.toggle('active', params.showMarkers);
+        reticleEl.style.display = params.showMarkers ? 'block' : 'none';
+        beaconL1.visible = params.showMarkers;
+        beaconL2.visible = params.showMarkers;
+        geoSpaceMarkersMesh.visible = params.showMarkers && params.geodesicCoupling > 0.02;
+      });
+
+      const toggleEncBtn = document.getElementById('toggle-enc-btn');
+      const encodingBody = document.getElementById('encoding-body');
+      let encHidden = false;
+      toggleEncBtn.addEventListener('click', () => {
+        encHidden = !encHidden;
+        encodingBody.style.display = encHidden ? 'none' : 'block';
+        toggleEncBtn.textContent = encHidden ? 'Show' : 'Hide';
+      });
+
+      // SYNAPSE Conductor Terminal & Local Seed Gate
+      const synapseLog = document.getElementById('synapse-log');
+      function termPrint(msg, cls = 'sys') {
+        const div = document.createElement('div');
+        div.className = 'term-line ' + cls;
+        div.textContent = msg;
+        synapseLog.appendChild(div);
+        while (synapseLog.children.length > 80) synapseLog.firstElementChild.remove();
+        synapseLog.scrollTop = synapseLog.scrollHeight;
+      }
+
+      termPrint('SYNAPSE CONDUCTOR // NEXUS OMNI INTEGRATED RUNTIME', 'sys');
+      termPrint('250x Fieyld Optics + -4D Geodesic Sierpinski-Tesseract Orb active.', 'mut');
+      termPrint('Type: help | checks | primes 100 6 | resources | receipts', 'mut');
+
+      document.getElementById('verify-seed-btn').addEventListener('click', async () => {
+        const val = document.getElementById('seed-genesis-input').value.trim();
+        if (!val) {
+          termPrint('Enter a local session seed string first (kept strictly in memory).', 'err');
+          return;
+        }
+        const digest = await sha256Hex(val);
+        document.getElementById('seed-genesis-input').value = '';
+        gateVerified = true;
+        const gateBox = document.getElementById('admit-gate-box');
+        gateBox.classList.add('green');
+        document.getElementById('admit-status-text').textContent =
+          `STATUS: LOCAL SEED HASHED (${digest.slice(0, 16)}…) · Unsigned local receipt recorded; no remote authority asserted.`;
+        updateSelectedVertexHeader();
+        const rec = await ledger.append('seed_genesis_hash', { local_only: true }, { sha256_prefix: digest.slice(0, 24) });
+        termPrint(`[RECEIPT #${rec.sequence}] Local Seed SHA-256: ${digest.slice(0, 24)}…`, 'sys');
+      });
+
+      async function runAllChecks() {
+        termPrint('Running local deterministic verification checks…', 'mut');
+        const pRes = computePrimes('100', 6);
+        const rRes = computeResources();
+        const rec1 = await ledger.append('check_primes', { start: '100', count: 6 }, pRes);
+        const rec2 = await ledger.append('check_resources', { sectors: 12, ticks: 120 }, rRes);
+        const ver = await ledger.verify();
+        termPrint(`PASS Primes(100,6): [${pRes.primes.join(', ')}] (Receipt #${rec1.sequence})`, 'sys');
+        termPrint(`PASS Resource Conservation Residual: ${rRes.global_residual} (Receipt #${rec2.sequence})`, 'sys');
+        termPrint(`PASS Ledger Chain Verified: ${ver.count} records · Head ${ver.head.slice(0, 16)}…`, 'sys');
+      }
+
+      document.getElementById('btn-run-checks').addEventListener('click', runAllChecks);
+      document.getElementById('btn-verify-ledger').addEventListener('click', async () => {
+        try {
+          const ver = await ledger.verify();
+          termPrint(`CHAIN VERIFIED: ${ver.count} append-only records · Head ${ver.head ? ver.head.slice(0, 20) + '…' : 'GENESIS'}`, 'sys');
+        } catch (err) {
+          termPrint('CHAIN ERROR: ' + err.message, 'err');
+        }
+      });
+
+      document.getElementById('synapse-form').addEventListener('submit', async e => {
+        e.preventDefault();
+        const raw = document.getElementById('synapse-input').value.trim();
+        document.getElementById('synapse-input').value = '';
+        if (!raw) return;
+        termPrint('Æ› ' + raw, 'usr');
+        const [cmd, a1, a2] = raw.split(/\s+/);
+        try {
+          if (cmd === 'help') {
+            termPrint('Commands: help · checks · primes <start> <count> · resources · receipts · -4d · relaunch', 'mut');
+          } else if (cmd === 'checks') {
+            await runAllChecks();
+          } else if (cmd === 'primes') {
+            const out = computePrimes(a1 || '100', a2 || 6);
+            const rec = await ledger.append('primes', { start: a1 || '100', count: Number(a2 || 6) }, out);
+            termPrint(`Primes: ${out.primes.join(', ')} | Product: ${out.product} (Receipt #${rec.sequence})`, 'sys');
+          } else if (cmd === 'resources') {
+            const out = computeResources();
+            const rec = await ledger.append('resources', { sectors: 12, ticks: 120 }, out);
+            termPrint(`Pool: ${out.pool} | Retained: ${out.retained} | Residual: ${out.global_residual} (Receipt #${rec.sequence})`, 'sys');
+          } else if (cmd === 'receipts') {
+            const ver = await ledger.verify();
+            termPrint(`Ledger Records: ${ver.count} | Head Hash: ${ver.head || 'EMPTY'}`, 'sys');
+          } else if (cmd === '-4d') {
+            btnPolarity.click();
+            termPrint(`Toggled 4D Polarity -> ${params.negative4D ? '-4D INVERSE (-W)' : '+4D POSITIVE (+W)'}`, 'sys');
+          } else if (cmd === 'relaunch') {
+            triggerLaunch();
+            termPrint('Re-launched Geodesic Sierpinski-Tesseract Orb.', 'sys');
+          } else {
+            await ledger.append('unknown_command_preserved', { command: raw }, { note: 'Failure preserved per Layer 6 rule' }, 'faulted', 'Unrecognized command');
+            termPrint(`Unknown command "${cmd}" (preserved as failure record in Layer 6 ledger). Type "help".`, 'err');
+          }
+        } catch (err) {
+          await ledger.append('command_error', { command: raw }, {}, 'faulted', err.message);
+          termPrint('Error: ' + err.message, 'err');
+        }
+      });
+
+      window.addEventListener('resize', () => {
+        initRadialField();
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // =========================================================================
+      // PART 5: UNIFIED CONTINUOUS ANIMATION LOOP (250x FIELD + 3D/4D ORB)
+      // =========================================================================
+      function updateTesseractEdgeBuffer(geo, vertices3D, maxCap, elapsed, hueBase) {
+        const posAttr = geo.attributes.position.array;
+        const colAttr = geo.attributes.color.array;
+        for (let i = 0; i < tesseractEdges.length; i++) {
+          const edge = tesseractEdges[i];
+          const pA = vertices3D[edge.a], pB = vertices3D[edge.b];
+          const stretchRatio = Math.min(1, pA.distanceTo(pB) / (maxCap * 1.4));
+          const offset = i * 6;
+          posAttr[offset] = pA.x; posAttr[offset + 1] = pA.y; posAttr[offset + 2] = pA.z;
+          posAttr[offset + 3] = pB.x; posAttr[offset + 4] = pB.y; posAttr[offset + 5] = pB.z;
+          const wave = 0.5 + 0.5 * Math.sin(elapsed * 3.5 + i * 0.4);
+          tempColor.setHSL((hueBase + stretchRatio * 0.32) % 1.0, 1.0, 0.50 + wave * 0.25);
+          colAttr[offset] = tempColor.r; colAttr[offset + 1] = tempColor.g; colAttr[offset + 2] = tempColor.b;
+          colAttr[offset + 3] = tempColor.r; colAttr[offset + 4] = tempColor.g; colAttr[offset + 5] = tempColor.b;
+        }
+        geo.attributes.position.needsUpdate = true;
+        geo.attributes.color.needsUpdate = true;
+      }
+
+      const lerpPulseVec = new THREE.Vector3();
+      function updateGeodesicLattice(elapsed, layer1Cap, layer2Cap, ovalScaleVec1, ovalScaleVec2, launchEase) {
+        const coupling = params.geodesicCoupling;
+        const r1Base = layer1Cap * 0.87, r2Base = layer2Cap * 0.87;
+
+        for (let i = 0; i < GEO_VERT_COUNT; i++) {
+          const gv = geodesicTopology.vertices[i];
+          const uv = gv.unitVec;
+          gv.posL1.set(
+            uv.x * r1Base * (1 + (ovalScaleVec1.x - 1) * 0.65 * coupling),
+            uv.y * r1Base * (1 + (ovalScaleVec1.y - 1) * 0.65 * coupling),
+            uv.z * r1Base * (1 + (ovalScaleVec1.z - 1) * 0.65 * coupling)
+          );
+          if (gv.posL1.length() > layer1Cap) gv.posL1.multiplyScalar(layer1Cap / gv.posL1.length());
+
+          gv.posL2.set(
+            uv.x * r2Base * (1 + (ovalScaleVec2.x - 1) * 0.65 * coupling),
+            uv.y * r2Base * (1 + (ovalScaleVec2.y - 1) * 0.65 * coupling),
+            uv.z * r2Base * (1 + (ovalScaleVec2.z - 1) * 0.65 * coupling)
+          );
+          if (gv.posL2.length() > layer2Cap) gv.posL2.multiplyScalar(layer2Cap / gv.posL2.length());
+
+          dummy.position.copy(gv.posL1);
+          dummy.rotation.set(elapsed * 0.6, elapsed * 0.6, 0);
+          dummy.scale.setScalar((0.65 + 0.45 * coupling) * launchEase);
+          dummy.updateMatrix();
+          geoSpaceMarkersMesh.setMatrixAt(i, dummy.matrix);
+
+          dummy.position.copy(gv.posL2);
+          dummy.rotation.set(-elapsed * 0.6, -elapsed * 0.6, 0);
+          dummy.scale.setScalar((0.75 + 0.50 * coupling) * launchEase);
+          dummy.updateMatrix();
+          geoSpaceMarkersMesh.setMatrixAt(GEO_VERT_COUNT + i, dummy.matrix);
+        }
+        geoSpaceMarkersMesh.instanceMatrix.needsUpdate = true;
+
+        const pos1 = geodesicLinesL1.geometry.attributes.position.array;
+        const col1 = geodesicLinesL1.geometry.attributes.color.array;
+        const pos2 = geodesicLinesL2.geometry.attributes.position.array;
+        const col2 = geodesicLinesL2.geometry.attributes.color.array;
+        const dirSign = params.negative4D ? -1 : 1;
+
+        for (let e = 0; e < GEO_EDGE_COUNT; e++) {
+          const edge = geodesicTopology.edges[e];
+          const vA = geodesicTopology.vertices[edge.a], vB = geodesicTopology.vertices[edge.b];
+          const offset = e * 6;
+
+          pos1[offset] = vA.posL1.x; pos1[offset + 1] = vA.posL1.y; pos1[offset + 2] = vA.posL1.z;
+          pos1[offset + 3] = vB.posL1.x; pos1[offset + 4] = vB.posL1.y; pos1[offset + 5] = vB.posL1.z;
+          const wave1 = 0.5 + 0.5 * Math.sin(elapsed * 3.8 * dirSign - e * 0.18);
+          tempColor.setHSL(0.49 + wave1 * 0.10, 0.95, (0.35 + wave1 * 0.35) * coupling);
+          col1[offset] = tempColor.r; col1[offset + 1] = tempColor.g; col1[offset + 2] = tempColor.b;
+          col1[offset + 3] = tempColor.r; col1[offset + 4] = tempColor.g; col1[offset + 5] = tempColor.b;
+
+          pos2[offset] = vA.posL2.x; pos2[offset + 1] = vA.posL2.y; pos2[offset + 2] = vA.posL2.z;
+          pos2[offset + 3] = vB.posL2.x; pos2[offset + 4] = vB.posL2.y; pos2[offset + 5] = vB.posL2.z;
+          const wave2 = 0.5 + 0.5 * Math.sin(elapsed * 3.8 * dirSign - e * 0.18 + params.nextLayerPhase);
+          tempColor.setHSL(0.76 + wave2 * 0.10, 0.95, (0.32 + wave2 * 0.35) * coupling);
+          col2[offset] = tempColor.r; col2[offset + 1] = tempColor.g; col2[offset + 2] = tempColor.b;
+          col2[offset + 3] = tempColor.r; col2[offset + 4] = tempColor.g; col2[offset + 5] = tempColor.b;
+
+          let alpha1 = ((elapsed * 0.85 * params.wSpeed * dirSign + e * 0.13) % 1 + 1) % 1;
+          lerpPulseVec.lerpVectors(vA.posL1, vB.posL1, alpha1);
+          dummy.position.copy(lerpPulseVec);
+          dummy.rotation.set(0, 0, 0);
+          dummy.scale.setScalar(coupling * launchEase);
+          dummy.updateMatrix();
+          geoPulseMesh.setMatrixAt(e, dummy.matrix);
+
+          let alpha2 = ((elapsed * 0.85 * params.wSpeed * dirSign + e * 0.13 + 0.25) % 1 + 1) % 1;
+          lerpPulseVec.lerpVectors(vA.posL2, vB.posL2, alpha2);
+          dummy.position.copy(lerpPulseVec);
+          dummy.scale.setScalar(coupling * 1.15 * launchEase);
+          dummy.updateMatrix();
+          geoPulseMesh.setMatrixAt(GEO_EDGE_COUNT + e, dummy.matrix);
+        }
+
+        geodesicLinesL1.geometry.attributes.position.needsUpdate = true;
+        geodesicLinesL1.geometry.attributes.color.needsUpdate = true;
+        geodesicLinesL2.geometry.attributes.position.needsUpdate = true;
+        geodesicLinesL2.geometry.attributes.color.needsUpdate = true;
+        geoPulseMesh.instanceMatrix.needsUpdate = true;
+      }
+
+      const worldProjVec = new THREE.Vector3();
+      const clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const dt = Math.max(clock.getDelta(), 0.001);
+        const dtMs = Math.min(dt * 1000, 100);
+        const elapsed = clock.getElapsedTime();
+
+        // 1. Step 250x Cryptics Fieyld Optics Radial Background
+        stepRadialField(dtMs);
+
+        // 2. Step 3D/4D Geodesic Sierpinski-Tesseract Orb
+        if (params.launchProgress < 1) {
+          params.launchProgress = Math.min(1, params.launchProgress + dt * 1.15);
+        }
+        const t = params.launchProgress;
+        const launchEase = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+
+        params.wAngleXW += dt * 0.65 * params.wSpeed;
+        params.wAngleYW += dt * 0.45 * params.wSpeed;
+        params.wAngleZW += dt * 0.30 * params.wSpeed;
+
+        if (params.autoRotate && !isDragging) {
+          targetRotY += dt * 0.24 * (params.negative4D ? -1 : 1);
+          targetRotX = Math.sin(elapsed * 0.3) * 0.22;
+        }
+        currentRotX += (targetRotX - currentRotX) * 0.08;
+        currentRotY += (targetRotY - currentRotY) * 0.08;
+
+        masterGroup.rotation.x = currentRotX;
+        masterGroup.rotation.y = currentRotY;
+        masterGroup.scale.setScalar(0.05 + 0.95 * launchEase);
+
+        const ratio = params.layerRatio;
+        const layer1Cap = params.maxCircleRadius;
+        const layer2Cap = params.maxCircleRadius * ratio;
+
+        const ovalScaleVec1 = computeOvalScaleVec(elapsed, 0);
+        const ovalScaleVec2 = computeOvalScaleVec(elapsed, params.nextLayerPhase);
+
+        capCircleGroup1.scale.setScalar(layer1Cap);
+        capCircleGroup2.scale.setScalar(layer2Cap);
+
+        const baseOvalR1 = layer1Cap * 0.85;
+        ovalRing1A.scale.set(Math.min(layer1Cap, baseOvalR1 * ovalScaleVec1.x), Math.min(layer1Cap, baseOvalR1 * ovalScaleVec1.y), 1);
+        ovalRing1A.rotation.z = elapsed * 0.3;
+        ovalRing1B.scale.set(Math.min(layer1Cap, baseOvalR1 * ovalScaleVec1.z), Math.min(layer1Cap, baseOvalR1 * ovalScaleVec1.y), 1);
+        ovalRing1B.rotation.x = elapsed * 0.25;
+
+        const baseOvalR2 = layer2Cap * 0.85;
+        ovalRing2A.scale.set(Math.min(layer2Cap, baseOvalR2 * ovalScaleVec2.x), Math.min(layer2Cap, baseOvalR2 * ovalScaleVec2.y), 1);
+        ovalRing2A.rotation.z = -elapsed * 0.25;
+        ovalRing2B.scale.set(Math.min(layer2Cap, baseOvalR2 * ovalScaleVec2.z), Math.min(layer2Cap, baseOvalR2 * ovalScaleVec2.y), 1);
+        ovalRing2B.rotation.x = -elapsed * 0.20;
+
+        updateGeodesicLattice(elapsed, layer1Cap, layer2Cap, ovalScaleVec1, ovalScaleVec2, launchEase);
+
+        if (fractalMesh && duplicateShellMesh && latticeLines) {
+          const uniformFacePulse = 1 + Math.sin(elapsed * 2.4) * 0.035;
+          for (let i = 0; i < fractalNodes.length; i++) {
+            const node = fractalNodes[i];
+            node.currentPos.lerpVectors(node.cubeVec, node.sphereVec, params.morph);
+            node.currentPos.x *= (1 + (ovalScaleVec1.x - 1) * 0.22) * uniformFacePulse;
+            node.currentPos.y *= (1 + (ovalScaleVec1.y - 1) * 0.22) * uniformFacePulse;
+            node.currentPos.z *= (1 + (ovalScaleVec1.z - 1) * 0.22) * uniformFacePulse;
+            const d = node.currentPos.length();
+            if (d > layer1Cap * 0.90) node.currentPos.multiplyScalar((layer1Cap * 0.90) / d);
+            dummy.position.copy(node.currentPos);
+            dummy.rotation.set(0, 0, 0);
+            dummy.scale.setScalar(node.baseSize * launchEase);
+            dummy.updateMatrix();
+            fractalMesh.setMatrixAt(i, dummy.matrix);
+          }
+          fractalMesh.instanceMatrix.needsUpdate = true;
+
+          for (let i = 0; i < outerShellNodes.length; i++) {
+            const node = outerShellNodes[i];
+            dummy.position.copy(node.currentPos).multiplyScalar(ratio);
+            dummy.rotation.set(elapsed * 0.5, elapsed * 0.5, 0);
+            dummy.scale.setScalar(node.baseSize * 0.65 * launchEase);
+            dummy.updateMatrix();
+            duplicateShellMesh.setMatrixAt(i, dummy.matrix);
+          }
+          duplicateShellMesh.instanceMatrix.needsUpdate = true;
+
+          const segPosArr = latticeLines.geometry.attributes.position.array;
+          const segColArr = latticeLines.geometry.attributes.color.array;
+          for (let s = 0; s < latticeSegments.length; s++) {
+            const seg = latticeSegments[s];
+            const pA = fractalNodes[seg.a].currentPos, pB = fractalNodes[seg.b].currentPos;
+            const offset = s * 6;
+            segPosArr[offset] = pA.x; segPosArr[offset + 1] = pA.y; segPosArr[offset + 2] = pA.z;
+            segPosArr[offset + 3] = pB.x; segPosArr[offset + 4] = pB.y; segPosArr[offset + 5] = pB.z;
+            const energy = 0.5 + 0.5 * Math.sin(elapsed * 4.0 - seg.phase);
+            tempColor.setHSL(0.52 + seg.axis * 0.14 + energy * 0.08, 0.95, 0.45 + energy * 0.35);
+            segColArr[offset] = tempColor.r; segColArr[offset + 1] = tempColor.g; segColArr[offset + 2] = tempColor.b;
+            segColArr[offset + 3] = tempColor.r; segColArr[offset + 4] = tempColor.g; segColArr[offset + 5] = tempColor.b;
+          }
+          latticeLines.geometry.attributes.position.needsUpdate = true;
+          latticeLines.geometry.attributes.color.needsUpdate = true;
+        }
+
+        const projectedLayer1 = tesseractPointRegistry.map(reg => projectEncoded4Dto3D(reg.v4, ovalScaleVec1, 1.0, 0));
+        const projectedLayer2 = tesseractPointRegistry.map(reg => projectEncoded4Dto3D(reg.v4, ovalScaleVec2, ratio, params.nextLayerPhase));
+
+        for (let i = 0; i < 16; i++) {
+          const reg = tesseractPointRegistry[i];
+          reg.velL1 = projectedLayer1[i].distanceTo(reg.prevL1) / dt;
+          reg.velL2 = projectedLayer2[i].distanceTo(reg.prevL2) / dt;
+          reg.prevL1.copy(projectedLayer1[i]);
+          reg.prevL2.copy(projectedLayer2[i]);
+        }
+
+        updateTesseractEdgeBuffer(tesseractLines.geometry, projectedLayer1, layer1Cap, elapsed, 0.50);
+        updateTesseractEdgeBuffer(dupTesseractLines.geometry, projectedLayer2, layer2Cap, elapsed, 0.74);
+
+        const bridgePosArr = anchorBridgeGeo.attributes.position.array;
+        const bridgeColArr = anchorBridgeGeo.attributes.color.array;
+        for (let i = 0; i < 16; i++) {
+          const p1 = projectedLayer1[i], p2 = projectedLayer2[i];
+          const offset = i * 6;
+          bridgePosArr[offset] = p1.x; bridgePosArr[offset + 1] = p1.y; bridgePosArr[offset + 2] = p1.z;
+          bridgePosArr[offset + 3] = p2.x; bridgePosArr[offset + 4] = p2.y; bridgePosArr[offset + 5] = p2.z;
+          const isSel = i === params.selectedVertex;
+          const pulse = isSel ? 1.0 : 0.5 + 0.5 * Math.sin(elapsed * 4.5 - i * 0.4);
+          tempColor.setHSL(0.52, 1.0, isSel ? 0.85 : 0.55 + pulse * 0.2);
+          bridgeColArr[offset] = tempColor.r; bridgeColArr[offset + 1] = tempColor.g; bridgeColArr[offset + 2] = tempColor.b;
+          tempColor.setHSL(0.82, 1.0, isSel ? 0.85 : 0.55 + pulse * 0.2);
+          bridgeColArr[offset + 3] = tempColor.r; bridgeColArr[offset + 4] = tempColor.g; bridgeColArr[offset + 5] = tempColor.b;
+        }
+        anchorBridgeGeo.attributes.position.needsUpdate = true;
+        anchorBridgeGeo.attributes.color.needsUpdate = true;
+
+        const tPosArr = trailGeo.attributes.position.array;
+        const tColArr = trailGeo.attributes.color.array;
+        let trailPtr = 0;
+        for (let i = 0; i < TOTAL_VERTICES; i++) {
+          const isLayer2 = i >= 16;
+          const baseIdx = isLayer2 ? i - 16 : i;
+          const pt = isLayer2 ? projectedLayer2[baseIdx] : projectedLayer1[baseIdx];
+          const isSel = baseIdx === params.selectedVertex;
+
+          dummy.position.copy(pt);
+          dummy.rotation.set(0, 0, 0);
+          dummy.scale.setScalar((isLayer2 ? 1.15 : 0.95) * (isSel ? 1.55 : 1.0));
+          dummy.updateMatrix();
+          tesseractNodesMesh.setMatrixAt(i, dummy.matrix);
+
+          const hist = vertexHistory[i];
+          hist.unshift(pt.clone());
+          if (hist.length > TRAIL_LENGTH) hist.pop();
+
+          const baseHue = isLayer2 ? 0.78 : 0.52;
+          for (let h = 0; h < TRAIL_LENGTH - 1; h++) {
+            const p0 = hist[h] || pt, p1 = hist[h + 1] || p0;
+            const fade = 1 - h / (TRAIL_LENGTH - 1);
+            tPosArr[trailPtr] = p0.x; tPosArr[trailPtr + 1] = p0.y; tPosArr[trailPtr + 2] = p0.z;
+            tPosArr[trailPtr + 3] = p1.x; tPosArr[trailPtr + 4] = p1.y; tPosArr[trailPtr + 5] = p1.z;
+            tempColor.setHSL((baseHue + (1 - fade) * 0.22) % 1.0, 0.95, 0.55 * fade);
+            tColArr[trailPtr] = tempColor.r; tColArr[trailPtr + 1] = tempColor.g; tColArr[trailPtr + 2] = tempColor.b;
+            const fadeNext = Math.max(0, 1 - (h + 1) / (TRAIL_LENGTH - 1));
+            tempColor.setHSL((baseHue + (1 - fadeNext) * 0.22) % 1.0, 0.95, 0.55 * fadeNext);
+            tColArr[trailPtr + 3] = tempColor.r; tColArr[trailPtr + 4] = tempColor.g; tColArr[trailPtr + 5] = tempColor.b;
+            trailPtr += 6;
+          }
+        }
+        tesseractNodesMesh.instanceMatrix.needsUpdate = true;
+        trailGeo.attributes.position.needsUpdate = true;
+        trailGeo.attributes.color.needsUpdate = true;
+
+        // 3. Update Telemetry HUD & 3D Projected Reticle
+        const selIdx = params.selectedVertex;
+        const selReg = tesseractPointRegistry[selIdx];
+        const selP1 = projectedLayer1[selIdx], selP2 = projectedLayer2[selIdx];
+
+        beaconL1.position.copy(selP1); beaconL1.lookAt(camera.position);
+        beaconL2.position.copy(selP2); beaconL2.lookAt(camera.position);
+
+        let nearestGeo = geodesicTopology.vertices[0], bestGeoDistSq = Infinity;
+        for (let g = 0; g < GEO_VERT_COUNT; g++) {
+          const dSq = geodesicTopology.vertices[g].posL2.distanceToSquared(selP2);
+          if (dSq < bestGeoDistSq) { bestGeoDistSq = dSq; nearestGeo = geodesicTopology.vertices[g]; }
+        }
+
+        let nearestSierpinski = fractalNodes[0], bestSierpDistSq = Infinity;
+        for (let k = 0; k < fractalNodes.length; k++) {
+          const dSq = fractalNodes[k].currentPos.distanceToSquared(selP1);
+          if (dSq < bestSierpDistSq) { bestSierpDistSq = dSq; nearestSierpinski = fractalNodes[k]; }
+        }
+
+        if (params.showMarkers) {
+          worldProjVec.copy(selP2);
+          masterGroup.localToWorld(worldProjVec);
+          worldProjVec.project(camera);
+          reticleEl.style.left = `${((worldProjVec.x * 0.5 + 0.5) * window.innerWidth).toFixed(1)}px`;
+          reticleEl.style.top = `${((-(worldProjVec.y * 0.5) + 0.5) * window.innerHeight).toFixed(1)}px`;
+          reticleEl.textContent = `${selReg.code} [${params.negative4D ? '-4D' : '+4D'}:${selReg.binary}] • ${nearestGeo.code} (${selP2.x.toFixed(2)}, ${selP2.y.toFixed(2)}, ${selP2.z.toFixed(2)})`;
+        }
+
+        const pct = fieldState.totalCells > 0 ? Math.round((fieldState.activeCount / fieldState.totalCells) * 100) : 0;
+        const sec = (fieldState.phaseElapsedMs / 1000).toFixed(1);
+        const dirLabel = fieldState.phase === 1 ? 'FILL' : 'INV';
+        document.getElementById('enc-field-pct').textContent = `${dirLabel} · ${pct}% · ${sec}s`;
+        document.getElementById('fieldStatsLine').textContent =
+          `250x Radial Optic Field (${fieldState.activeCount.toLocaleString()} / ${fieldState.totalCells.toLocaleString()} · ${pct}%) · Continuous Runtime`;
+
+        document.getElementById('enc-ratio-cap').textContent = `${ratio.toFixed(2)}x | R${layer1Cap.toFixed(2)}→${layer2Cap.toFixed(2)}`;
+        document.getElementById('enc-l1-pos').textContent = `${selP1.x.toFixed(2)}, ${selP1.y.toFixed(2)}, ${selP1.z.toFixed(2)} (r=${selP1.length().toFixed(2)})`;
+        document.getElementById('enc-l2-pos').textContent = `${selP2.x.toFixed(2)}, ${selP2.y.toFixed(2)}, ${selP2.z.toFixed(2)} (r=${selP2.length().toFixed(2)})`;
+        document.getElementById('enc-span-vel').textContent = `Δr ${selP1.distanceTo(selP2).toFixed(2)} | ${selReg.velL2.toFixed(2)} u/s`;
+        document.getElementById('enc-geo-space').textContent = `${nearestGeo.code} • ${nearestSierpinski ? nearestSierpinski.encodedAddress : 'S000000'}`;
+
+        coreLight.intensity = 3.0 + Math.sin(elapsed * 4) * 0.8;
+        renderer.render(scene, camera);
+      }
+
+      animate();
+    };
+  </script>
+</body>
+</html>
+
+

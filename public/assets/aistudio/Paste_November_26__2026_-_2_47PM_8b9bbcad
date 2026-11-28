@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sierpinski Hypercube Tesseract Spherical Fractal Orb</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #04040a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #e0e6ff;
+    }
+
+    #canvas-container {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    /* HUD Top-Left Header */
+    .hud-header {
+      position: absolute;
+      top: 18px;
+      left: 20px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .symbol-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: #00f3ff;
+      background: rgba(0, 243, 255, 0.08);
+      border: 1px solid rgba(0, 243, 255, 0.32);
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 6px;
+      backdrop-filter: blur(8px);
+    }
+
+    .hud-title {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      background: linear-gradient(90deg, #ffffff, #88aaff, #ff44cc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(136, 170, 255, 0.2);
+    }
+
+    .hud-subtitle {
+      font-size: 11px;
+      color: #8a94b8;
+      margin-top: 3px;
+    }
+
+    /* Point Encoding & Next Movement Telemetry Panel (Bottom-Left) */
+    .encoding-panel {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      z-index: 10;
+      width: 350px;
+      max-width: calc(100vw - 40px);
+      background: rgba(8, 11, 24, 0.84);
+      border: 1px solid rgba(0, 243, 255, 0.28);
+      border-radius: 14px;
+      padding: 14px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), inset 0 0 18px rgba(0, 243, 255, 0.06);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    .panel-header span {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: #00f3ff;
+    }
+
+    .toggle-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .toggle-btn:hover {
+      background: rgba(0, 243, 255, 0.2);
+      border-color: #00f3ff;
+    }
+
+    .encoding-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 9px;
+    }
+
+    .enc-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
+
+    .enc-card-title {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #94a3b8;
+      margin-bottom: 2px;
+    }
+
+    .enc-card-val {
+      font-size: 11px;
+      font-weight: 700;
+      color: #e2e8f0;
+    }
+
+    .enc-card-val.cyan { color: #00f3ff; }
+    .enc-card-val.magenta { color: #ff44cc; }
+    .enc-card-val.emerald { color: #34d399; }
+
+    .vertex-selector-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      background: rgba(0, 243, 255, 0.07);
+      border: 1px solid rgba(0, 243, 255, 0.22);
+      border-radius: 8px;
+      padding: 5px 8px;
+      margin-bottom: 8px;
+    }
+
+    .nav-pt-btn {
+      background: rgba(0, 243, 255, 0.18);
+      border: 1px solid rgba(0, 243, 255, 0.4);
+      color: #00f3ff;
+      border-radius: 5px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .nav-pt-btn:hover {
+      background: #00f3ff;
+      color: #04040a;
+    }
+
+    .vertex-id-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      text-align: center;
+    }
+
+    .telemetry-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5px;
+    }
+
+    .telemetry-table td {
+      padding: 3px 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .telemetry-table td.lbl {
+      color: #94a3b8;
+    }
+
+    .telemetry-table td.val {
+      text-align: right;
+      color: #f8fafc;
+      font-weight: 600;
+    }
+
+    /* Floating 3D Projected Anchor Reticle Label */
+    #point-reticle {
+      position: absolute;
+      z-index: 8;
+      pointer-events: none;
+      transform: translate(-50%, -135%);
+      background: rgba(6, 10, 24, 0.88);
+      border: 1px solid #00f3ff;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      color: #00f3ff;
+      white-space: nowrap;
+      box-shadow: 0 0 12px rgba(0, 243, 255, 0.45);
+      transition: opacity 0.15s ease;
+    }
+
+    /* Control Panel (Bottom-Right) */
+    .controls-panel {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10;
+      width: 330px;
+      max-width: calc(100vw - 40px);
+      background: rgba(10, 12, 26, 0.84);
+      border: 1px solid rgba(110, 140, 255, 0.25);
+      border-radius: 14px;
+      padding: 15px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65), inset 0 0 20px rgba(0, 243, 255, 0.05);
+    }
+
+    .control-group {
+      margin-bottom: 9px;
+    }
+
+    .control-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      margin-bottom: 4px;
+      color: #cbd5e1;
+    }
+
+    .control-value {
+      color: #00f3ff;
+      font-family: monospace;
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 5px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #00f3ff;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00f3ff;
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .action-btn {
+      background: linear-gradient(135deg, rgba(0, 243, 255, 0.15), rgba(168, 85, 247, 0.2));
+      border: 1px solid rgba(0, 243, 255, 0.4);
+      color: #fff;
+      padding: 7px 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .action-btn:hover {
+      background: linear-gradient(135deg, rgba(0, 243, 255, 0.3), rgba(168, 85, 247, 0.35));
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+    }
+
+    .action-btn.active {
+      background: #00f3ff;
+      color: #04040a;
+      border-color: #00f3ff;
+    }
+
+    .depth-selector {
+      display: flex;
+      gap: 6px;
+    }
+
+    .depth-btn {
+      flex: 1;
+      padding: 5px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .depth-btn.active {
+      background: rgba(0, 243, 255, 0.2);
+      border-color: #00f3ff;
+      color: #00f3ff;
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.25);
+    }
+
+    /* Launch Flash Overlay */
+    #launch-flash {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle, rgba(0, 243, 255, 0.6) 0%, rgba(168, 85, 247, 0.2) 50%, transparent 80%);
+      z-index: 20;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s ease-out;
+    }
+
+    @media (max-width: 760px) {
+      .encoding-panel {
+        top: 86px;
+        bottom: auto;
+        left: 14px;
+        width: calc(100vw - 28px);
+        padding: 10px;
+      }
+      .controls-panel {
+        bottom: 14px;
+        right: 14px;
+        left: 14px;
+        width: auto;
+        padding: 12px;
+      }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <div id="launch-flash"></div>
+  <div id="point-reticle">V00 [-4D:0000] • R:0.00</div>
+
+  <div class="hud-header">
+    <div class="symbol-badge">◆ SYMBOL RENDER OBJECT // GEODESIC -4D ENCODED</div>
+    <div class="hud-title">Sierpinski-Tesseract Spherical Orb</div>
+    <div class="hud-subtitle">Full Geodesic Lattice • Point-to-Point Linear Motion • Encoded -4D Hyperspace</div>
+  </div>
+
+  <div id="canvas-container"></div>
+
+  <!-- Left HUD: Encoded -4D & Geodesic Point Telemetry -->
+  <div class="encoding-panel" id="encoding-panel">
+    <div class="panel-header">
+      <span>Encoded -4D & Geodesic Spaces</span>
+      <button class="toggle-btn" id="toggle-enc-btn">Hide</button>
+    </div>
+
+    <div id="encoding-body">
+      <div class="encoding-grid">
+        <div class="enc-card">
+          <div class="enc-card-title">-4D Projection Polarity</div>
+          <div class="enc-card-val emerald" id="enc-polarity">-4D INVERSE (w &lt; 0)</div>
+        </div>
+        <div class="enc-card">
+          <div class="enc-card-title">Geodesic Lattice Spaces</div>
+          <div class="enc-card-val cyan" id="enc-geo-info">42 Nodes | 120 Edges</div>
+        </div>
+        <div class="enc-card">
+          <div class="enc-card-title">L1:L2 Ratio & Cap</div>
+          <div class="enc-card-val magenta" id="enc-ratio-cap">1.38x | R2.90→4.00</div>
+        </div>
+        <div class="enc-card">
+          <div class="enc-card-title">-4D Phase (XW/YW/ZW)</div>
+          <div class="enc-card-val" id="enc-4d-angles">0.00 / 0.00 / 0.00</div>
+        </div>
+      </div>
+
+      <div class="vertex-selector-bar">
+        <button class="nav-pt-btn" id="prev-vertex-btn">◀</button>
+        <div class="vertex-id-label" id="selected-vertex-title">ANCHOR V00 • -4D [0000]</div>
+        <button class="nav-pt-btn" id="next-vertex-btn">▶</button>
+      </div>
+
+      <table class="telemetry-table">
+        <tr>
+          <td class="lbl">-4D Encoded Basis (-x,-y,-z,-w)</td>
+          <td class="val" id="enc-v4">(+1, +1, +1, +1)</td>
+        </tr>
+        <tr>
+          <td class="lbl">L1 Primary -4D Pos (X,Y,Z)</td>
+          <td class="val" id="enc-l1-pos">0.00, 0.00, 0.00</td>
+        </tr>
+        <tr>
+          <td class="lbl">L2 Next-Layer -4D Pos (X,Y,Z)</td>
+          <td class="val" id="enc-l2-pos">0.00, 0.00, 0.00</td>
+        </tr>
+        <tr>
+          <td class="lbl">Linear Vector Velocity & Span</td>
+          <td class="val" id="enc-span-vel">Δr 0.00 | 0.00 u/s</td>
+        </tr>
+        <tr>
+          <td class="lbl">Marked Geodesic Space Node</td>
+          <td class="val" id="enc-geo-space">G00 • S000000</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Right HUD: Geodesic & -4D Movement Controls -->
+  <div class="controls-panel" id="controls-panel">
+    <div class="panel-header">
+      <span>Geodesic & -4D Parameters</span>
+      <button class="toggle-btn" id="collapse-btn">Hide</button>
+    </div>
+
+    <div id="controls-body">
+      <div class="control-group">
+        <div class="control-label">
+          <span>Spherical Morph (1:1:1 Cube ↔ Orb)</span>
+          <span class="control-value" id="val-morph">0.78</span>
+        </div>
+        <input type="range" id="slider-morph" min="0" max="1" step="0.01" value="0.78">
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>Geodesic Lattice Coupling</span>
+          <span class="control-value" id="val-geodesic">0.85</span>
+        </div>
+        <input type="range" id="slider-geodesic" min="0" max="1" step="0.01" value="0.85">
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>Anchored Layer Ratio (L1 : L2)</span>
+          <span class="control-value" id="val-ratio">1.38x</span>
+        </div>
+        <input type="range" id="slider-ratio" min="1.15" max="1.75" step="0.01" value="1.38">
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>Oval Diameter Scale Pulse</span>
+          <span class="control-value" id="val-oval">0.32</span>
+        </div>
+        <input type="range" id="slider-oval" min="0" max="1" step="0.01" value="0.32">
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>Max Circumference Radius Cap</span>
+          <span class="control-value" id="val-cap">2.90</span>
+        </div>
+        <input type="range" id="slider-cap" min="2.2" max="3.4" step="0.05" value="2.90">
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>-4D Hyperspace W-Rotation</span>
+          <span class="control-value" id="val-wrot">1.00x</span>
+        </div>
+        <input type="range" id="slider-wrot" min="0" max="3" step="0.05" value="1.0">
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>Menger-Sierpinski Recursion</span>
+          <span class="control-value" id="val-depth">Level 3</span>
+        </div>
+        <div class="depth-selector">
+          <button class="depth-btn" data-depth="1">L1</button>
+          <button class="depth-btn" data-depth="2">L2</button>
+          <button class="depth-btn active" data-depth="3">L3</button>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <button class="action-btn" id="btn-relaunch">◆ Re-Launch Orb</button>
+        <button class="action-btn active" id="btn-polarity">-4D Mode: INV (-W)</button>
+        <button class="action-btn active" id="btn-autorotate">Auto-Orbit: ON</button>
+        <button class="action-btn active" id="btn-reticle">Space Markers: ON</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.onload = function () {
+      // --- State & Geodesic -4D Movement Parameters ---
+      const params = {
+        morph: 0.78,            // 0 = pure 1:1:1 Sierpinski/Menger Cube, 1 = Spherical Orb
+        geodesicCoupling: 0.85, // Strength of full geodesic lattice linear wave & node markers
+        layerRatio: 1.38,       // Evenly anchored duplicate next movement dimension ratio
+        nextLayerPhase: 0.785,  // Next-layer dimensional phase shift (π/4 rad)
+        ovalAmplitude: 0.32,    // Oval diameter scale in & out amplitude
+        maxCircleRadius: 2.90,  // Primary maximum scaled circular circumference cap
+        wSpeed: 1.0,            // -4D tesseract rotation speed
+        wDistance: 2.65,        // Stereographic projection focal distance
+        negative4D: true,       // Encoded -4D inverse hyperspace polarity (-x,-y,-z,-w)
+        depth: 3,               // Fractal recursion level (1 to 3)
+        autoRotate: true,
+        showMarkers: true,
+        selectedVertex: 0,      // Currently inspected -4D point index (0..15)
+        launchProgress: 0,
+        wAngleXW: 0,
+        wAngleYW: 0,
+        wAngleZW: 0
+      };
+
+      // --- Scene, Camera, Renderer ---
+      const container = document.getElementById('canvas-container');
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x04040a, 0.025);
+
+      const camera = new THREE.PerspectiveCamera(
+        55,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        1000
+      );
+      camera.position.set(0, 0, 10.6);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      container.appendChild(renderer.domElement);
+
+      const masterGroup = new THREE.Group();
+      scene.add(masterGroup);
+
+      // --- Lighting ---
+      const ambientLight = new THREE.AmbientLight(0x222844, 1.6);
+      scene.add(ambientLight);
+
+      const coreLight = new THREE.PointLight(0x00f3ff, 3.8, 22);
+      masterGroup.add(coreLight);
+
+      const rimLight1 = new THREE.PointLight(0xff2a85, 2.5, 28);
+      rimLight1.position.set(7, 6, 7);
+      scene.add(rimLight1);
+
+      const rimLight2 = new THREE.PointLight(0x6366f1, 2.5, 28);
+      rimLight2.position.set(-7, -6, -5);
+      scene.add(rimLight2);
+
+      // --- 1. Ambient Cosmic Starfield ---
+      const starGeo = new THREE.BufferGeometry();
+      const starCount = 1200;
+      const starPos = new Float32Array(starCount * 3);
+      for (let i = 0; i < starCount * 3; i++) {
+        starPos[i] = (Math.random() - 0.5) * 65;
+      }
+      starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+      const starMat = new THREE.PointsMaterial({
+        color: 0x88aaff,
+        size: 0.08,
+        transparent: true,
+        opacity: 0.55
+      });
+      const stars = new THREE.Points(starGeo, starMat);
+      scene.add(stars);
+
+      // --- 2. Full Geodesic Lattice & Point-to-Point Encoded Space Markers ---
+      // Subdivided Icosahedral Geodesic Lattice (Frequency 2 -> 42 unique encoded geodesic spaces, 120 linear edges)
+      function buildGeodesicTopology() {
+        const icoGeo = new THREE.IcosahedronGeometry(1.0, 1);
+        const posAttr = icoGeo.attributes.position;
+        const uniqueVerts = [];
+        const vertLookup = new Map();
+        const edgeSet = new Set();
+        const edges = [];
+
+        function getOrAddVertex(vx, vy, vz) {
+          const v = new THREE.Vector3(vx, vy, vz).normalize();
+          const key = `${v.x.toFixed(4)},${v.y.toFixed(4)},${v.z.toFixed(4)}`;
+          if (vertLookup.has(key)) {
+            return vertLookup.get(key);
+          }
+          const idx = uniqueVerts.length;
+          uniqueVerts.push({
+            id: idx,
+            code: `G${String(idx).padStart(2, '0')}`,
+            unitVec: v,
+            posL1: new THREE.Vector3(),
+            posL2: new THREE.Vector3()
+          });
+          vertLookup.set(key, idx);
+          return idx;
+        }
+
+        function addEdge(a, b) {
+          if (a === b) return;
+          const minI = Math.min(a, b);
+          const maxI = Math.max(a, b);
+          const key = `${minI}_${maxI}`;
+          if (!edgeSet.has(key)) {
+            edgeSet.add(key);
+            edges.push({ a: minI, b: maxI });
+          }
+        }
+
+        const triCount = posAttr.count / 3;
+        for (let t = 0; t < triCount; t++) {
+          const i0 = getOrAddVertex(posAttr.getX(t * 3), posAttr.getY(t * 3), posAttr.getZ(t * 3));
+          const i1 = getOrAddVertex(posAttr.getX(t * 3 + 1), posAttr.getY(t * 3 + 1), posAttr.getZ(t * 3 + 1));
+          const i2 = getOrAddVertex(posAttr.getX(t * 3 + 2), posAttr.getY(t * 3 + 2), posAttr.getZ(t * 3 + 2));
+          addEdge(i0, i1);
+          addEdge(i1, i2);
+          addEdge(i2, i0);
+        }
+
+        icoGeo.dispose();
+        return { vertices: uniqueVerts, edges };
+      }
+
+      const geodesicTopology = buildGeodesicTopology();
+      const GEO_VERT_COUNT = geodesicTopology.vertices.length; // 42
+      const GEO_EDGE_COUNT = geodesicTopology.edges.length;   // 120
+
+      document.getElementById('enc-geo-info').textContent =
+        `${GEO_VERT_COUNT} Nodes | ${GEO_EDGE_COUNT} Edges`;
+
+      // Geodesic Lattice Linear Segments for Layer 1 & Layer 2
+      function createGeodesicLineBuffer(opacity) {
+        const geo = new THREE.BufferGeometry();
+        const pos = new Float32Array(GEO_EDGE_COUNT * 2 * 3);
+        const col = new Float32Array(GEO_EDGE_COUNT * 2 * 3);
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+        const mat = new THREE.LineBasicMaterial({
+          vertexColors: true,
+          transparent: true,
+          opacity,
+          blending: THREE.AdditiveBlending
+        });
+        return new THREE.LineSegments(geo, mat);
+      }
+
+      const geodesicLinesL1 = createGeodesicLineBuffer(0.62);
+      const geodesicLinesL2 = createGeodesicLineBuffer(0.45);
+      masterGroup.add(geodesicLinesL1, geodesicLinesL2);
+
+      // Point-to-Point Linear Motion Pulse Particles traveling along Geodesic Edges (L1 & L2)
+      const GEO_PULSE_COUNT = GEO_EDGE_COUNT * 2; // 1 per edge on L1 + 1 per edge on L2
+      const geoPulseGeo = new THREE.OctahedronGeometry(0.032, 0);
+      const geoPulseMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        blending: THREE.AdditiveBlending
+      });
+      const geoPulseMesh = new THREE.InstancedMesh(geoPulseGeo, geoPulseMat, GEO_PULSE_COUNT);
+      geoPulseMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      for (let i = 0; i < GEO_PULSE_COUNT; i++) {
+        const isL2 = i >= GEO_EDGE_COUNT;
+        const c = new THREE.Color().setHSL(isL2 ? 0.82 : 0.50, 1.0, 0.65);
+        geoPulseMesh.setColorAt(i, c);
+      }
+      geoPulseMesh.instanceColor.needsUpdate = true;
+      masterGroup.add(geoPulseMesh);
+
+      // Marked Geodesic Space Nodes (42 on L1 + 42 on L2 = 84 marked space nodes)
+      const geoSpaceMarkerGeo = new THREE.OctahedronGeometry(0.055, 0);
+      const geoSpaceMarkerMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.85,
+        blending: THREE.AdditiveBlending
+      });
+      const geoSpaceMarkersMesh = new THREE.InstancedMesh(
+        geoSpaceMarkerGeo,
+        geoSpaceMarkerMat,
+        GEO_VERT_COUNT * 2
+      );
+      geoSpaceMarkersMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      for (let i = 0; i < GEO_VERT_COUNT * 2; i++) {
+        const isL2 = i >= GEO_VERT_COUNT;
+        const c = new THREE.Color().setHSL(isL2 ? 0.78 : 0.48, 0.95, 0.62);
+        geoSpaceMarkersMesh.setColorAt(i, c);
+      }
+      geoSpaceMarkersMesh.instanceColor.needsUpdate = true;
+      masterGroup.add(geoSpaceMarkersMesh);
+
+      // --- 3. Menger-Sierpinski 1:1:1 Lattice & Point Encoding Registry ---
+      let fractalMesh = null;
+      let duplicateShellMesh = null;
+      let latticeLines = null;
+      let fractalNodes = [];
+      let outerShellNodes = [];
+      let latticeSegments = [];
+      const dummy = new THREE.Object3D();
+      const tempColor = new THREE.Color();
+
+      function generateSierpinski111Grid(level) {
+        const points = [];
+        const gridDim = Math.pow(3, level);
+        const halfSpan = (gridDim - 1) / 2;
+        const totalSize = 2.45;
+        const cellStep = totalSize / gridDim;
+        const pointMap = new Map();
+
+        function recurse(gx, gy, gz, span, depth) {
+          if (depth === 0) {
+            const x = (gx - halfSpan) * cellStep;
+            const y = (gy - halfSpan) * cellStep;
+            const z = (gz - halfSpan) * cellStep;
+            const idx = points.length;
+            const isExteriorShell =
+              gx === 0 || gx === gridDim - 1 ||
+              gy === 0 || gy === gridDim - 1 ||
+              gz === 0 || gz === gridDim - 1;
+
+            const encodedAddress = `S${String(gx).padStart(2, '0')}${String(gy).padStart(2, '0')}${String(gz).padStart(2, '0')}`;
+
+            const nodeData = {
+              idx,
+              gx,
+              gy,
+              gz,
+              encodedAddress,
+              x,
+              y,
+              z,
+              size: cellStep,
+              isExteriorShell
+            };
+            points.push(nodeData);
+            pointMap.set(`${gx},${gy},${gz}`, idx);
+            return;
+          }
+          const subSpan = span / 3;
+          for (let dx = 0; dx < 3; dx++) {
+            for (let dy = 0; dy < 3; dy++) {
+              for (let dz = 0; dz < 3; dz++) {
+                const centerAxes = (dx === 1 ? 1 : 0) + (dy === 1 ? 1 : 0) + (dz === 1 ? 1 : 0);
+                if (centerAxes <= 1) {
+                  recurse(
+                    gx + dx * subSpan,
+                    gy + dy * subSpan,
+                    gz + dz * subSpan,
+                    subSpan,
+                    depth - 1
+                  );
+                }
+              }
+            }
+          }
+        }
+
+        recurse(0, 0, 0, gridDim, level);
+
+        const segments = [];
+        const dirs = [
+          { dx: 1, dy: 0, dz: 0, axis: 0 },
+          { dx: 0, dy: 1, dz: 0, axis: 1 },
+          { dx: 0, dy: 0, dz: 1, axis: 2 }
+        ];
+
+        for (let i = 0; i < points.length; i++) {
+          const p = points[i];
+          for (let d = 0; d < dirs.length; d++) {
+            const dir = dirs[d];
+            const neighborKey = `${p.gx + dir.dx},${p.gy + dir.dy},${p.gz + dir.dz}`;
+            const neighborIdx = pointMap.get(neighborKey);
+            if (neighborIdx !== undefined) {
+              segments.push({
+                a: i,
+                b: neighborIdx,
+                axis: dir.axis,
+                phase: (p.gx + p.gy + p.gz) * 0.25 + dir.axis * (Math.PI / 3)
+              });
+            }
+          }
+        }
+
+        return { points, segments, gridDim };
+      }
+
+      function buildFractalOrb(level) {
+        if (fractalMesh) {
+          masterGroup.remove(fractalMesh);
+          fractalMesh.geometry.dispose();
+          fractalMesh.material.dispose();
+        }
+        if (duplicateShellMesh) {
+          masterGroup.remove(duplicateShellMesh);
+          duplicateShellMesh.geometry.dispose();
+          duplicateShellMesh.material.dispose();
+        }
+        if (latticeLines) {
+          masterGroup.remove(latticeLines);
+          latticeLines.geometry.dispose();
+          latticeLines.material.dispose();
+        }
+
+        const { points, segments, gridDim } = generateSierpinski111Grid(level);
+        latticeSegments = segments;
+        outerShellNodes = [];
+
+        fractalNodes = points.map((pt) => {
+          const cubeVec = new THREE.Vector3(pt.x, pt.y, pt.z);
+          const len = cubeVec.length();
+          const sphereVec = len > 0.0001
+            ? cubeVec.clone().normalize().multiplyScalar(2.05)
+            : new THREE.Vector3(0, 0, 0);
+
+          const normDist = Math.min(len / 2.15, 1.0);
+          const halfGrid = Math.max(1, (gridDim - 1) / 2);
+          const node = {
+            gx: pt.gx,
+            gy: pt.gy,
+            gz: pt.gz,
+            encodedAddress: pt.encodedAddress,
+            cubeVec,
+            sphereVec,
+            currentPos: new THREE.Vector3(),
+            baseSize: pt.size * 0.72,
+            normDist,
+            nx: (pt.gx - halfGrid) / halfGrid,
+            ny: (pt.gy - halfGrid) / halfGrid,
+            nz: (pt.gz - halfGrid) / halfGrid,
+            phase: (pt.gx * 0.35) + (pt.gy * 0.35) + (pt.gz * 0.35)
+          };
+          if (pt.isExteriorShell) {
+            outerShellNodes.push(node);
+          }
+          return node;
+        });
+
+        const cellGeo = new THREE.BoxGeometry(0.68, 0.68, 0.68);
+        const cellMat = new THREE.MeshStandardMaterial({
+          color: 0xffffff,
+          roughness: 0.22,
+          metalness: 0.8,
+          emissive: 0x0a192f,
+          emissiveIntensity: 0.55
+        });
+
+        fractalMesh = new THREE.InstancedMesh(cellGeo, cellMat, fractalNodes.length);
+        fractalMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+
+        for (let i = 0; i < fractalNodes.length; i++) {
+          const n = fractalNodes[i];
+          tempColor.setHSL(0.51 + n.normDist * 0.35, 0.92, 0.56);
+          fractalMesh.setColorAt(i, tempColor);
+        }
+        fractalMesh.instanceColor.needsUpdate = true;
+        masterGroup.add(fractalMesh);
+
+        const dupGeo = new THREE.OctahedronGeometry(0.32, 0);
+        const dupMat = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          transparent: true,
+          opacity: 0.65,
+          blending: THREE.AdditiveBlending
+        });
+
+        duplicateShellMesh = new THREE.InstancedMesh(dupGeo, dupMat, outerShellNodes.length);
+        duplicateShellMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+        for (let i = 0; i < outerShellNodes.length; i++) {
+          const n = outerShellNodes[i];
+          tempColor.setHSL(0.78 - n.normDist * 0.25, 0.95, 0.62);
+          duplicateShellMesh.setColorAt(i, tempColor);
+        }
+        duplicateShellMesh.instanceColor.needsUpdate = true;
+        masterGroup.add(duplicateShellMesh);
+
+        const lineGeo = new THREE.BufferGeometry();
+        const linePositions = new Float32Array(latticeSegments.length * 2 * 3);
+        const lineColors = new Float32Array(latticeSegments.length * 2 * 3);
+        lineGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+        lineGeo.setAttribute('color', new THREE.BufferAttribute(lineColors, 3));
+
+        const lineMat = new THREE.LineBasicMaterial({
+          vertexColors: true,
+          transparent: true,
+          opacity: level === 3 ? 0.28 : 0.55,
+          blending: THREE.AdditiveBlending
+        });
+
+        latticeLines = new THREE.LineSegments(lineGeo, lineMat);
+        masterGroup.add(latticeLines);
+      }
+
+      // --- 4. Dual-Layer -4D Tesseract Wireframes, Encoded Point Registry & Motion-Cap Trails ---
+      const tesseractPointRegistry = [];
+      for (let i = 0; i < 16; i++) {
+        const b0 = (i & 1) ? 1 : 0;
+        const b1 = (i & 2) ? 1 : 0;
+        const b2 = (i & 4) ? 1 : 0;
+        const b3 = (i & 8) ? 1 : 0;
+        tesseractPointRegistry.push({
+          id: i,
+          code: `V${String(i).padStart(2, '0')}`,
+          binary: `${b3}${b2}${b1}${b0}`,
+          v4: [b0 ? 1 : -1, b1 ? 1 : -1, b2 ? 1 : -1, b3 ? 1 : -1],
+          prevL1: new THREE.Vector3(),
+          prevL2: new THREE.Vector3(),
+          velL1: 0,
+          velL2: 0
+        });
+      }
+
+      const tesseractEdges = [];
+      for (let i = 0; i < 16; i++) {
+        for (let j = i + 1; j < 16; j++) {
+          const diff = i ^ j;
+          if (diff === 1 || diff === 2 || diff === 4 || diff === 8) {
+            tesseractEdges.push({ a: i, b: j, axisBit: diff });
+          }
+        }
+      }
+
+      const tesseractLineGeo = new THREE.BufferGeometry();
+      const tesseractLinePositions = new Float32Array(tesseractEdges.length * 2 * 3);
+      const tesseractLineColors = new Float32Array(tesseractEdges.length * 2 * 3);
+      tesseractLineGeo.setAttribute('position', new THREE.BufferAttribute(tesseractLinePositions, 3));
+      tesseractLineGeo.setAttribute('color', new THREE.BufferAttribute(tesseractLineColors, 3));
+
+      const tesseractLineMat = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.92,
+        blending: THREE.AdditiveBlending
+      });
+      const tesseractLines = new THREE.LineSegments(tesseractLineGeo, tesseractLineMat);
+      masterGroup.add(tesseractLines);
+
+      const dupTesseractLineGeo = new THREE.BufferGeometry();
+      const dupTesseractLinePositions = new Float32Array(tesseractEdges.length * 2 * 3);
+      const dupTesseractLineColors = new Float32Array(tesseractEdges.length * 2 * 3);
+      dupTesseractLineGeo.setAttribute('position', new THREE.BufferAttribute(dupTesseractLinePositions, 3));
+      dupTesseractLineGeo.setAttribute('color', new THREE.BufferAttribute(dupTesseractLineColors, 3));
+
+      const dupTesseractLineMat = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.78,
+        blending: THREE.AdditiveBlending
+      });
+      const dupTesseractLines = new THREE.LineSegments(dupTesseractLineGeo, dupTesseractLineMat);
+      masterGroup.add(dupTesseractLines);
+
+      // 16 Radial Ratio-Anchor Vector Bridges connecting Layer 1 Vertex[i] <-> Layer 2 Vertex[i]
+      const anchorBridgeGeo = new THREE.BufferGeometry();
+      const anchorBridgePositions = new Float32Array(16 * 2 * 3);
+      const anchorBridgeColors = new Float32Array(16 * 2 * 3);
+      anchorBridgeGeo.setAttribute('position', new THREE.BufferAttribute(anchorBridgePositions, 3));
+      anchorBridgeGeo.setAttribute('color', new THREE.BufferAttribute(anchorBridgeColors, 3));
+
+      const anchorBridgeMat = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.72,
+        blending: THREE.AdditiveBlending
+      });
+      const anchorBridgeLines = new THREE.LineSegments(anchorBridgeGeo, anchorBridgeMat);
+      masterGroup.add(anchorBridgeLines);
+
+      // Highlighted Selected Anchor Beacon Rings
+      const beaconGeo = new THREE.RingGeometry(0.14, 0.20, 24);
+      const beaconMat = new THREE.MeshBasicMaterial({
+        color: 0x00f3ff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending
+      });
+      const beaconL1 = new THREE.Mesh(beaconGeo, beaconMat);
+      const beaconL2 = new THREE.Mesh(beaconGeo, beaconMat.clone());
+      beaconL2.material.color.setHex(0xff44cc);
+      masterGroup.add(beaconL1, beaconL2);
+
+      // Dual-Layer Motion-Cap Trace Ring Buffer
+      const TOTAL_VERTICES = 32;
+      const TRAIL_LENGTH = 24;
+      const trailPositions = new Float32Array(TOTAL_VERTICES * (TRAIL_LENGTH - 1) * 2 * 3);
+      const trailColors = new Float32Array(TOTAL_VERTICES * (TRAIL_LENGTH - 1) * 2 * 3);
+      const trailGeo = new THREE.BufferGeometry();
+      trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+      trailGeo.setAttribute('color', new THREE.BufferAttribute(trailColors, 3));
+
+      const trailMat = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.62,
+        blending: THREE.AdditiveBlending
+      });
+      const tesseractTrails = new THREE.LineSegments(trailGeo, trailMat);
+      masterGroup.add(tesseractTrails);
+
+      const vertexHistory = Array.from({ length: TOTAL_VERTICES }, () => []);
+
+      const vertexNodeGeo = new THREE.OctahedronGeometry(0.08, 0);
+      const vertexNodeMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        blending: THREE.AdditiveBlending
+      });
+      const tesseractNodesMesh = new THREE.InstancedMesh(vertexNodeGeo, vertexNodeMat, TOTAL_VERTICES);
+      masterGroup.add(tesseractNodesMesh);
+
+      // --- 5. Dual-Layer Maximum Scaled Circumference Cap Circles & Breathing Oval Rings ---
+      function createCircleLoop(segments) {
+        const pts = [];
+        for (let i = 0; i <= segments; i++) {
+          const theta = (i / segments) * Math.PI * 2;
+          pts.push(new THREE.Vector3(Math.cos(theta), Math.sin(theta), 0));
+        }
+        return new THREE.BufferGeometry().setFromPoints(pts);
+      }
+
+      const capCircleGroup1 = new THREE.Group();
+      const capMat1 = new THREE.LineBasicMaterial({
+        color: 0x00f3ff,
+        transparent: true,
+        opacity: 0.28,
+        blending: THREE.AdditiveBlending
+      });
+      const c1XY = new THREE.Line(createCircleLoop(128), capMat1);
+      const c1XZ = new THREE.Line(createCircleLoop(128), capMat1);
+      c1XZ.rotation.x = Math.PI / 2;
+      const c1YZ = new THREE.Line(createCircleLoop(128), capMat1);
+      c1YZ.rotation.y = Math.PI / 2;
+      capCircleGroup1.add(c1XY, c1XZ, c1YZ);
+      masterGroup.add(capCircleGroup1);
+
+      const capCircleGroup2 = new THREE.Group();
+      const capMat2 = new THREE.LineBasicMaterial({
+        color: 0xa855f7,
+        transparent: true,
+        opacity: 0.24,
+        blending: THREE.AdditiveBlending
+      });
+      const c2XY = new THREE.Line(createCircleLoop(128), capMat2);
+      const c2XZ = new THREE.Line(createCircleLoop(128), capMat2);
+      c2XZ.rotation.x = Math.PI / 2;
+      const c2YZ = new THREE.Line(createCircleLoop(128), capMat2);
+      c2YZ.rotation.y = Math.PI / 2;
+      capCircleGroup2.add(c2XY, c2XZ, c2YZ);
+      masterGroup.add(capCircleGroup2);
+
+      const ovalMat1 = new THREE.LineBasicMaterial({
+        color: 0xff44cc,
+        transparent: true,
+        opacity: 0.52,
+        blending: THREE.AdditiveBlending
+      });
+      const ovalRing1A = new THREE.Line(createCircleLoop(128), ovalMat1);
+      const ovalRing1B = new THREE.Line(createCircleLoop(128), ovalMat1);
+      ovalRing1B.rotation.y = Math.PI / 2;
+
+      const ovalMat2 = new THREE.LineBasicMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.45,
+        blending: THREE.AdditiveBlending
+      });
+      const ovalRing2A = new THREE.Line(createCircleLoop(128), ovalMat2);
+      const ovalRing2B = new THREE.Line(createCircleLoop(128), ovalMat2);
+      ovalRing2B.rotation.y = Math.PI / 2;
+
+      masterGroup.add(ovalRing1A, ovalRing1B, ovalRing2A, ovalRing2B);
+
+      // --- -4D Hyperspace Projection with Geodesic & Oval Coupling ---
+      function computeOvalScaleVec(elapsed, phaseOffset) {
+        const amp = params.ovalAmplitude;
+        return new THREE.Vector3(
+          1 + Math.sin(elapsed * 2.1 + phaseOffset) * amp,
+          1 + Math.cos(elapsed * 2.1 + phaseOffset) * amp,
+          1 + Math.sin(elapsed * 2.1 + phaseOffset + Math.PI * 0.5) * (amp * 0.75)
+        );
+      }
+
+      function projectEncoded4Dto3D(v4, ovalScaleVec, layerScaleMultiplier, wPhaseShift) {
+        const polaritySign = params.negative4D ? -1 : 1;
+        let x = v4[0] * polaritySign;
+        let y = v4[1] * polaritySign;
+        let z = v4[2] * polaritySign;
+        let w = v4[3] * polaritySign;
+
+        const dir = polaritySign;
+
+        // XW Plane Rotation (inverted sense when in -4D mode)
+        const angleXW = (params.wAngleXW + wPhaseShift) * dir;
+        const cosXW = Math.cos(angleXW);
+        const sinXW = Math.sin(angleXW);
+        let nx = x * cosXW - w * sinXW;
+        let nw = x * sinXW + w * cosXW;
+        x = nx;
+        w = nw;
+
+        // YW Plane Rotation
+        const angleYW = (params.wAngleYW + wPhaseShift * 0.7) * dir;
+        const cosYW = Math.cos(angleYW);
+        const sinYW = Math.sin(angleYW);
+        let ny = y * cosYW - w * sinYW;
+        nw = y * sinYW + w * cosYW;
+        y = ny;
+        w = nw;
+
+        // ZW Plane Rotation
+        const angleZW = (params.wAngleZW + wPhaseShift * 0.5) * dir;
+        const cosZW = Math.cos(angleZW);
+        const sinZW = Math.sin(angleZW);
+        let nz = z * cosZW - w * sinZW;
+        nw = z * sinZW + w * cosZW;
+        z = nz;
+        w = nw;
+
+        // Stereographic -4D -> 3D projection (negative W pole focal inversion when negative4D is true)
+        const denom = params.negative4D ? (params.wDistance + w) : (params.wDistance - w);
+        const wFactor = 1 / Math.max(0.85, denom);
+        const baseScale = 2.4 * layerScaleMultiplier;
+        const projVec = new THREE.Vector3(
+          x * wFactor * baseScale,
+          y * wFactor * baseScale,
+          z * wFactor * baseScale
+        );
+
+        projVec.multiply(ovalScaleVec);
+
+        const layerCapRadius = params.maxCircleRadius * layerScaleMultiplier;
+        const targetOrbRadius = layerCapRadius * 0.86;
+        const sphereShell = projVec.clone().normalize().multiplyScalar(targetOrbRadius);
+        projVec.lerp(sphereShell, params.morph * 0.65);
+
+        const dist = projVec.length();
+        if (dist > layerCapRadius) {
+          projVec.multiplyScalar(layerCapRadius / dist);
+        }
+
+        return projVec;
+      }
+
+      // --- Launch Sequence Trigger ---
+      function triggerLaunch() {
+        params.launchProgress = 0.01;
+        for (let i = 0; i < TOTAL_VERTICES; i++) {
+          vertexHistory[i].length = 0;
+        }
+        const flash = document.getElementById('launch-flash');
+        flash.style.transition = 'none';
+        flash.style.opacity = '0.9';
+        requestAnimationFrame(() => {
+          flash.style.transition = 'opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1)';
+          flash.style.opacity = '0';
+        });
+      }
+
+      buildFractalOrb(params.depth);
+      triggerLaunch();
+
+      // --- Mouse & Touch Orbit Controls ---
+      let isDragging = false;
+      let prevPointer = { x: 0, y: 0 };
+      let targetRotX = 0.32;
+      let targetRotY = 0.52;
+      let currentRotX = 0.32;
+      let currentRotY = 0.52;
+
+      function onPointerDown(x, y) {
+        isDragging = true;
+        prevPointer = { x, y };
+      }
+
+      function onPointerMove(x, y) {
+        if (!isDragging) return;
+        const deltaX = x - prevPointer.x;
+        const deltaY = y - prevPointer.y;
+        targetRotY += deltaX * 0.007;
+        targetRotX += deltaY * 0.007;
+        prevPointer = { x, y };
+      }
+
+      function onPointerUp() {
+        isDragging = false;
+      }
+
+      const domElem = renderer.domElement;
+      domElem.addEventListener('mousedown', (e) => onPointerDown(e.clientX, e.clientY));
+      window.addEventListener('mousemove', (e) => onPointerMove(e.clientX, e.clientY));
+      window.addEventListener('mouseup', onPointerUp);
+
+      domElem.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          onPointerDown(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1) {
+          onPointerMove(e.touches[0].clientX, e.touches[0].clientY);
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', onPointerUp);
+
+      domElem.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        camera.position.z = Math.max(4.5, Math.min(18.0, camera.position.z + e.deltaY * 0.006));
+      }, { passive: false });
+
+      // --- UI Event Listeners ---
+      const sliderMorph = document.getElementById('slider-morph');
+      const valMorph = document.getElementById('val-morph');
+      sliderMorph.addEventListener('input', (e) => {
+        params.morph = parseFloat(e.target.value);
+        valMorph.textContent = params.morph.toFixed(2);
+      });
+
+      const sliderGeodesic = document.getElementById('slider-geodesic');
+      const valGeodesic = document.getElementById('val-geodesic');
+      sliderGeodesic.addEventListener('input', (e) => {
+        params.geodesicCoupling = parseFloat(e.target.value);
+        valGeodesic.textContent = params.geodesicCoupling.toFixed(2);
+        geodesicLinesL1.visible = params.geodesicCoupling > 0.02;
+        geodesicLinesL2.visible = params.geodesicCoupling > 0.02;
+        geoPulseMesh.visible = params.geodesicCoupling > 0.02;
+        geoSpaceMarkersMesh.visible = params.showMarkers && params.geodesicCoupling > 0.02;
+      });
+
+      const sliderRatio = document.getElementById('slider-ratio');
+      const valRatio = document.getElementById('val-ratio');
+      sliderRatio.addEventListener('input', (e) => {
+        params.layerRatio = parseFloat(e.target.value);
+        valRatio.textContent = params.layerRatio.toFixed(2) + 'x';
+      });
+
+      const sliderOval = document.getElementById('slider-oval');
+      const valOval = document.getElementById('val-oval');
+      sliderOval.addEventListener('input', (e) => {
+        params.ovalAmplitude = parseFloat(e.target.value);
+        valOval.textContent = params.ovalAmplitude.toFixed(2);
+      });
+
+      const sliderCap = document.getElementById('slider-cap');
+      const valCap = document.getElementById('val-cap');
+      sliderCap.addEventListener('input', (e) => {
+        params.maxCircleRadius = parseFloat(e.target.value);
+        valCap.textContent = params.maxCircleRadius.toFixed(2);
+      });
+
+      const sliderWRot = document.getElementById('slider-wrot');
+      const valWRot = document.getElementById('val-wrot');
+      sliderWRot.addEventListener('input', (e) => {
+        params.wSpeed = parseFloat(e.target.value);
+        valWRot.textContent = params.wSpeed.toFixed(2) + 'x';
+      });
+
+      const depthBtns = document.querySelectorAll('.depth-btn');
+      const valDepth = document.getElementById('val-depth');
+      depthBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          depthBtns.forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          params.depth = parseInt(btn.getAttribute('data-depth'), 10);
+          valDepth.textContent = 'Level ' + params.depth;
+          buildFractalOrb(params.depth);
+          triggerLaunch();
+        });
+      });
+
+      // Point Encoding Selector Buttons
+      function updateSelectedVertexHeader() {
+        const reg = tesseractPointRegistry[params.selectedVertex];
+        const s = params.negative4D ? -1 : 1;
+        const modeTag = params.negative4D ? '-4D' : '+4D';
+        document.getElementById('selected-vertex-title').textContent =
+          `ANCHOR ${reg.code} • ${modeTag} [${reg.binary}]`;
+        document.getElementById('enc-v4').textContent =
+          `(${reg.v4[0] * s}, ${reg.v4[1] * s}, ${reg.v4[2] * s}, ${reg.v4[3] * s})`;
+      }
+      updateSelectedVertexHeader();
+
+      document.getElementById('prev-vertex-btn').addEventListener('click', () => {
+        params.selectedVertex = (params.selectedVertex + 15) % 16;
+        updateSelectedVertexHeader();
+      });
+
+      document.getElementById('next-vertex-btn').addEventListener('click', () => {
+        params.selectedVertex = (params.selectedVertex + 1) % 16;
+        updateSelectedVertexHeader();
+      });
+
+      document.getElementById('btn-relaunch').addEventListener('click', triggerLaunch);
+
+      const btnPolarity = document.getElementById('btn-polarity');
+      btnPolarity.addEventListener('click', () => {
+        params.negative4D = !params.negative4D;
+        btnPolarity.textContent = params.negative4D ? '-4D Mode: INV (-W)' : '+4D Mode: POS (+W)';
+        btnPolarity.classList.toggle('active', params.negative4D);
+        document.getElementById('enc-polarity').textContent = params.negative4D
+          ? '-4D INVERSE (w < 0)'
+          : '+4D POSITIVE (w > 0)';
+        updateSelectedVertexHeader();
+      });
+
+      const btnAutoRotate = document.getElementById('btn-autorotate');
+      btnAutoRotate.addEventListener('click', () => {
+        params.autoRotate = !params.autoRotate;
+        btnAutoRotate.textContent = params.autoRotate ? 'Auto-Orbit: ON' : 'Auto-Orbit: OFF';
+        btnAutoRotate.classList.toggle('active', params.autoRotate);
+      });
+
+      const btnReticle = document.getElementById('btn-reticle');
+      const reticleEl = document.getElementById('point-reticle');
+      btnReticle.addEventListener('click', () => {
+        params.showMarkers = !params.showMarkers;
+        btnReticle.textContent = params.showMarkers ? 'Space Markers: ON' : 'Space Markers: OFF';
+        btnReticle.classList.toggle('active', params.showMarkers);
+        reticleEl.style.display = params.showMarkers ? 'block' : 'none';
+        beaconL1.visible = params.showMarkers;
+        beaconL2.visible = params.showMarkers;
+        geoSpaceMarkersMesh.visible = params.showMarkers && params.geodesicCoupling > 0.02;
+      });
+
+      const collapseBtn = document.getElementById('collapse-btn');
+      const controlsBody = document.getElementById('controls-body');
+      let isCollapsed = false;
+      collapseBtn.addEventListener('click', () => {
+        isCollapsed = !isCollapsed;
+        controlsBody.style.display = isCollapsed ? 'none' : 'block';
+        collapseBtn.textContent = isCollapsed ? 'Show' : 'Hide';
+      });
+
+      const toggleEncBtn = document.getElementById('toggle-enc-btn');
+      const encodingBody = document.getElementById('encoding-body');
+      let isEncCollapsed = false;
+      toggleEncBtn.addEventListener('click', () => {
+        isEncCollapsed = !isEncCollapsed;
+        encodingBody.style.display = isEncCollapsed ? 'none' : 'block';
+        toggleEncBtn.textContent = isEncCollapsed ? 'Show' : 'Hide';
+      });
+
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      function updateTesseractEdgeBuffer(geo, vertices3D, maxCap, elapsed, hueBase) {
+        const posAttr = geo.attributes.position.array;
+        const colAttr = geo.attributes.color.array;
+
+        for (let i = 0; i < tesseractEdges.length; i++) {
+          const edge = tesseractEdges[i];
+          const pA = vertices3D[edge.a];
+          const pB = vertices3D[edge.b];
+          const segLen = pA.distanceTo(pB);
+          const stretchRatio = Math.min(1, segLen / (maxCap * 1.4));
+
+          const offset = i * 6;
+          posAttr[offset] = pA.x;
+          posAttr[offset + 1] = pA.y;
+          posAttr[offset + 2] = pA.z;
+          posAttr[offset + 3] = pB.x;
+          posAttr[offset + 4] = pB.y;
+          posAttr[offset + 5] = pB.z;
+
+          const wave = 0.5 + 0.5 * Math.sin(elapsed * 3.5 + i * 0.4);
+          tempColor.setHSL((hueBase + stretchRatio * 0.32) % 1.0, 1.0, 0.50 + wave * 0.25);
+
+          colAttr[offset] = tempColor.r;
+          colAttr[offset + 1] = tempColor.g;
+          colAttr[offset + 2] = tempColor.b;
+          colAttr[offset + 3] = tempColor.r;
+          colAttr[offset + 4] = tempColor.g;
+          colAttr[offset + 5] = tempColor.b;
+        }
+        geo.attributes.position.needsUpdate = true;
+        geo.attributes.color.needsUpdate = true;
+      }
+
+      // Update Geodesic Line Buffer & Point-to-Point Linear Motion Particles
+      const lerpPulseVec = new THREE.Vector3();
+      function updateGeodesicLattice(elapsed, layer1Cap, layer2Cap, ovalScaleVec1, ovalScaleVec2, launchEase) {
+        const coupling = params.geodesicCoupling;
+        const r1Base = layer1Cap * 0.87;
+        const r2Base = layer2Cap * 0.87;
+
+        // Compute Geodesic Vertex Positions for both L1 and L2 matching fluid oval & orbital path
+        for (let i = 0; i < GEO_VERT_COUNT; i++) {
+          const gv = geodesicTopology.vertices[i];
+          const uv = gv.unitVec;
+
+          // Layer 1 Geodesic Point
+          gv.posL1.set(
+            uv.x * r1Base * (1 + (ovalScaleVec1.x - 1) * 0.65 * coupling),
+            uv.y * r1Base * (1 + (ovalScaleVec1.y - 1) * 0.65 * coupling),
+            uv.z * r1Base * (1 + (ovalScaleVec1.z - 1) * 0.65 * coupling)
+          );
+          const d1 = gv.posL1.length();
+          if (d1 > layer1Cap) gv.posL1.multiplyScalar(layer1Cap / d1);
+
+          // Layer 2 Geodesic Point (anchored next movement dimension)
+          gv.posL2.set(
+            uv.x * r2Base * (1 + (ovalScaleVec2.x - 1) * 0.65 * coupling),
+            uv.y * r2Base * (1 + (ovalScaleVec2.y - 1) * 0.65 * coupling),
+            uv.z * r2Base * (1 + (ovalScaleVec2.z - 1) * 0.65 * coupling)
+          );
+          const d2 = gv.posL2.length();
+          if (d2 > layer2Cap) gv.posL2.multiplyScalar(layer2Cap / d2);
+
+          // Update Marked Geodesic Space Nodes (L1 & L2)
+          dummy.position.copy(gv.posL1);
+          dummy.rotation.set(elapsed * 0.6, elapsed * 0.6, 0);
+          dummy.scale.setScalar((0.65 + 0.45 * coupling) * launchEase);
+          dummy.updateMatrix();
+          geoSpaceMarkersMesh.setMatrixAt(i, dummy.matrix);
+
+          dummy.position.copy(gv.posL2);
+          dummy.rotation.set(-elapsed * 0.6, -elapsed * 0.6, 0);
+          dummy.scale.setScalar((0.75 + 0.50 * coupling) * launchEase);
+          dummy.updateMatrix();
+          geoSpaceMarkersMesh.setMatrixAt(GEO_VERT_COUNT + i, dummy.matrix);
+        }
+        geoSpaceMarkersMesh.instanceMatrix.needsUpdate = true;
+
+        // Update Geodesic Edges & Point-to-Point Linear Motion Particles
+        const pos1 = geodesicLinesL1.geometry.attributes.position.array;
+        const col1 = geodesicLinesL1.geometry.attributes.color.array;
+        const pos2 = geodesicLinesL2.geometry.attributes.position.array;
+        const col2 = geodesicLinesL2.geometry.attributes.color.array;
+
+        const dirSign = params.negative4D ? -1 : 1;
+
+        for (let e = 0; e < GEO_EDGE_COUNT; e++) {
+          const edge = geodesicTopology.edges[e];
+          const vA = geodesicTopology.vertices[edge.a];
+          const vB = geodesicTopology.vertices[edge.b];
+          const offset = e * 6;
+
+          // Layer 1 Linear Segment
+          pos1[offset] = vA.posL1.x;
+          pos1[offset + 1] = vA.posL1.y;
+          pos1[offset + 2] = vA.posL1.z;
+          pos1[offset + 3] = vB.posL1.x;
+          pos1[offset + 4] = vB.posL1.y;
+          pos1[offset + 5] = vB.posL1.z;
+
+          const wave1 = 0.5 + 0.5 * Math.sin(elapsed * 3.8 * dirSign - e * 0.18);
+          tempColor.setHSL(0.49 + wave1 * 0.10, 0.95, (0.35 + wave1 * 0.35) * coupling);
+          col1[offset] = tempColor.r;
+          col1[offset + 1] = tempColor.g;
+          col1[offset + 2] = tempColor.b;
+          col1[offset + 3] = tempColor.r;
+          col1[offset + 4] = tempColor.g;
+          col1[offset + 5] = tempColor.b;
+
+          // Layer 2 Linear Segment
+          pos2[offset] = vA.posL2.x;
+          pos2[offset + 1] = vA.posL2.y;
+          pos2[offset + 2] = vA.posL2.z;
+          pos2[offset + 3] = vB.posL2.x;
+          pos2[offset + 4] = vB.posL2.y;
+          pos2[offset + 5] = vB.posL2.z;
+
+          const wave2 = 0.5 + 0.5 * Math.sin(elapsed * 3.8 * dirSign - e * 0.18 + params.nextLayerPhase);
+          tempColor.setHSL(0.76 + wave2 * 0.10, 0.95, (0.32 + wave2 * 0.35) * coupling);
+          col2[offset] = tempColor.r;
+          col2[offset + 1] = tempColor.g;
+          col2[offset + 2] = tempColor.b;
+          col2[offset + 3] = tempColor.r;
+          col2[offset + 4] = tempColor.g;
+          col2[offset + 5] = tempColor.b;
+
+          // Point-to-Point Linear Motion Pulse Particle along L1 Geodesic Edge
+          let alpha1 = ((elapsed * 0.85 * params.wSpeed * dirSign + e * 0.13) % 1 + 1) % 1;
+          lerpPulseVec.lerpVectors(vA.posL1, vB.posL1, alpha1);
+          dummy.position.copy(lerpPulseVec);
+          dummy.rotation.set(0, 0, 0);
+          dummy.scale.setScalar(coupling * launchEase);
+          dummy.updateMatrix();
+          geoPulseMesh.setMatrixAt(e, dummy.matrix);
+
+          // Point-to-Point Linear Motion Pulse Particle along L2 Geodesic Edge
+          let alpha2 = ((elapsed * 0.85 * params.wSpeed * dirSign + e * 0.13 + 0.25) % 1 + 1) % 1;
+          lerpPulseVec.lerpVectors(vA.posL2, vB.posL2, alpha2);
+          dummy.position.copy(lerpPulseVec);
+          dummy.scale.setScalar(coupling * 1.15 * launchEase);
+          dummy.updateMatrix();
+          geoPulseMesh.setMatrixAt(GEO_EDGE_COUNT + e, dummy.matrix);
+        }
+
+        geodesicLinesL1.geometry.attributes.position.needsUpdate = true;
+        geodesicLinesL1.geometry.attributes.color.needsUpdate = true;
+        geodesicLinesL2.geometry.attributes.position.needsUpdate = true;
+        geodesicLinesL2.geometry.attributes.color.needsUpdate = true;
+        geoPulseMesh.instanceMatrix.needsUpdate = true;
+      }
+
+      const worldProjVec = new THREE.Vector3();
+      const clock = new THREE.Clock();
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const dt = Math.max(clock.getDelta(), 0.001);
+        const elapsed = clock.getElapsedTime();
+
+        if (params.launchProgress < 1) {
+          params.launchProgress = Math.min(1, params.launchProgress + dt * 1.15);
+        }
+        const t = params.launchProgress;
+        const launchEase = t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+
+        params.wAngleXW += dt * 0.65 * params.wSpeed;
+        params.wAngleYW += dt * 0.45 * params.wSpeed;
+        params.wAngleZW += dt * 0.30 * params.wSpeed;
+
+        if (params.autoRotate && !isDragging) {
+          targetRotY += dt * 0.24 * (params.negative4D ? -1 : 1);
+          targetRotX = Math.sin(elapsed * 0.3) * 0.22;
+        }
+        currentRotX += (targetRotX - currentRotX) * 0.08;
+        currentRotY += (targetRotY - currentRotY) * 0.08;
+
+        masterGroup.rotation.x = currentRotX;
+        masterGroup.rotation.y = currentRotY;
+        masterGroup.scale.setScalar(0.05 + 0.95 * launchEase);
+
+        const ratio = params.layerRatio;
+        const layer1Cap = params.maxCircleRadius;
+        const layer2Cap = params.maxCircleRadius * ratio;
+
+        const ovalScaleVec1 = computeOvalScaleVec(elapsed, 0);
+        const ovalScaleVec2 = computeOvalScaleVec(elapsed, params.nextLayerPhase);
+
+        capCircleGroup1.scale.setScalar(layer1Cap);
+        capCircleGroup2.scale.setScalar(layer2Cap);
+
+        const baseOvalR1 = layer1Cap * 0.85;
+        ovalRing1A.scale.set(
+          Math.min(layer1Cap, baseOvalR1 * ovalScaleVec1.x),
+          Math.min(layer1Cap, baseOvalR1 * ovalScaleVec1.y),
+          1
+        );
+        ovalRing1A.rotation.z = elapsed * 0.3;
+
+        ovalRing1B.scale.set(
+          Math.min(layer1Cap, baseOvalR1 * ovalScaleVec1.z),
+          Math.min(layer1Cap, baseOvalR1 * ovalScaleVec1.y),
+          1
+        );
+        ovalRing1B.rotation.x = elapsed * 0.25;
+
+        const baseOvalR2 = layer2Cap * 0.85;
+        ovalRing2A.scale.set(
+          Math.min(layer2Cap, baseOvalR2 * ovalScaleVec2.x),
+          Math.min(layer2Cap, baseOvalR2 * ovalScaleVec2.y),
+          1
+        );
+        ovalRing2A.rotation.z = -elapsed * 0.25;
+
+        ovalRing2B.scale.set(
+          Math.min(layer2Cap, baseOvalR2 * ovalScaleVec2.z),
+          Math.min(layer2Cap, baseOvalR2 * ovalScaleVec2.y),
+          1
+        );
+        ovalRing2B.rotation.x = -elapsed * 0.20;
+
+        // 1. Update Full Geodesic Lattice & Point-to-Point Linear Motion Paths (L1 & L2)
+        updateGeodesicLattice(elapsed, layer1Cap, layer2Cap, ovalScaleVec1, ovalScaleVec2, launchEase);
+
+        // 2. Update Menger-Sierpinski 1:1:1 Aligned Nodes, Duplicate Shell & Straight Vector Segments
+        if (fractalMesh && duplicateShellMesh && latticeLines) {
+          const uniformFacePulse = 1 + Math.sin(elapsed * 2.4) * 0.035;
+
+          for (let i = 0; i < fractalNodes.length; i++) {
+            const node = fractalNodes[i];
+            node.currentPos.lerpVectors(node.cubeVec, node.sphereVec, params.morph);
+
+            node.currentPos.x *= (1 + (ovalScaleVec1.x - 1) * 0.22) * uniformFacePulse;
+            node.currentPos.y *= (1 + (ovalScaleVec1.y - 1) * 0.22) * uniformFacePulse;
+            node.currentPos.z *= (1 + (ovalScaleVec1.z - 1) * 0.22) * uniformFacePulse;
+
+            const d = node.currentPos.length();
+            if (d > layer1Cap * 0.90) {
+              node.currentPos.multiplyScalar((layer1Cap * 0.90) / d);
+            }
+
+            dummy.position.copy(node.currentPos);
+            dummy.rotation.set(0, 0, 0);
+            dummy.scale.setScalar(node.baseSize * launchEase);
+            dummy.updateMatrix();
+            fractalMesh.setMatrixAt(i, dummy.matrix);
+          }
+          fractalMesh.instanceMatrix.needsUpdate = true;
+
+          for (let i = 0; i < outerShellNodes.length; i++) {
+            const node = outerShellNodes[i];
+            dummy.position.copy(node.currentPos).multiplyScalar(ratio);
+            dummy.rotation.set(elapsed * 0.5, elapsed * 0.5, 0);
+            dummy.scale.setScalar(node.baseSize * 0.65 * launchEase);
+            dummy.updateMatrix();
+            duplicateShellMesh.setMatrixAt(i, dummy.matrix);
+          }
+          duplicateShellMesh.instanceMatrix.needsUpdate = true;
+
+          const segPosArr = latticeLines.geometry.attributes.position.array;
+          const segColArr = latticeLines.geometry.attributes.color.array;
+
+          for (let s = 0; s < latticeSegments.length; s++) {
+            const seg = latticeSegments[s];
+            const pA = fractalNodes[seg.a].currentPos;
+            const pB = fractalNodes[seg.b].currentPos;
+
+            const offset = s * 6;
+            segPosArr[offset] = pA.x;
+            segPosArr[offset + 1] = pA.y;
+            segPosArr[offset + 2] = pA.z;
+            segPosArr[offset + 3] = pB.x;
+            segPosArr[offset + 4] = pB.y;
+            segPosArr[offset + 5] = pB.z;
+
+            const energy = 0.5 + 0.5 * Math.sin(elapsed * 4.0 - seg.phase);
+            tempColor.setHSL(0.52 + seg.axis * 0.14 + energy * 0.08, 0.95, 0.45 + energy * 0.35);
+
+            segColArr[offset] = tempColor.r;
+            segColArr[offset + 1] = tempColor.g;
+            segColArr[offset + 2] = tempColor.b;
+            segColArr[offset + 3] = tempColor.r;
+            segColArr[offset + 4] = tempColor.g;
+            segColArr[offset + 5] = tempColor.b;
+          }
+          latticeLines.geometry.attributes.position.needsUpdate = true;
+          latticeLines.geometry.attributes.color.needsUpdate = true;
+        }
+
+        // 3. Update Dual-Layer -4D Tesseract Projections
+        const projectedLayer1 = tesseractPointRegistry.map((reg) =>
+          projectEncoded4Dto3D(reg.v4, ovalScaleVec1, 1.0, 0)
+        );
+        const projectedLayer2 = tesseractPointRegistry.map((reg) =>
+          projectEncoded4Dto3D(reg.v4, ovalScaleVec2, ratio, params.nextLayerPhase)
+        );
+
+        for (let i = 0; i < 16; i++) {
+          const reg = tesseractPointRegistry[i];
+          const p1 = projectedLayer1[i];
+          const p2 = projectedLayer2[i];
+          reg.velL1 = p1.distanceTo(reg.prevL1) / dt;
+          reg.velL2 = p2.distanceTo(reg.prevL2) / dt;
+          reg.prevL1.copy(p1);
+          reg.prevL2.copy(p2);
+        }
+
+        updateTesseractEdgeBuffer(tesseractLineGeo, projectedLayer1, layer1Cap, elapsed, 0.50);
+        updateTesseractEdgeBuffer(dupTesseractLineGeo, projectedLayer2, layer2Cap, elapsed, 0.74);
+
+        // 4. Update 16 Radial Ratio-Anchor Bridges
+        const bridgePosArr = anchorBridgeGeo.attributes.position.array;
+        const bridgeColArr = anchorBridgeGeo.attributes.color.array;
+        for (let i = 0; i < 16; i++) {
+          const p1 = projectedLayer1[i];
+          const p2 = projectedLayer2[i];
+          const offset = i * 6;
+
+          bridgePosArr[offset] = p1.x;
+          bridgePosArr[offset + 1] = p1.y;
+          bridgePosArr[offset + 2] = p1.z;
+          bridgePosArr[offset + 3] = p2.x;
+          bridgePosArr[offset + 4] = p2.y;
+          bridgePosArr[offset + 5] = p2.z;
+
+          const isSelected = i === params.selectedVertex;
+          const pulse = isSelected ? 1.0 : 0.5 + 0.5 * Math.sin(elapsed * 4.5 - i * 0.4);
+          tempColor.setHSL(0.52, 1.0, isSelected ? 0.85 : 0.55 + pulse * 0.2);
+          bridgeColArr[offset] = tempColor.r;
+          bridgeColArr[offset + 1] = tempColor.g;
+          bridgeColArr[offset + 2] = tempColor.b;
+
+          tempColor.setHSL(0.82, 1.0, isSelected ? 0.85 : 0.55 + pulse * 0.2);
+          bridgeColArr[offset + 3] = tempColor.r;
+          bridgeColArr[offset + 4] = tempColor.g;
+          bridgeColArr[offset + 5] = tempColor.b;
+        }
+        anchorBridgeGeo.attributes.position.needsUpdate = true;
+        anchorBridgeGeo.attributes.color.needsUpdate = true;
+
+        // 5. Update all 32 Dual-Layer Vertices & Motion-Cap Trace History
+        const tPosArr = trailGeo.attributes.position.array;
+        const tColArr = trailGeo.attributes.color.array;
+        let trailPtr = 0;
+
+        for (let i = 0; i < TOTAL_VERTICES; i++) {
+          const isLayer2 = i >= 16;
+          const baseIdx = isLayer2 ? i - 16 : i;
+          const pt = isLayer2 ? projectedLayer2[baseIdx] : projectedLayer1[baseIdx];
+          const isSelected = baseIdx === params.selectedVertex;
+
+          dummy.position.copy(pt);
+          dummy.rotation.set(0, 0, 0);
+          dummy.scale.setScalar((isLayer2 ? 1.15 : 0.95) * (isSelected ? 1.55 : 1.0));
+          dummy.updateMatrix();
+          tesseractNodesMesh.setMatrixAt(i, dummy.matrix);
+
+          const hist = vertexHistory[i];
+          hist.unshift(pt.clone());
+          if (hist.length > TRAIL_LENGTH) {
+            hist.pop();
+          }
+
+          const baseHue = isLayer2 ? 0.78 : 0.52;
+          for (let h = 0; h < TRAIL_LENGTH - 1; h++) {
+            const p0 = hist[h] || pt;
+            const p1 = hist[h + 1] || p0;
+            const fade = 1 - h / (TRAIL_LENGTH - 1);
+
+            tPosArr[trailPtr] = p0.x;
+            tPosArr[trailPtr + 1] = p0.y;
+            tPosArr[trailPtr + 2] = p0.z;
+            tPosArr[trailPtr + 3] = p1.x;
+            tPosArr[trailPtr + 4] = p1.y;
+            tPosArr[trailPtr + 5] = p1.z;
+
+            tempColor.setHSL((baseHue + (1 - fade) * 0.22) % 1.0, 0.95, 0.55 * fade);
+            tColArr[trailPtr] = tempColor.r;
+            tColArr[trailPtr + 1] = tempColor.g;
+            tColArr[trailPtr + 2] = tempColor.b;
+
+            const fadeNext = Math.max(0, 1 - (h + 1) / (TRAIL_LENGTH - 1));
+            tempColor.setHSL((baseHue + (1 - fadeNext) * 0.22) % 1.0, 0.95, 0.55 * fadeNext);
+            tColArr[trailPtr + 3] = tempColor.r;
+            tColArr[trailPtr + 4] = tempColor.g;
+            tColArr[trailPtr + 5] = tempColor.b;
+
+            trailPtr += 6;
+          }
+        }
+        tesseractNodesMesh.instanceMatrix.needsUpdate = true;
+        trailGeo.attributes.position.needsUpdate = true;
+        trailGeo.attributes.color.needsUpdate = true;
+
+        // 6. Update Encoded -4D & Geodesic Telemetry + 3D Reticle
+        const selIdx = params.selectedVertex;
+        const selReg = tesseractPointRegistry[selIdx];
+        const selP1 = projectedLayer1[selIdx];
+        const selP2 = projectedLayer2[selIdx];
+
+        beaconL1.position.copy(selP1);
+        beaconL1.lookAt(camera.position);
+        beaconL2.position.copy(selP2);
+        beaconL2.lookAt(camera.position);
+
+        // Find nearest Marked Geodesic Space Node (G00..G41)
+        let nearestGeo = geodesicTopology.vertices[0];
+        let bestGeoDistSq = Infinity;
+        for (let g = 0; g < GEO_VERT_COUNT; g++) {
+          const dSq = geodesicTopology.vertices[g].posL2.distanceToSquared(selP2);
+          if (dSq < bestGeoDistSq) {
+            bestGeoDistSq = dSq;
+            nearestGeo = geodesicTopology.vertices[g];
+          }
+        }
+
+        // Find nearest 1:1:1 Sierpinski Grid Address
+        let nearestSierpinski = fractalNodes[0];
+        let bestSierpDistSq = Infinity;
+        for (let k = 0; k < fractalNodes.length; k++) {
+          const dSq = fractalNodes[k].currentPos.distanceToSquared(selP1);
+          if (dSq < bestSierpDistSq) {
+            bestSierpDistSq = dSq;
+            nearestSierpinski = fractalNodes[k];
+          }
+        }
+
+        if (params.showMarkers) {
+          worldProjVec.copy(selP2);
+          masterGroup.localToWorld(worldProjVec);
+          worldProjVec.project(camera);
+          const sx = (worldProjVec.x * 0.5 + 0.5) * window.innerWidth;
+          const sy = (-(worldProjVec.y * 0.5) + 0.5) * window.innerHeight;
+          reticleEl.style.left = `${sx.toFixed(1)}px`;
+          reticleEl.style.top = `${sy.toFixed(1)}px`;
+          const pTag = params.negative4D ? '-4D' : '+4D';
+          reticleEl.textContent = `${selReg.code} [${pTag}:${selReg.binary}] • ${nearestGeo.code} (${selP2.x.toFixed(2)}, ${selP2.y.toFixed(2)}, ${selP2.z.toFixed(2)})`;
+        }
+
+        const dirSign = params.negative4D ? -1 : 1;
+        document.getElementById('enc-ratio-cap').textContent =
+          `${ratio.toFixed(2)}x | R${layer1Cap.toFixed(2)}→${layer2Cap.toFixed(2)}`;
+        document.getElementById('enc-4d-angles').textContent =
+          `${((params.wAngleXW * dirSign) % (Math.PI * 2)).toFixed(2)} / ${((params.wAngleYW * dirSign) % (Math.PI * 2)).toFixed(2)} / ${((params.wAngleZW * dirSign) % (Math.PI * 2)).toFixed(2)}`;
+
+        document.getElementById('enc-l1-pos').textContent =
+          `${selP1.x.toFixed(2)}, ${selP1.y.toFixed(2)}, ${selP1.z.toFixed(2)} (r=${selP1.length().toFixed(2)})`;
+        document.getElementById('enc-l2-pos').textContent =
+          `${selP2.x.toFixed(2)}, ${selP2.y.toFixed(2)}, ${selP2.z.toFixed(2)} (r=${selP2.length().toFixed(2)})`;
+
+        const bridgeSpan = selP1.distanceTo(selP2);
+        document.getElementById('enc-span-vel').textContent =
+          `Δr ${bridgeSpan.toFixed(2)} | ${selReg.velL2.toFixed(2)} u/s`;
+
+        document.getElementById('enc-geo-space').textContent =
+          `${nearestGeo.code} • ${nearestSierpinski ? nearestSierpinski.encodedAddress : 'S000000'}`;
+
+        coreLight.intensity = 3.0 + Math.sin(elapsed * 4) * 0.8;
+        stars.rotation.y = elapsed * 0.015;
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+    };
+  </script>
+</body>
+</html>

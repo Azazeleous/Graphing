@@ -1,0 +1,25 @@
+{
+  "checkpointId": "CKPT-RUNTIME-ERROR-RECONCILE-20261127",
+  "phase": "RUNTIME_ERROR_REGISTRY_RECONCILIATION_AND_MOCK_LEDGER",
+  "timestamp": "2026-11-27T06:51:00Z",
+  "protocol": "LS-MASTER-1.0",
+  "doctrine": "THE CREED OF ADMITTANCE",
+  "previousCheckpoint": "CKPT-BLKS-RECONCILE-20261127",
+  "filesToModify": [
+    "/src/canonicalErrorRegistry.ts",
+    "/index.html"
+  ],
+  "preChangeState": {
+    "canonicalErrorIds": ["ERR-001", "ERR-002", "ERR-003", "ERR-004"],
+    "canonicalErrorCount": 4,
+    "canonicalSeverityBreakdown": {
+      "ERROR": 2,
+      "WARN": 2,
+      "INFO": 0
+    },
+    "canonicalLogCount": 16,
+    "blksTotal": 4096,
+    "v5NodesTotal": 625,
+    "v5EdgesTotal": 2000
+  }
+}

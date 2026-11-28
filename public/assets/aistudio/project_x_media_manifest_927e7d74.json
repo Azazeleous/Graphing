@@ -1,0 +1,39 @@
+{
+  "tdoc": "TDOC-PROJECT-X-10026",
+  "title": "GODs Sphynxchimera Project X",
+  "generated_utc": "2026-10-17T20:22:37.738806+00:00",
+  "mp4_attachments": [],
+  "attachments": [
+    {
+      "name": "README.md",
+      "sha256": "e9b3a0f50d68c4c805f38eefebc4e0b02276711d99023462a5a0fe6bf22fcacc",
+      "bytes": 4601
+    },
+    {
+      "name": "SOUL.md",
+      "sha256": "e557945c1cd7cdc0b9b671bc80db1dc4fefb79690f5d74731ec2166fb8efee50",
+      "bytes": 2365
+    },
+    {
+      "name": "adapters.json",
+      "sha256": "99a5d207c109c45b19435c9ddba0ce27fcb3bea399e9654415ddf20ebc416be9",
+      "bytes": 2467
+    },
+    {
+      "name": "PROVENANCE_AUDIT.md",
+      "sha256": "2838ccdd40bd91ad055d6ba55ee0f206ca54854dea10ea99c3a001a318185e32",
+      "bytes": 3326
+    },
+    {
+      "name": "Project_X_ADAM_Gates.xlsx",
+      "sha256": "bbcf73dce52946cac38337f2956013f6aa46d4615d4b86f31781d6edb64e966f",
+      "bytes": 9344
+    },
+    {
+      "name": "local_test_receipt.json",
+      "sha256": "75cb63bd14fc1cb5c8b11c5987e13995aa555c421cd4a2a3a93c1b62d5c60dcb",
+      "bytes": 151
+    }
+  ],
+  "viewer_note": "Acrobat/compatible viewers expose PDF file attachments. Media links are not simulated."
+}

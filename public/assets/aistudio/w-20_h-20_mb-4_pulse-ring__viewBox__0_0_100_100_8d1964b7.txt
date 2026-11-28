@@ -1,0 +1,414 @@
+"w-20 h-20 mb-4 pulse-ring" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="50,5 93,28 93,72 50,95 7,72 7,28" stroke="#facc15" stroke-width="2.5" fill="rgba(250,204,21,0.05)"/>
+          <polygon points="50,18 80,35 80,65 50,82 20,65 20,35" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4 3"/>
+          <circle cx="50" cy="50" r="14" stroke="#facc15" stroke-width="2" fill="rgba(34,211,238,0.12)"/>
+          <circle cx="50" cy="50" r="4" fill="#22d3ee"/>
+          <line x1="50" y1="5" x2="50" y2="36" stroke="#facc15" stroke-width="1.2"/>
+          <line x1="50" y1="64" x2="50" y2="95" stroke="#facc15" stroke-width="1.2"/>
+        </svg>
+
+        <h1 class="font-cinzel text-2xl sm:text-3xl font-bold tracking-wider text-yellow-400 uppercase">
+          Hamiltonians CrypticNexus
+        </h1>
+        <p class="font-orbitron text-xs tracking-widest text-cyan-400 mt-1 uppercase">
+          Cosmic Guardian // Unified Authentication Matrix
+        </p>
+      </div>
+
+      <!-- Authentication Inputs -->
+      <form onsubmit="event.preventDefault(); breachGateway();" class="space-y-4">
+        <div>
+          <label for="auth-hash" class="block text-xs font-orbitron uppercase tracking-wider text-slate-300 mb-1.5">
+            Sovereign Hash
+          </label>
+          <input id="auth-hash" type="password" placeholder="Enter Sovereign Hash (or leave default)..." 
+                 value="HAMILTONIAN-137451921129154222"
+                 class="w-full bg-slate-950/90 border border-slate-700 focus:border-yellow-400 rounded-lg px-3.5 py-2.5 text-sm text-yellow-300 outline-none transition">
+        </div>
+
+        <div>
+          <label for="auth-2fa" class="block text-xs font-orbitron uppercase tracking-wider text-slate-300 mb-1.5">
+            6-Digit 2FA Resonance Token
+          </label>
+          <input id="auth-2fa" type="text" maxlength="6" inputmode="numeric" placeholder="000000" value="832194"
+                 class="w-full bg-slate-950/90 border border-slate-700 focus:border-cyan-400 rounded-lg px-3.5 py-2.5 text-sm tracking-[0.4em] text-center font-bold text-cyan-300 outline-none transition">
+        </div>
+
+        <div id="gate-status" class="text-xs text-center min-h-[18px] text-rose-400"></div>
+
+        <button type="submit"
+                class="w-full py-3 px-4 rounded-lg font-orbitron text-sm font-bold uppercase tracking-widest bg-gradient-to-r from-yellow-500 to-amber-400 text-slate-950 hover:from-yellow-400 hover:to-yellow-300 shadow-lg shadow-yellow-500/20 transition transform active:scale-[0.99] cursor-pointer">
+          Breach Gateway
+        </button>
+      </form>
+
+      <div class="mt-5 pt-4 border-t border-slate-800/80 flex justify-between items-center text-[11px] text-slate-500">
+        <span>ENCLAVE: SHADOW_DOM_READY</span>
+        <button type="button" onclick="fillDemoCredentials()" class="text-cyan-400 hover:underline cursor-pointer">
+          Auto-Sync Token
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STAGE 2: INFINITE CANVAS WORKSPACE -->
+  <main id="infinite-canvas" class="hidden min-h-screen flex flex-col relative z-10">
+    <!-- Top Workspace Header -->
+    <header class="glass-panel border-b border-yellow-500/25 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30">
+      <div class="flex items-center gap-3">
+        <div class="w-3 h-3 rounded-full bg-emerald-400 animate-pulse"></div>
+        <div>
+          <h2 class="font-cinzel text-lg sm:text-xl font-bold text-yellow-400 tracking-wide leading-none">
+            Hamiltonians CrypticNexus
+          </h2>
+          <span class="text-[10px] font-orbitron text-cyan-400 tracking-widest">
+            INFINITE CANVAS // BOUND TO 137451921129154222
+          </span>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3 text-xs">
+        <div class="bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-md">
+          <span class="text-slate-400">TDOC:</span>
+          <span class="text-yellow-300 font-semibold">1832.b1ede2fe899bdec88938</span>
+        </div>
+        <div class="bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-md">
+          <span class="text-slate-400">RESONANCE:</span>
+          <span id="telemetry-hz" class="text-cyan-400 font-semibold">60.00 Hz</span>
+        </div>
+        <button onclick="lockGateway()" class="px-3 py-1.5 rounded-md border border-rose-500/40 text-rose-300 hover:bg-rose-500/10 font-orbitron text-[11px] uppercase cursor-pointer">
+          Lock Matrix
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Split Workspace -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 sm:p-6">
+      
+      <!-- Left Panel: Data URL Registry & Terminal (Reconstructed from truncation point) -->
+      <section class="lg:col-span-5 glass-panel rounded-xl p-4 sm:p-5 flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 class="font-orbitron text-yellow-400 text-sm sm:text-base font-bold uppercase tracking-wider">
+            Data URL Registry &amp; Terminal
+          </h3>
+          <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/30">
+            QUINE_ACTIVE
+          </span>
+        </div>
+
+        <!-- Decoded Ideology Matrix -->
+        <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3.5">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-orbitron text-cyan-400 uppercase">Decoded SVG Ideology Metadata</span>
+            <button onclick="copyIdeology()" id="copy-btn" class="text-[11px] text-yellow-400 hover:underline cursor-pointer">
+              Copy Directives
+            </button>
+          </div>
+          <ul id="ideology-list" class="space-y-1.5 text-xs text-slate-300"></ul>
+        </div>
+
+        <!-- URI Fragment & Data URL Quine Generator -->
+        <div class="bg-slate-950/80 border border-slate-800 rounded-lg p-3.5 space-y-2.5">
+          <label for="quine-input" class="block text-[11px] font-orbitron text-yellow-400 uppercase">
+            Self-Encoding Payload / URI Fragment Builder
+          </label>
+          <div class="flex gap-2">
+            <input id="quine-input" type="text" value="H(q,p) = T(p) + V(q) :: KNOCK_SYNC"
+                   class="flex-1 bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-cyan-200 outline-none focus:border-yellow-400">
+            <button onclick="encodePayload()" class="px-3 py-1.5 bg-cyan-500/20 border border-cyan-400/50 text-cyan-300 hover:bg-cyan-500/30 rounded text-xs font-orbitron cursor-pointer">
+              Quine
+            </button>
+          </div>
+          <div id="quine-output" class="text-[11px] text-slate-400 break-all bg-black/50 p-2 rounded border border-slate-800/80 font-fira">
+            data:application/hamiltonian+json;base64,SCgxLHApID0gVChwKSArIFYocSk=
+          </div>
+        </div>
+
+        <!-- Interactive Command Terminal -->
+        <div class="flex-1 flex flex-col bg-black/80 border border-slate-800 rounded-lg p-3 min-h-[220px]">
+          <div id="terminal-log" class="flex-1 overflow-y-auto space-y-1.5 text-xs font-fira text-emerald-400 mb-2 max-h-[240px]">
+            <div>[SYS] Enclave Shadow DOM boundary verified.</div>
+            <div>[SYS] Sprocket knock sequence acknowledged (AUTH_KEY + KNOCK).</div>
+            <div>[SYS] Continuous telemetry locked to IDENTITY 137451921129154222.</div>
+            <div class="text-slate-400">Type 'help', 'ideology', 'hamiltonian', or 'clear' below...</div>
+          </div>
+          <form onsubmit="event.preventDefault(); runTerminalCommand();" class="flex items-center gap-2 border-t border-slate-800 pt-2">
+            <span class="text-yellow-400 text-xs font-bold">&gt;_</span>
+            <input id="terminal-cmd" type="text" placeholder="Execute nexus directive..." autocomplete="off"
+                   class="flex-1 bg-transparent text-xs text-slate-100 outline-none">
+          </form>
+        </div>
+      </section>
+
+      <!-- Right Panel: Hamiltonian Phase-Space & Resonance Canvas -->
+      <section class="lg:col-span-7 glass-panel rounded-xl p-4 sm:p-5 flex flex-col gap-4">
+        <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-2">
+          <div>
+            <h3 class="font-orbitron text-cyan-400 text-sm sm:text-base font-bold uppercase tracking-wider">
+              Hamiltonian Phase-Space Dynamics
+            </h3>
+            <p class="text-[11px] text-slate-400">Symplectic Trajectory &amp; Synchronous Telemetry Manifold</p>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <label class="flex items-center gap-1.5 text-slate-300">
+              <span>Coupling (κ):</span>
+              <input id="coupling-slider" type="range" min="0.2" max="2.5" step="0.1" value="1.1" class="w-20 accent-yellow-400">
+            </label>
+          </div>
+        </div>
+
+        <!-- Responsive Phase-Space Canvas -->
+        <div id="canvas-container" class="relative flex-1 min-h-[300px] sm:min-h-[380px] bg-slate-950/90 rounded-lg border border-slate-800 overflow-hidden">
+          <canvas id="phase-canvas" class="w-full h-full block"></canvas>
+          <div class="absolute bottom-3 left-3 bg-slate-950/85 border border-slate-800 px-3 py-1.5 rounded text-[11px] text-slate-300 space-y-0.5 pointer-events-none">
+            <div>H(q, p) = ½p² + ½ω²q² + κ·cos(q)</div>
+            <div id="energy-readout" class="text-yellow-400">Invariant Energy E: 1.4820 J</div>
+          </div>
+        </div>
+
+        <!-- Bottom Telemetry Metrics -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div class="bg-slate-950/75 border border-slate-800 p-3 rounded-lg">
+            <div class="text-slate-400 text-[10px] font-orbitron">1. ENCLAVING</div>
+            <div class="text-emerald-400 font-semibold mt-0.5">ISOLATED</div>
+          </div>
+          <div class="bg-slate-950/75 border border-slate-800 p-3 rounded-lg">
+            <div class="text-slate-400 text-[10px] font-orbitron">2. SPROCKETING</div>
+            <div class="text-yellow-400 font-semibold mt-0.5">AUTH + KNOCK</div>
+          </div>
+          <div class="bg-slate-950/75 border border-slate-800 p-3 rounded-lg">
+            <div class="text-slate-400 text-[10px] font-orbitron">3. QUINING</div>
+            <div class="text-cyan-400 font-semibold mt-0.5">URI_FRAGMENT</div>
+          </div>
+          <div class="bg-slate-950/75 border border-slate-800 p-3 rounded-lg">
+            <div class="text-slate-400 text-[10px] font-orbitron">4. RESONANCE</div>
+            <div id="sync-counter" class="text-purple-400 font-semibold mt-0.5">SYNC #0001</div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script>
+    // Decode Base64 metadata directly from #cryptic-logo SVG
+    function getDecodedIdeology() {
+      const logo = document.getElementById('cryptic-logo');
+      const rawB64 = logo.getAttribute('data-ideology');
+      try {
+        return atob(rawB64);
+      } catch (e) {
+        return "Ideology decode error.";
+      }
+    }
+
+    function renderIdeology() {
+      const decoded = getDecodedIdeology();
+      const listEl = document.getElementById('ideology-list');
+      // Split by numbered items "1. ", "2. ", etc.
+      const parts = decoded.split(/(?=\d+\.\s)/).filter(Boolean);
+      listEl.innerHTML = parts.map(item => {
+        const [title, ...rest] = item.split(':');
+        return `<li class="border-l-2 border-yellow-400/70 pl-2.5 py-0.5">
+                  <span class="text-yellow-300 font-semibold">${title}:</span>
+                  <span class="text-slate-300">${rest.join(':')}</span>
+                </li>`;
+      }).join('');
+    }
+
+    function fillDemoCredentials() {
+      document.getElementById('auth-hash').value = 'HAMILTONIAN-137451921129154222';
+      document.getElementById('auth-2fa').value = '832194';
+      document.getElementById('gate-status').textContent = 'Sovereign credentials synchronized.';
+      document.getElementById('gate-status').className = 'text-xs text-center min-h-[18px] text-emerald-400';
+    }
+
+    // Stage 1 -> Stage 2 Trigger
+    function breachGateway() {
+      const hashVal = document.getElementById('auth-hash').value.trim();
+      const twoFaVal = document.getElementById('auth-2fa').value.trim();
+      const statusEl = document.getElementById('gate-status');
+
+      if (!hashVal) {
+        statusEl.textContent = 'ERROR: Sovereign Hash required.';
+        return;
+      }
+      if (!/^\d{6}$/.test(twoFaVal)) {
+        statusEl.textContent = 'ERROR: 6-digit numeric 2FA token required.';
+        return;
+      }
+
+      statusEl.className = 'text-xs text-center min-h-[18px] text-cyan-400';
+      statusEl.textContent = 'Matrix breached. Initializing Infinite Canvas...';
+
+      setTimeout(() => {
+        document.getElementById('guardian-gate').classList.add('hidden');
+        document.getElementById('infinite-canvas').classList.remove('hidden');
+        renderIdeology();
+        encodePayload();
+        initPhaseCanvas();
+      }, 350);
+    }
+
+    function lockGateway() {
+      document.getElementById('infinite-canvas').classList.add('hidden');
+      document.getElementById('guardian-gate').classList.remove('hidden');
+      document.getElementById('gate-status').textContent = 'Matrix re-locked.';
+      document.getElementById('gate-status').className = 'text-xs text-center min-h-[18px] text-yellow-400';
+    }
+
+    function copyIdeology() {
+      const text = getDecodedIdeology();
+      const temp = document.createElement('textarea');
+      temp.value = text;
+      document.body.appendChild(temp);
+      temp.select();
+      document.execCommand('copy');
+      document.body.removeChild(temp);
+
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy Directives', 1500);
+    }
+
+    function encodePayload() {
+      const input = document.getElementById('quine-input').value;
+      const b64 = btoa(unescape(encodeURIComponent(input)));
+      const uri = `data:text/plain;charset=utf-8;base64,${b64}#id=137451921129154222`;
+      document.getElementById('quine-output').textContent = uri;
+      window.location.hash = `tdoc=1832.b1ede2fe899bdec88938&q=${b64.slice(0, 24)}`;
+    }
+
+    function runTerminalCommand() {
+      const inputEl = document.getElementById('terminal-cmd');
+      const logEl = document.getElementById('terminal-log');
+      const cmd = inputEl.value.trim();
+      if (!cmd) return;
+
+      const userLine = document.createElement('div');
+      userLine.className = 'text-yellow-300';
+      userLine.textContent = `> ${cmd}`;
+      logEl.appendChild(userLine);
+
+      const reply = document.createElement('div');
+      const lower = cmd.toLowerCase();
+
+      if (lower === 'clear') {
+        logEl.innerHTML = '';
+        inputEl.value = '';
+        return;
+      } else if (lower === 'help') {
+        reply.className = 'text-cyan-300';
+        reply.textContent = 'Commands: help, ideology, hamiltonian, telemetry, clear';
+      } else if (lower === 'ideology') {
+        reply.className = 'text-slate-200';
+        reply.textContent = getDecodedIdeology();
+      } else if (lower === 'hamiltonian') {
+        reply.className = 'text-emerald-300';
+        reply.textContent = 'dq/dt = ∂H/∂p = p | dp/dt = -∂H/∂q = -ω²q + κ·sin(q)';
+      } else if (lower === 'telemetry') {
+        reply.className = 'text-purple-300';
+        reply.textContent = 'TDOC 1832.b1ede2fe899bdec88938 :: IDENTITY 137451921129154222 :: NOMINAL';
+      } else {
+        reply.className = 'text-slate-400';
+        reply.textContent = `Executed [${cmd}] -> Echo status 200 OK.`;
+      }
+
+      logEl.appendChild(reply);
+      logEl.scrollTop = logEl.scrollHeight;
+      inputEl.value = '';
+    }
+
+    // Hamiltonian Symplectic Phase-Space Visualizer
+    let animStarted = false;
+    function initPhaseCanvas() {
+      if (animStarted) return;
+      animStarted = true;
+
+      const canvas = document.getElementById('phase-canvas');
+      const container = document.getElementById('canvas-container');
+      const ctx = canvas.getContext('2d');
+      const slider = document.getElementById('coupling-slider');
+      const energyReadout = document.getElementById('energy-readout');
+      const syncCounter = document.getElementById('sync-counter');
+      const hzReadout = document.getElementById('telemetry-hz');
+
+      function resizeCanvas() {
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      // Initialize multiple phase-space orbits (q, p)
+      const particles = Array.from({ length: 18 }, (_, i) => ({
+        q: (i - 8.5) * 0.35,
+        p: ((i % 3) - 1) * 0.6,
+        hue: i % 2 === 0 ? '#facc15' : '#22d3ee',
+        trail: []
+      }));
+
+      let tick = 0;
+      const dt = 0.035;
+
+      function step() {
+        tick++;
+        const kappa = parseFloat(slider.value);
+        const w = canvas.width;
+        const h = canvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        const scale = Math.min(w, h) * 0.16;
+
+        // Subtle fade trail
+        ctx.fillStyle = 'rgba(5, 7, 13, 0.18)';
+        ctx.fillRect(0, 0, w, h);
+
+        // Draw coordinate axes
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, cy); ctx.lineTo(w, cy);
+        ctx.moveTo(cx, 0); ctx.lineTo(cx, h);
+        ctx.stroke();
+
+        let sampleEnergy = 0;
+
+        particles.forEach((pt, idx) => {
+          // Symplectic Euler integration for H = 0.5*p^2 + 0.5*q^2 + kappa*cos(q)
+          const force = -pt.q + kappa * Math.sin(pt.q);
+          pt.p += force * dt;
+          pt.q += pt.p * dt;
+
+          // Wrap q smoothly for visual continuity
+          if (pt.q > 4.5) pt.q -= 9;
+          if (pt.q < -4.5) pt.q += 9;
+
+          const sx = cx + pt.q * scale;
+          const sy = cy - pt.p * scale;
+
+          ctx.fillStyle = pt.hue;
+          ctx.beginPath();
+          ctx.arc(sx, sy, 2.2, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (idx === 4) {
+            sampleEnergy = 0.5 * pt.p * pt.p + 0.5 * pt.q * pt.q + kappa * Math.cos(pt.q);
+          }
+        });
+
+        if (tick % 15 === 0) {
+          energyReadout.textContent = `Invariant Energy E: ${sampleEnergy.toFixed(4)} J`;
+          syncCounter.textContent = `SYNC #${String(tick).padStart(4, '0')}`;
+          hzReadout.textContent = `${(59.95 + Math.random() * 0.1).toFixed(2)} Hz`;
+        }
+
+        requestAnimationFrame(step);
+      }
+
+      step();
+    }
+  </script>
+</body>
+</html>
+I completed the truncated HTML document by reconstructing the Data URL Registry & Terminal panel and adding an interactive Hamiltonian Phase-Space Dynamics visualizer alongside the Cosmic Guardian authentication gate. You can click the Preview toggle in the top right of the Canvas to test unlocking the matrix, inspecting the decoded SVG ideology metadata, building Base64 URI fragments, and adjusting the Hamiltonian coupling constant (\(\kappa \)).

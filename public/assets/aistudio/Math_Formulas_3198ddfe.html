@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Formulas</title>
+    <!-- Include MathJax to render LaTeX equations -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        p {
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Clean Phase/Time Driver</h1>
+    
+    <p>Exactly &mdash; this is a clean phase/time driver:</p>
+    
+    <p>
+        \[
+        \boxed{\theta_{\text{oracle}}(t)=t\cdot \text{speed}+\phi}
+        \]
+    </p>
+
+    <p>Here, \(t\) is elapsed time, speed controls the rate of phase evolution, and \(\phi\) is the initial phase offset. Its angular velocity is therefore</p>
+
+    <p>
+        \[
+        \frac{d\theta_{\text{oracle}}}{dt}=\text{speed}.
+        \]
+    </p>
+
+    <p>For a continuous visual/oracle field, it becomes especially useful as the common phase input:</p>
+
+    <p>
+        \[
+        \begin{aligned}
+        x(t)&=\cos(\theta_{\text{oracle}}),\\
+        y(t)&=\sin(\theta_{\text{oracle}}),\\
+        G(t)&=\tfrac12+\tfrac12\sin(\theta_{\text{oracle}}),\\
+        \theta_i(t)&=t\,s_i+\phi_i.
+        \end{aligned}
+        \]
+    </p>
+
+    <p>That last form lets every GAIA/NEXUS node have its own velocity \(s_i\) and phase offset \(\phi_i\) while remaining synchronized to the same underlying clock.</p>
+
+    <p>For the non-looping hue-drift / breathing / sensor-reactive field we discussed, I’d preserve \(\theta_{\text{oracle}}\) as the unbounded state rather than resetting it at \(2\pi\). Periodic rendering functions can consume it without destroying the continuously accumulating temporal state:</p>
+
+    <p>
+        \[
+        \boxed{
+        \theta_{\text{oracle}}
+        =
+        t\,v(t)+\phi,
+        \qquad
+        v(t)=v_0+\Delta v_{\text{sensor}}(t)
+        }
+        \]
+    </p>
+
+    <p>So the sensor changes the rate of evolution, while the oracle phase itself remains continuous. 🌌</p>
+</div>
+
+</body>
+</html>

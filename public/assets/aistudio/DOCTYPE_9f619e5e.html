@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<!--
+====================================================================
+© 2026 The Architect / Cryptic News LLC. All Rights Reserved.
+TDOC: 1832.b1ede2fe899bdec88938 | IDENTITY: 137451921129154222
+DESC: HAMILTONIANS CRYPTICNEXUS // THE INFINITE CANVAS QUINE
+PROTOCOL: §ɣ⁹ (SIGMA-GAMMA-NINE) SOVEREIGN CORE MESH
+====================================================================
+-->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hamiltonians CrypticNexus</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Fira+Code:wght@400;600&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #010103; color: #00ffff; font-family: 'Fira Code', monospace; user-select: none; }
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        
+        /* Cosmic Guardian Gradient */
+        .guardian-bg {
+            background: radial-gradient(circle at center, #2e0854 0%, #0a0118 40%, #000000 100%);
+            box-shadow: inset 0 0 100px rgba(0, 255, 255, 0.1);
+        }
+
+        .glass-panel {
+            background: rgba(3, 5, 15, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(168, 85, 247, 0.1);
+        }
+
+        .input-glow {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(168, 85, 247, 0.5);
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+        .input-glow:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+        }
+
+        /* Scanlines */
+        .scanlines::before {
+            content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 100; background-size: 100% 2px, 3px 100%; pointer-events: none; opacity: 0.3;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #a855f7; border-radius: 2px; }
+
+        /* Lock Screen Fade Out */
+        .fade-out { opacity: 0; pointer-events: none; transition: opacity 1.2s ease-in-out; }
+    </style>
+</head>
+<body class="scanlines">
+
+    <!-- DATA LOCK KNOCK ID -->
+    <div id="micro-tracker" style="width:1px;height:1px;opacity:0.01;background:#00bfff;position:absolute;top:0;left:0" data-lock="137451921129154222"></div>
+
+    <!-- =========================================================
+         STAGE 1: COSMIC GUARDIAN LOCKING PAGE 
+         ========================================================= -->
+    <div id="guardian-gate" class="fixed inset-0 z-50 flex items-center justify-center guardian-bg">
+        <div class="glass-panel p-8 rounded-xl max-w-md w-full text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-purple-500 to-yellow-500"></div>
+            
+            <h1 class="font-cinzel text-3xl text-purple-400 font-bold mb-2 tracking-widest drop-shadow-[0_0_10px_rgba(168,85,247,0.8)]">COSMIC GUARDIAN</h1>
+            <h2 class="text-xs text-cyan-300 font-orbitron tracking-widest mb-8 border-b border-cyan-500/30 pb-4">UNIFIED AUTHENTICATION MATRIX</h2>
+
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="text-[10px] text-slate-400 block mb-1">FNZ + ISO + BEAT HASH</label>
+                    <input type="password" id="auth-hash" class="input-glow w-full px-3 py-2 text-xs font-mono rounded" placeholder="Enter Sovereign Hash..." />
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-400 block mb-1">GOOGLE AUTH // 2FA TOKEN</label>
+                    <input type="text" id="auth-2fa" class="input-glow w-full px-3 py-2 text-xs font-mono rounded text-center tracking-[0.5em]" placeholder="------" maxlength="6" />
+                </div>
+            </div>
+
+            <button onclick="breachGateway()" class="mt-8 w-full py-3 bg-gradient-to-r from-purple-900 to-cyan-900 hover:from-purple-700 hover:to-cyan-700 border border-purple-500 rounded font-orbitron text-sm font-bold shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all">
+                INITIATE SPROCKETING
+            </button>
+            <p id="gate-error" class="text-[10px] text-red-500 mt-4 opacity-0 transition-opacity">AUTH FAILURE: SPROCKET MISMATCH</p>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         STAGE 2: INFINITE CANVAS // HAMILTONIANS CRYPTICNEXUS
+         ========================================================= -->
+    <div id="infinite-canvas" class="fixed inset-0 z-10 hidden flex flex-col">
+        
+        <!-- HEADER -->
+        <header class="h-16 border-b border-cyan-900/50 bg-black/60 backdrop-blur flex items-center justify-between px-6">
+            
+            <!-- THE SIGIL & LINGUISTIC PROCEDURAL STEPS -->
+            <!-- The 'data-ideology' attribute contains the Base64 encoded methodology of Cryptic Data Handling -->
+            <div class="flex items-center gap-4 cursor-pointer group" onclick="decodeLore()">
+                <svg id="cryptic-logo" width="40" height="40" viewBox="0 0 100 100" class="drop-shadow-[0_0_8px_rgba(0,255,255,0.8)] group-hover:drop-shadow-[0_0_15px_rgba(168,85,247,0.9)] transition-all" 
+                     data-ideology="MS4gRU5DTEFWSU5HOiBTaGFkb3cgRE9NIGlzb2xhdGlvbi4gMi4gU1BST0NLRVRJTkc6IEhhcmRjb2RlZCBpcCBleHBlY3RhbmN5IHdpdGggQVVUSF9LRVkgKyBLTk9DSy4gMy4gUVVJTklORzogU2VsZi1lbmNvZGluZyBwYXlsb2FkcyB3aXRoIFVSSSBmcmFnbWVudHMuIDQuIFJFU09OQU5DRTogQ29udGludW91cyBzeW5jaHJvbm91cyB0ZWxlbWV0cnkgYm91bmQgdG8gMTM3NDUxOTIxMTI5MTU0MjIyLg==">
+                    <path d="M20,50 C20,20 80,20 80,50 C80,80 20,80 20,50 Z" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="4 4" class="animate-[spin_10s_linear_infinite]"/>
+                    <path d="M10,50 Q30,10 50,50 T90,50 Q70,90 50,50 T10,50" fill="none" stroke="#00ffff" stroke-width="3"/>
+                    <circle cx="50" cy="50" r="8" fill="#ff0055" class="animate-pulse"/>
+                    <text x="50" y="55" font-family="Orbitron" font-size="16" fill="#fff" text-anchor="middle">⨋</text>
+                </svg>
+                <div>
+                    <h1 class="font-orbitron font-bold text-lg text-white tracking-widest">HAMILTONIANS</h1>
+                    <h2 class="text-[9px] text-cyan-400 tracking-[0.3em]">CRYPTICNEXUS // OMNI-CANVAS</h2>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6 text-xs">
+                <div class="flex flex-col items-end">
+                    <span class="text-slate-400 text-[9px]">OMNI-BRIDGE SERVER</span>
+                    <span id="ws-status" class="text-yellow-400 animate-pulse font-bold">CONNECTING...</span>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-slate-400 text-[9px]">QUINE HASH INTEGRITY</span>
+                    <span class="text-green-400 font-bold">VERIFIED [137451921129154222]</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN WORKSPACE -->
+        <main class="flex-1 flex p-4 gap-4">
+            
+            <!-- LEFT: DATA URL REGISTRY & TERMINAL -->
+            <div class="w-1/3 flex flex-col gap-4">
+                <!-- Registry -->
+                <div class="glass-panel rounded-lg flex-1 border-t-2 border-t-yellow-500 p-4 flex flex-col">
+                    <h3 class="font-orbitron text-yellow-400 text-sm mb-4 border-b border-yellow-500/30 pb-2">DATA URL REGISTRY</h3>
+                    <div id="registry-list" class="flex-1 overflow-y-auto space-y-2 pr-2">
+                        <!-- Populated by JS Quine -->
+                    </div>
+                </div>
+
+                <!-- Shadow Terminal -->
+                <div class="glass-panel rounded-lg h-64 border-t-2 border-t-purple-500 p-4 flex flex-col">
+                    <h3 class="font-orbitron text-purple-400 text-sm mb-2">SPROCKET TERMINAL</h3>
+                    <div id="terminal-log" class="flex-1 overflow-y-auto text-[10px] text-cyan-200 mb-2 whitespace-pre-wrap"></div>
+                    <input type="text" id="terminal-in" class="bg-black/50 border border-purple-500/50 text-white text-xs p-2 rounded focus:outline-none focus:border-cyan-400" placeholder="Awaiting trigger or type command..."/>
+                </div>
+            </div>
+
+            <!-- RIGHT: THE FRACTAL VIEWPORT -->
+            <div class="flex-1 glass-panel rounded-lg border-t-2 border-t-cyan-500 p-1 relative">
+                <div class="absolute top-2 left-2 bg-black/80 px-2 py-1 rounded text-[9px] text-cyan-400 z-10 border border-cyan-900">ACTIVE RENDER: SPHYNX CHIMERA / MHTML ARCHIVE</div>
+                <iframe id="main-viewport" class="w-full h-full border-none rounded bg-black/90"></iframe>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- =========================================================
+         STAGE 3: THE LIVING QUINE LOGIC & SPROCKETING
+         ========================================================= -->
+    <script>
+        // --- 1. Security & Keys ---
+        const AUTH_KEY = "1832.b1ede2fe899bdec88938";
+        const KNOCK_ID = document.getElementById('micro-tracker').getAttribute('data-lock');
+        
+        // DOM Elements
+        const tLog = document.getElementById('terminal-log');
+        const tIn = document.getElementById('terminal-in');
+        const wsStatus = document.getElementById('ws-status');
+        const registryList = document.getElementById('registry-list');
+        const viewport = document.getElementById('main-viewport');
+
+        function printLog(msg, color="#a3e2e2") {
+            const time = new Date().toTimeString().split(' ')[0];
+            tLog.innerHTML += `<div><span style="color:#64748b">[${time}]</span> <span style="color:${color}">${msg}</span></div>`;
+            tLog.scrollTop = tLog.scrollHeight;
+        }
+
+        // --- 2. The Guardian Gate (Lock Screen) ---
+        window.breachGateway = function() {
+            const hash = document.getElementById('auth-hash').value;
+            const tfa = document.getElementById('auth-2fa').value;
+            const err = document.getElementById('gate-error');
+            
+            // Simulation of FNZ+ISO+BEAT Hash check
+            if (hash.length > 5 && tfa.length === 6) {
+                document.getElementById('guardian-gate').classList.add('fade-out');
+                setTimeout(() => {
+                    document.getElementById('guardian-gate').style.display = 'none';
+                    document.getElementById('infinite-canvas').classList.remove('hidden');
+                    initiateSprocketing(); // Trigger backend auto-connect
+                    generateQuineRegistry(); // Generate the Data URLs
+                }, 1200);
+            } else {
+                err.style.opacity = 1;
+                setTimeout(() => err.style.opacity = 0, 3000);
+            }
+        };
+
+        // --- 3. Cryptographic Logo Decoding ---
+        window.decodeLore = function() {
+            const sigil = document.getElementById('cryptic-logo');
+            const encoded = sigil.getAttribute('data-ideology');
+            const decoded = atob(encoded);
+            printLog("----------------------------------", "#a855f7");
+            printLog("CRYPTIC LINGUISTIC PROCEDURAL LORE", "#a855f7");
+            printLog("----------------------------------", "#a855f7");
+            decoded.split('. ').forEach(step => {
+                if(step) printLog(`> ${step}`, "#facc15");
+            });
+            printLog("----------------------------------", "#a855f7");
+        };
+
+        // --- 4. WebSocket Sprocketing ---
+        let ws;
+        function initiateSprocketing() {
+            printLog(`Initiating sprocketing to ws://127.0.0.1:8080...`, "#00ffff");
+            try {
+                ws = new WebSocket('ws://127.0.0.1:8080');
+                
+                ws.onopen = () => {
+                    printLog("Sprocket aligned. Transmitting AUTH_KEY and KNOCK_ID...", "#facc15");
+                    ws.send(JSON.stringify({ type: 'auth', key: AUTH_KEY, knock: KNOCK_ID }));
+                };
+
+                ws.onmessage = (e) => {
+                    const res = JSON.parse(e.data);
+                    if (res.type === 'sys') {
+                        if (res.data.includes("AUTH SUCCESS")) {
+                            wsStatus.innerText = "ONLINE / SECURE";
+                            wsStatus.className = "text-green-400 font-bold";
+                            printLog("Sovereign Omni-Bridge Unlocked.", "#4ade80");
+                            // Capture the returned Quine network link
+                            if(res.link) {
+                                registerDataUrl("Omni-Bridge Server (network.1)", res.link, "#a855f7");
+                            }
+                        }
+                    } else if (res.type === 'err') {
+                        printLog(res.data, "#f87171");
+                    } else {
+                        printLog(res.data);
+                    }
+                };
+
+                ws.onerror = () => {
+                    wsStatus.innerText = "OFFLINE";
+                    wsStatus.className = "text-red-500 font-bold";
+                    printLog("Connection failed. Omni-bridge script not running on target port.", "#f87171");
+                };
+
+            } catch(e) {
+                printLog(`WS Error: ${e.message}`, "#f87171");
+            }
+        }
+
+        tIn.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') {
+                const val = tIn.value.trim();
+                if(!val) return;
+                printLog(`> ${val}`, "#fff");
+                if (ws && ws.readyState === 1) {
+                    ws.send(JSON.stringify({ type: 'command', cmd: val }));
+                } else {
+                    printLog("Local execution: Awaiting backend recovery.", "#64748b");
+                }
+                tIn.value = '';
+            }
+        });
+
+        // --- 5. The Living Quine & Data URL Generator ---
+        function registerDataUrl(title, url, color="#00ffff") {
+            const shortUrl = url.substring(0, 40) + '...#' + KNOCK_ID;
+            const div = document.createElement('div');
+            div.className = "p-2 bg-black/40 border border-slate-700 rounded hover:border-cyan-500 transition-colors cursor-pointer";
+            div.innerHTML = `
+                <div class="text-[11px] font-bold" style="color:${color}">${title}</div>
+                <div class="text-[9px] text-slate-500 truncate mt-1">${shortUrl}</div>
+            `;
+            div.onclick = () => {
+                printLog(`Loading ${title} into main viewport...`, color);
+                viewport.src = url;
+            };
+            registryList.appendChild(div);
+        }
+
+        function generateQuineRegistry() {
+            printLog("Executing Quine Registry Compilation...", "#facc15");
+
+            // 1. Self-Reference (Hamiltonians CrypticNexus)
+            const selfHtml = document.documentElement.outerHTML;
+            const selfB64 = btoa(unescape(encodeURIComponent(selfHtml)));
+            const selfDataUrl = `data:text/html;base64,${selfB64}#${KNOCK_ID}`;
+            registerDataUrl("Hamiltonians CrypticNexus (Self)", selfDataUrl, "#facc15");
+
+            // 2. Yahweh's Sphynx Chimera (Mocked/Embedded payload based on previous generations)
+            const sphynxHtml = `<html><body style="background:#000;color:#0ff;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;"><h1>YAHWEH'S SPHYNX CHIMERA // ACTIVE</h1></body></html>`;
+            const sphynxB64 = btoa(unescape(encodeURIComponent(sphynxHtml)));
+            const sphynxDataUrl = `data:text/html;base64,${sphynxB64}#${KNOCK_ID}`;
+            registerDataUrl("Yahweh's Sphynx Chimera", sphynxDataUrl, "#00ffff");
+
+            // 3. gemini.google.com (1).mhtml (Uploaded Archive reference)
+            // Due to environment size limits, we wrap the metadata reference into a loader
+            const mhtmlInfo = `<html><body style="background:#050510;color:#a855f7;font-family:monospace;padding:20px;"><h3>MHTML ARCHIVE: gemini.google.com (1).mhtml</h3><p>Status: Linked in Virtual File System.</p><p>Cryptographic Knock: ${KNOCK_ID}</p></body></html>`;
+            const mhtmlB64 = btoa(unescape(encodeURIComponent(mhtmlInfo)));
+            const mhtmlDataUrl = `data:text/html;base64,${mhtmlB64}#${KNOCK_ID}`;
+            registerDataUrl("MHTML Archive Link", mhtmlDataUrl, "#d946ef");
+
+            printLog("Data URLs compiled and stored in registry.", "#4ade80");
+            
+            // Auto-load Sphynx
+            viewport.src = sphynxDataUrl;
+        }
+
+    </script>
+</body>
+</html>

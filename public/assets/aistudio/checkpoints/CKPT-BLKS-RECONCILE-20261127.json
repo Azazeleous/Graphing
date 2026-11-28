@@ -1,0 +1,31 @@
+{
+  "checkpointId": "CKPT-BLKS-RECONCILE-20261127",
+  "phase": "BLKS_VS_V5_NODES_EDGES_DEFINITION_RECONCILIATION",
+  "timestamp": "2026-11-27T06:35:30Z",
+  "protocol": "LS-MASTER-1.0",
+  "doctrine": "THE CREED OF ADMITTANCE",
+  "previousCheckpoint": "CKPT-PHASE2-PRE-ADMITTANCE-20261127",
+  "filesToModify": [
+    "/src/canonicalErrorRegistry.ts",
+    "/src/hamiltonianCore.ts",
+    "/index.html"
+  ],
+  "preservedCounterValues": {
+    "blksTotal": 4096,
+    "v5NodesTotal": 625,
+    "v5EdgesTotal": 2000,
+    "canonicalErrorCount": 4,
+    "canonicalLogCount": 16
+  },
+  "preReconciliationDefinitions": {
+    "blksDefinition": {
+      "totalCapacity": 4096,
+      "completedCriteria": "A block is complete when its calculated Proof-of-Work nonce meets or exceeds target difficulty bits and its Merkle leaf hash is anchored into the 13-level binary Merkle tree root."
+    },
+    "v5LatticeDefinition": {
+      "nodesCount": 625,
+      "edgesCount": 2000,
+      "coordinateSpace": "Discrete 4D integer grid V5 = {-2, -1, 0, 1, 2}^4 with undirected nearest-neighbor edges (Euclidean distance Delta = 1)."
+    }
+  }
+}

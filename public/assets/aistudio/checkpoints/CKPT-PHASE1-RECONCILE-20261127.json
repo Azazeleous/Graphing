@@ -1,0 +1,15 @@
+{
+  "checkpointName": "CKPT-PHASE1-RECONCILE-20261127",
+  "timestamp": "2026-11-27T06:00:00Z",
+  "protocol": "LS-MASTER-1.0",
+  "doctrine": "THE CREED OF ADMITTANCE",
+  "status": "FROZEN_AND_RECONCILED",
+  "sourceInventoryCount": 10,
+  "systemState": {
+    "blksTotal": 4096,
+    "v5NodesTotal": 625,
+    "v5EdgesTotal": 2000,
+    "errorCount": 4,
+    "logCount": 16
+  }
+}

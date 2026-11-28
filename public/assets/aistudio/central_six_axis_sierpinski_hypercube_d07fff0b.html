@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Six-Axis Sierpinski Hypercube // Sephiroth Sphere</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            950: '#030712',
+                            900: '#0a0f1d',
+                            800: '#111827',
+                            700: '#1f293d',
+                            cyan: '#06b6d4',
+                            pink: '#f43f5e',
+                            emerald: '#10b981',
+                            purple: '#8b5cf6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body, html {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #030712;
+            overflow: hidden;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .glow-cyan {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.6), 0 0 20px rgba(6, 182, 212, 0.3);
+        }
+        .glow-pink {
+            text-shadow: 0 0 10px rgba(244, 63, 94, 0.6), 0 0 20px rgba(244, 63, 94, 0.3);
+        }
+        .glow-emerald {
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.6), 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        /* Custom scrollbar for telemetry panels */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(3, 7, 18, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(6, 182, 212, 0.4);
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(6, 182, 212, 0.8);
+        }
+    </style>
+</head>
+<body class="text-slate-100 bg-cyber-950 select-none">
+
+    <!-- WebGL Canvas -->
+    <canvas id="webgl-canvas" class="absolute inset-0 z-0"></canvas>
+
+    <!-- HUD Overlay Interface -->
+    <div id="ui-overlay" class="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 md:p-6 transition-opacity duration-300">
+        
+        <!-- Top Header & Telemetry Bar -->
+        <header id="hud-header" title="Double-click to hide UI" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-cyber-900/80 backdrop-blur-xl border border-cyber-cyan/30 p-4 rounded-2xl shadow-2xl pointer-events-auto cursor-pointer">
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 rounded-full bg-cyber-cyan animate-ping"></div>
+                <div>
+                    <h1 class="text-base md:text-lg font-bold tracking-wider text-cyber-cyan glow-cyan">SIERPINSKI HYPERCUBE // SEPHIROTH SPHERE</h1>
+                    <p class="text-xs text-slate-400">Six-Axis Central Origin Lattice & Cryptographic Cardinality Engine <span class="text-cyber-cyan/70">(Double-click header to hide UI)</span></p>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-3 text-xs">
+                <div class="bg-cyber-800/80 border border-slate-700/50 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                    <span class="text-slate-400">STATUS:</span>
+                    <span class="text-cyber-emerald font-bold">LATTICE SYNCHRONIZED</span>
+                </div>
+                <div class="bg-cyber-800/80 border border-slate-700/50 px-3 py-1.5 rounded-lg flex items-center gap-2">
+                    <span class="text-slate-400">FPS:</span>
+                    <span id="fps-counter" class="text-cyber-cyan font-bold">60</span>
+                </div>
+                <button id="toggle-autorotate" class="bg-slate-800 border border-cyber-cyan/50 text-cyber-cyan px-3 py-1.5 rounded-lg transition font-bold">
+                    ORBIT: FROZEN
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Middle Section (Left & Right Floating Panels) -->
+        <div class="flex flex-col lg:flex-row justify-between items-start gap-4 flex-1 my-4 overflow-hidden pointer-events-none">
+            
+            <!-- Left Panel: Explicit Cryptographic Cardinalities -->
+            <div class="w-full lg:w-80 bg-cyber-900/85 backdrop-blur-xl border border-cyber-pink/30 p-4 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-3 max-h-full overflow-y-auto">
+                <div class="flex items-center justify-between border-b border-cyber-pink/20 pb-2">
+                    <h2 class="text-sm font-bold text-cyber-pink glow-pink tracking-wider">CRYPTOGRAPHIC CARDINALITIES</h2>
+                    <span class="text-[10px] bg-cyber-pink/20 text-cyber-pink px-2 py-0.5 rounded">EXPLICIT MAPPING</span>
+                </div>
+
+                <div class="space-y-2 text-xs">
+                    <div class="bg-cyber-800/60 p-2.5 rounded-xl border border-slate-700/40 flex justify-between items-center">
+                        <span class="text-slate-400">Fractal Recursion Depth:</span>
+                        <span id="card-depth" class="text-cyber-cyan font-bold text-sm">3</span>
+                    </div>
+                    <div class="bg-cyber-800/60 p-2.5 rounded-xl border border-slate-700/40 flex justify-between items-center">
+                        <span class="text-slate-400">Axis Vector Base (N):</span>
+                        <span class="text-cyber-purple font-bold">6 Orthogonal</span>
+                    </div>
+                    <div class="bg-cyber-800/60 p-2.5 rounded-xl border border-slate-700/40 flex justify-between items-center">
+                        <span class="text-slate-400">Total Line Segments:</span>
+                        <span id="card-lines" class="text-cyber-cyan font-bold">0</span>
+                    </div>
+                    <div class="bg-cyber-800/60 p-2.5 rounded-xl border border-slate-700/40 flex justify-between items-center">
+                        <span class="text-slate-400">Face Centroids (Pink):</span>
+                        <span id="card-faces" class="text-cyber-pink font-bold">0</span>
+                    </div>
+                    <div class="bg-cyber-800/60 p-2.5 rounded-xl border border-slate-700/40 flex justify-between items-center">
+                        <span class="text-slate-400">Triangular Facets (Gems):</span>
+                        <span id="card-facets" class="text-cyber-purple font-bold">0</span>
+                    </div>
+                    <div class="bg-cyber-800/60 p-2.5 rounded-xl border border-slate-700/40 flex justify-between items-center">
+                        <span class="text-slate-400">Edge Midpoints (Emerald):</span>
+                        <span id="card-edges" class="text-cyber-emerald font-bold">0</span>
+                    </div>
+                    <div class="bg-cyber-800/60 p-2.5 rounded-xl border border-slate-700/40 flex justify-between items-center">
+                        <span class="text-slate-400">Vertex Gems (Gold):</span>
+                        <span id="card-gems" class="text-amber-400 font-bold">0</span>
+                    </div>
+                    <div class="bg-cyber-800/60 p-2.5 rounded-xl border border-slate-700/40 flex justify-between items-center">
+                        <span class="text-slate-400">Prism Quad Bisectors:</span>
+                        <span id="card-quads" class="text-sky-400 font-bold">0</span>
+                    </div>
+                    <div class="bg-cyber-800/60 p-2.5 rounded-xl border border-slate-700/40 flex justify-between items-center">
+                        <span class="text-slate-400">Center of Mass Align:</span>
+                        <span id="card-com" class="text-cyber-cyan font-mono text-[10px]">(0.00, 0.00, 0.00)</span>
+                    </div>
+                </div>
+
+                <div class="mt-2 pt-2 border-t border-slate-700/50">
+                    <p class="text-[10px] text-slate-400 leading-relaxed">
+                        The hypercube lattice maps cryptographic primitives across 6 dimensional axes, mirroring Sephirothic tree nodes with fractal subdivision depths.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Right Panel: Control Matrix & Parameters -->
+            <div class="w-full lg:w-80 bg-cyber-900/85 backdrop-blur-xl border border-cyber-emerald/30 p-4 rounded-2xl shadow-2xl pointer-events-auto flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-cyber-emerald/20 pb-2">
+                    <h2 class="text-sm font-bold text-cyber-emerald glow-emerald tracking-wider">LATTICE CONTROL MATRIX</h2>
+                    <span class="text-[10px] bg-cyber-emerald/20 text-cyber-emerald px-2 py-0.5 rounded">REAL-TIME</span>
+                </div>
+
+                <div class="space-y-3 text-xs">
+                    <!-- Depth Slider -->
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-slate-300">Recursion Depth (0-4):</span>
+                            <span id="val-depth" class="text-cyber-cyan font-bold">3</span>
+                        </div>
+                        <input id="range-depth" type="range" min="0" max="4" value="3" class="w-full accent-cyber-cyan cursor-pointer">
+                    </div>
+
+                    <!-- Size Multiplier -->
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-slate-300">Lattice Scale:</span>
+                            <span id="val-scale" class="text-cyber-cyan font-bold">2.5</span>
+                        </div>
+                        <input id="range-scale" type="range" min="1.0" max="4.0" step="0.1" value="2.5" class="w-full accent-cyber-cyan cursor-pointer">
+                    </div>
+
+                    <!-- Layer Toggles -->
+                    <div class="pt-2 border-t border-slate-700/50 space-y-2">
+                        <span class="text-slate-400 block font-bold mb-1">VISUALIZATION LAYERS</span>
+                        <label class="flex items-center justify-between cursor-pointer bg-cyber-800/40 p-2 rounded-lg border border-slate-700/30 hover:bg-cyber-800/80 transition">
+                            <span class="text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-cyber-cyan"></span> Prismatic Edge Lines</span>
+                            <input id="toggle-lines" type="checkbox" checked class="accent-cyber-cyan w-4 h-4 cursor-pointer">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer bg-cyber-800/40 p-2 rounded-lg border border-slate-700/30 hover:bg-cyber-800/80 transition">
+                            <span class="text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-cyber-purple"></span> Gem Facets (Translucent)</span>
+                            <input id="toggle-facets" type="checkbox" checked class="accent-cyber-purple w-4 h-4 cursor-pointer">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer bg-cyber-800/40 p-2 rounded-lg border border-slate-700/30 hover:bg-cyber-800/80 transition">
+                            <span class="text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-amber-400"></span> Vertex Gems (6-Axis)</span>
+                            <input id="toggle-gems" type="checkbox" checked class="accent-amber-400 w-4 h-4 cursor-pointer">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer bg-cyber-800/40 p-2 rounded-lg border border-slate-700/30 hover:bg-cyber-800/80 transition">
+                            <span class="text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-cyber-pink"></span> Rose Face Centroids</span>
+                            <input id="toggle-faces" type="checkbox" checked class="accent-cyber-pink w-4 h-4 cursor-pointer">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer bg-cyber-800/40 p-2 rounded-lg border border-slate-700/30 hover:bg-cyber-800/80 transition">
+                            <span class="text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-cyber-emerald"></span> Emerald Edge Midpoints</span>
+                            <input id="toggle-edges" type="checkbox" checked class="accent-cyber-emerald w-4 h-4 cursor-pointer">
+                        </label>
+                        <label class="flex items-center justify-between cursor-pointer bg-cyber-800/40 p-2 rounded-lg border border-slate-700/30 hover:bg-cyber-800/80 transition">
+                            <span class="text-slate-300 flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-sky-400"></span> 4-Quadrant Prism Bisectors</span>
+                            <input id="toggle-quads" type="checkbox" checked class="accent-sky-400 w-4 h-4 cursor-pointer">
+                        </label>
+                    </div>
+
+                    <!-- Reset Camera Button -->
+                    <button id="btn-reset-view" class="w-full mt-2 bg-cyber-cyan/10 hover:bg-cyber-cyan/20 border border-cyber-cyan/40 text-cyber-cyan py-2 rounded-xl transition font-bold tracking-wider">
+                        RECENTER DRONE ALIGNMENT
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Footer Navigation / Info -->
+        <footer class="bg-cyber-900/80 backdrop-blur-xl border border-slate-700/50 px-4 py-3 rounded-2xl shadow-2xl flex flex-col sm:flex-row justify-between items-center gap-2 text-xs pointer-events-auto">
+            <div class="text-slate-400 flex items-center gap-2">
+                <span class="inline-block w-2 h-2 rounded-full bg-cyber-emerald"></span>
+                <span>WSAD: 3D Drone Flight (Q/E: Elev) | Arrow Keys / Drag: 360° Gimbal Look | Scroll: Thrust</span>
+            </div>
+            <div id="drone-telemetry" class="text-slate-400 font-mono">
+                POS: (0.0, 0.0, 6.5) | YAW: 0° PITCH: 0°
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- WebGL Rendering & Application Script -->
+    <script>
+        const canvas = document.getElementById('webgl-canvas');
+        const gl = canvas.getContext('webgl');
+
+        if (!gl) {
+            console.error('WebGL not supported');
+            document.body.innerHTML = '<div style="color: white; font-family: monospace; padding: 40px; text-align: center;">WebGL is not supported in this browser environment.</div>';
+        }
+
+        // --- Vector3 Class Polyfill ---
+        class Vector3 {
+            constructor(x = 0, y = 0, z = 0) {
+                this.x = x;
+                this.y = y;
+                this.z = z;
+            }
+            clone() {
+                return new Vector3(this.x, this.y, this.z);
+            }
+            add(v) {
+                this.x += v.x;
+                this.y += v.y;
+                this.z += v.z;
+                return this;
+            }
+            multiplyScalar(s) {
+                this.x *= s;
+                this.y *= s;
+                this.z *= s;
+                return this;
+            }
+            divideScalar(s) {
+                this.x /= s;
+                this.y /= s;
+                this.z /= s;
+                return this;
+            }
+            dot(v) {
+                return this.x * v.x + this.y * v.y + this.z * v.z;
+            }
+        }
+
+        // --- Application State ---
+        let currentDepth = 3;
+        let currentScale = 2.5;
+        let autoRotate = false; // Frozen orbit by default
+        let showLines = true;
+        let showFacets = true;
+        let showGems = true;
+        let showFaces = true;
+        let showEdges = true;
+        let showQuads = true;
+
+        // --- Data Repositories ---
+        let sierpinskiLinePositions = [];
+        let sierpinskiLineColors = [];
+        let fractalFacetPositions = [];
+        let fractalFacetColors = [];
+        let fractalVertexGems = [];
+        let fractalFaceCenters = []; 
+        let fractalEdgePoints = [];  
+        let prismQuadLinePositions = [];
+        let prismQuadLineColors = [];
+        let prismQuadFacetPositions = [];
+        let prismQuadFacetColors = [];
+
+        // --- Core Fractal Generator (With Gems, Facets, Midpoints & Colored Edges) ---
+        function buildSixSierpinski(center, size, depth) {
+            const baseAxes = [
+                new Vector3(1, 0, 0), new Vector3(-1, 0, 0),
+                new Vector3(0, 1, 0), new Vector3(0, -1, 0),
+                new Vector3(0, 0, 1), new Vector3(0, 0, -1)
+            ];
+
+            // Axis-aligned chromatic palette for edges & facets
+            const axisColors = [
+                [0.02, 0.71, 0.83], // +X Cyan
+                [0.22, 0.74, 0.97], // -X Sky
+                [0.96, 0.25, 0.37], // +Y Rose
+                [0.98, 0.45, 0.09], // -Y Amber
+                [0.06, 0.73, 0.51], // +Z Emerald
+                [0.55, 0.36, 0.96]  // -Z Violet
+            ];
+
+            if (depth === 0) {
+                const localVertices = baseAxes.map(axis => axis.clone().multiplyScalar(size).add(center));
+
+                // 1. Collect Vertex Gems (6 octahedral apex nodes per cell)
+                localVertices.forEach(v => {
+                    fractalVertexGems.push(v.x, v.y, v.z);
+                });
+
+                // 2. Collect Prismatic Colored Edge Lines
+                for (let i = 0; i < baseAxes.length; i++) {
+                    for (let j = i + 1; j < baseAxes.length; j++) {
+                        if (baseAxes[i].dot(baseAxes[j]) === 0) {
+                            sierpinskiLinePositions.push(localVertices[i].x, localVertices[i].y, localVertices[i].z);
+                            sierpinskiLinePositions.push(localVertices[j].x, localVertices[j].y, localVertices[j].z);
+
+                            const c1 = axisColors[i];
+                            const c2 = axisColors[j];
+                            sierpinskiLineColors.push(c1[0], c1[1], c1[2], 0.85);
+                            sierpinskiLineColors.push(c2[0], c2[1], c2[2], 0.85);
+                        }
+                    }
+                }
+
+                // 3. Collect Triangular Gem Facets & Face Centroids
+                const triangularFaceCombinations = [
+                    [0, 2, 4], [0, 2, 5], [0, 3, 4], [0, 3, 5], 
+                    [1, 2, 4], [1, 2, 5], [1, 3, 4], [1, 3, 5]  
+                ];
+
+                triangularFaceCombinations.forEach((combination, idx) => {
+                    const v0 = localVertices[combination[0]];
+                    const v1 = localVertices[combination[1]];
+                    const v2 = localVertices[combination[2]];
+
+                    // Push triangle vertices for solid gem facet rendering
+                    fractalFacetPositions.push(v0.x, v0.y, v0.z, v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
+
+                    const fc = axisColors[idx % axisColors.length];
+                    fractalFacetColors.push(
+                        fc[0], fc[1], fc[2], 0.16,
+                        fc[0], fc[1], fc[2], 0.16,
+                        fc[0], fc[1], fc[2], 0.16
+                    );
+
+                    const centroid = new Vector3()
+                        .add(v0)
+                        .add(v1)
+                        .add(v2)
+                        .divideScalar(3);
+                    fractalFaceCenters.push(centroid.x, centroid.y, centroid.z);
+                });
+
+                // 4. Collect Edge Midpoints
+                const edgeCombinations = [
+                    [0, 2], [0, 3], [0, 4], [0, 5],
+                    [1, 2], [1, 3], [1, 4], [1, 5],
+                    [2, 4], [2, 5], [3, 4], [3, 5]
+                ];
+
+                edgeCombinations.forEach(edge => {
+                    const midpoint = new Vector3()
+                        .add(localVertices[edge[0]])
+                        .add(localVertices[edge[1]])
+                        .divideScalar(2);
+                    fractalEdgePoints.push(midpoint.x, midpoint.y, midpoint.z);
+                });
+
+                // 5. Bisect Each Prism into 4 Equal Quadrants (Center Base -> Vertical Axis -> Intersection Convergence Quad)
+                // localVertices indices: 0:+X, 1:-X, 2:+Y (top apex), 3:-Y (bottom apex), 4:+Z, 5:-Z
+                const vPosX = localVertices[0];
+                const vNegX = localVertices[1];
+                const vTopY = localVertices[2];
+                const vBotY = localVertices[3];
+                const vPosZ = localVertices[4];
+                const vNegZ = localVertices[5];
+
+                // Equatorial edge midpoints forming the 4-quadrant convergence crosshairs
+                const mXZ_pp = vPosX.clone().add(vPosZ).divideScalar(2); // Quadrant I (+X, +Z)
+                const mXZ_np = vNegX.clone().add(vPosZ).divideScalar(2); // Quadrant II (-X, +Z)
+                const mXZ_nn = vNegX.clone().add(vNegZ).divideScalar(2); // Quadrant III (-X, -Z)
+                const mXZ_pn = vPosX.clone().add(vNegZ).divideScalar(2); // Quadrant IV (+X, -Z)
+
+                // Vertical spine from center base origin to top/bottom apices + equatorial convergence quad crossbars
+                const bisectorSegments = [
+                    [center, vTopY], [center, vBotY],       // Center base vertical axis
+                    [center, vPosX], [center, vNegX],       // X-axis quadrant dividers
+                    [center, vPosZ], [center, vNegZ],       // Z-axis quadrant dividers
+                    [mXZ_pp, mXZ_nn], [mXZ_np, mXZ_pn],     // Diagonal convergence quad crosshairs
+                    [vTopY, mXZ_pp], [vTopY, mXZ_np], [vTopY, mXZ_nn], [vTopY, mXZ_pn], // Upper 4-quadrant ridge lines
+                    [vBotY, mXZ_pp], [vBotY, mXZ_np], [vBotY, mXZ_nn], [vBotY, mXZ_pn]  // Lower 4-quadrant ridge lines
+                ];
+
+                bisectorSegments.forEach(([pA, pB]) => {
+                    prismQuadLinePositions.push(pA.x, pA.y, pA.z, pB.x, pB.y, pB.z);
+                    prismQuadLineColors.push(
+                        0.22, 0.74, 0.97, 0.92,
+                        0.98, 0.75, 0.14, 0.92
+                    );
+                });
+
+                // Internal orthogonal quadrant-bisecting planes (X-Y plane and Z-Y plane through center vertical axis)
+                const quadPlanes = [
+                    [vPosX, vTopY, vNegX], [vPosX, vNegX, vBotY], // Vertical X-Y bisecting quad
+                    [vPosZ, vTopY, vNegZ], [vPosZ, vNegZ, vBotY]  // Vertical Z-Y bisecting quad
+                ];
+
+                quadPlanes.forEach(([a, b, c]) => {
+                    prismQuadFacetPositions.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+                    prismQuadFacetColors.push(
+                        0.22, 0.74, 0.97, 0.12,
+                        0.98, 0.75, 0.14, 0.12,
+                        0.22, 0.74, 0.97, 0.12
+                    );
+                });
+                return;
+            }
+
+            const nextSize = size * 0.5;
+            baseAxes.forEach(axis => {
+                buildSixSierpinski(axis.clone().multiplyScalar(size * 0.5).add(center), nextSize, depth - 1);
+            });
+        }
+
+        // --- Buffers & Data Initialization ---
+        let lineBuffer = null;
+        let lineColorBuffer = null;
+        let facetBuffer = null;
+        let facetColorBuffer = null;
+        let gemBuffer = null;
+        let faceBuffer = null;
+        let edgeBuffer = null;
+        let quadLineBuffer = null;
+        let quadLineColorBuffer = null;
+        let quadFacetBuffer = null;
+        let quadFacetColorBuffer = null;
+
+        function recenterCenterOfMass(positions) {
+            if (positions.length === 0) return { x: 0, y: 0, z: 0 };
+            let sx = 0, sy = 0, sz = 0;
+            const count = positions.length / 3;
+            for (let i = 0; i < positions.length; i += 3) {
+                sx += positions[i];
+                sy += positions[i + 1];
+                sz += positions[i + 2];
+            }
+            const cx = sx / count;
+            const cy = sy / count;
+            const cz = sz / count;
+            for (let i = 0; i < positions.length; i += 3) {
+                positions[i] -= cx;
+                positions[i + 1] -= cy;
+                positions[i + 2] -= cz;
+            }
+            return { x: cx, y: cy, z: cz };
+        }
+
+        function regenerateFractalData() {
+            sierpinskiLinePositions = [];
+            sierpinskiLineColors = [];
+            fractalFacetPositions = [];
+            fractalFacetColors = [];
+            fractalVertexGems = [];
+            fractalFaceCenters = [];
+            fractalEdgePoints = [];
+            prismQuadLinePositions = [];
+            prismQuadLineColors = [];
+            prismQuadFacetPositions = [];
+            prismQuadFacetColors = [];
+
+            buildSixSierpinski(new Vector3(0, 0, 0), currentScale, currentDepth);
+
+            // Recenter exact Center of Mass across all geometry arrays
+            const com = recenterCenterOfMass(fractalVertexGems);
+            recenterCenterOfMass(sierpinskiLinePositions);
+            recenterCenterOfMass(fractalFacetPositions);
+            recenterCenterOfMass(fractalFaceCenters);
+            recenterCenterOfMass(fractalEdgePoints);
+            recenterCenterOfMass(prismQuadLinePositions);
+            recenterCenterOfMass(prismQuadFacetPositions);
+
+            // Update cardinalities HUD
+            document.getElementById('card-depth').innerText = currentDepth;
+            document.getElementById('card-lines').innerText = (sierpinskiLinePositions.length / 6).toLocaleString();
+            document.getElementById('card-faces').innerText = (fractalFaceCenters.length / 3).toLocaleString();
+            document.getElementById('card-facets').innerText = (fractalFacetPositions.length / 9).toLocaleString();
+            document.getElementById('card-edges').innerText = (fractalEdgePoints.length / 3).toLocaleString();
+            document.getElementById('card-gems').innerText = (fractalVertexGems.length / 3).toLocaleString();
+            document.getElementById('card-quads').innerText = ((fractalVertexGems.length / 18) * 4).toLocaleString();
+            document.getElementById('card-com').innerText = `(${com.x.toFixed(2)}, ${com.y.toFixed(2)}, ${com.z.toFixed(2)})`;
+
+            // Re-bind WebGL buffers
+            if (lineBuffer) gl.deleteBuffer(lineBuffer);
+            if (lineColorBuffer) gl.deleteBuffer(lineColorBuffer);
+            if (facetBuffer) gl.deleteBuffer(facetBuffer);
+            if (facetColorBuffer) gl.deleteBuffer(facetColorBuffer);
+            if (gemBuffer) gl.deleteBuffer(gemBuffer);
+            if (faceBuffer) gl.deleteBuffer(faceBuffer);
+            if (edgeBuffer) gl.deleteBuffer(edgeBuffer);
+            if (quadLineBuffer) gl.deleteBuffer(quadLineBuffer);
+            if (quadLineColorBuffer) gl.deleteBuffer(quadLineColorBuffer);
+            if (quadFacetBuffer) gl.deleteBuffer(quadFacetBuffer);
+            if (quadFacetColorBuffer) gl.deleteBuffer(quadFacetColorBuffer);
+
+            lineBuffer = createStaticBuffer(gl, sierpinskiLinePositions);
+            lineColorBuffer = createStaticBuffer(gl, sierpinskiLineColors);
+            facetBuffer = createStaticBuffer(gl, fractalFacetPositions);
+            facetColorBuffer = createStaticBuffer(gl, fractalFacetColors);
+            gemBuffer = createStaticBuffer(gl, fractalVertexGems);
+            faceBuffer = createStaticBuffer(gl, fractalFaceCenters);
+            edgeBuffer = createStaticBuffer(gl, fractalEdgePoints);
+            quadLineBuffer = createStaticBuffer(gl, prismQuadLinePositions);
+            quadLineColorBuffer = createStaticBuffer(gl, prismQuadLineColors);
+            quadFacetBuffer = createStaticBuffer(gl, prismQuadFacetPositions);
+            quadFacetColorBuffer = createStaticBuffer(gl, prismQuadFacetColors);
+        }
+
+        // --- Shader Sources (Supports Per-Vertex Color + Uniform Fallback + Faceted Gems) ---
+        const vsSource = `
+            attribute vec3 aPosition;
+            attribute vec4 aColor;
+            uniform mat4 uMVP;
+            uniform float uPointSize;
+            uniform float uUseVertexColor;
+            uniform vec4 uUniformColor;
+            varying vec4 vColor;
+            void main() {
+                gl_Position = uMVP * vec4(aPosition, 1.0);
+                gl_PointSize = uPointSize;
+                vColor = mix(uUniformColor, aColor, uUseVertexColor);
+            }
+        `;
+
+        const fsSource = `
+            precision mediump float;
+            varying vec4 vColor;
+            uniform float uIsGemPoint;
+            void main() {
+                if (uIsGemPoint > 0.5) {
+                    // Render diamond-cut octahedral gem sparkle for point sprites
+                    vec2 coord = gl_PointCoord - vec2(0.5);
+                    float diamond = abs(coord.x) + abs(coord.y);
+                    if (diamond > 0.5) discard;
+                    float facetHighlight = 1.0 - (diamond * 1.4);
+                    gl_FragColor = vec4(vColor.rgb + vec3(0.25 * facetHighlight), vColor.a);
+                } else {
+                    gl_FragColor = vColor;
+                }
+            }
+        `;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error(gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vsSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error('Program link error:', gl.getProgramInfoLog(program));
+        }
+
+        gl.useProgram(program);
+
+        const aPosition = gl.getAttribLocation(program, 'aPosition');
+        const aColor = gl.getAttribLocation(program, 'aColor');
+        const uMVP = gl.getUniformLocation(program, 'uMVP');
+        const uPointSize = gl.getUniformLocation(program, 'uPointSize');
+        const uUseVertexColor = gl.getUniformLocation(program, 'uUseVertexColor');
+        const uUniformColor = gl.getUniformLocation(program, 'uUniformColor');
+        const uIsGemPoint = gl.getUniformLocation(program, 'uIsGemPoint');
+
+        function createStaticBuffer(gl, data) {
+            const buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
+            return buffer;
+        }
+
+        // Initialize dataset
+        regenerateFractalData();
+
+        // --- 3D Matrix & 360° Drone Camera Math ---
+        function getPerspectiveMatrix(fovy, aspect, near, far) {
+            const f = 1.0 / Math.tan(fovy / 2);
+            const nf = 1 / (near - far);
+            return [
+                f / aspect, 0, 0, 0,
+                0, f, 0, 0,
+                0, 0, (far + near) * nf, -1,
+                0, 0, (2 * far * near) * nf, 0
+            ];
+        }
+
+        function multiplyMatrices(a, b) {
+            const out = new Array(16);
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    let sum = 0;
+                    for (let i = 0; i < 4; i++) {
+                        sum += a[row * 4 + i] * b[i * 4 + col];
+                    }
+                    out[row * 4 + col] = sum;
+                }
+            }
+            return out;
+        }
+
+        // --- Drone Camera State (Aligned to Center of Mass at (0,0,0)) ---
+        const drone = {
+            x: 0.0,
+            y: 0.0,
+            z: 6.5,
+            yaw: 0.0,   // Full 360° horizontal look
+            pitch: 0.0, // Full 360° vertical look
+            roll: 0.0
+        };
+        let latticeSpinY = 0.0;
+        let isDragging = false;
+        let prevMouseX = 0;
+        let prevMouseY = 0;
+
+        // Keyboard state for WSAD + Arrow keys 360° traversal
+        const keys = {};
+        window.addEventListener('keydown', e => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+                e.preventDefault();
+            }
+            keys[e.code] = true;
+        });
+        window.addEventListener('keyup', e => {
+            keys[e.code] = false;
+        });
+
+        function resetDroneAlignment() {
+            // Align drone camera directly on the Z-axis looking dead-center at Center of Mass (0,0,0)
+            drone.x = 0.0;
+            drone.y = 0.0;
+            drone.z = currentScale * 2.6;
+            drone.yaw = 0.0;
+            drone.pitch = 0.0;
+            drone.roll = 0.0;
+            latticeSpinY = 0.0;
+        }
+        resetDroneAlignment();
+
+        function buildDroneViewMatrix() {
+            // World-to-Camera transformation: Translate(-pos) -> RotateY(-yaw) -> RotateX(-pitch) -> RotateZ(-roll)
+            const cy = Math.cos(-drone.yaw), sy = Math.sin(-drone.yaw);
+            const cp = Math.cos(-drone.pitch), sp = Math.sin(-drone.pitch);
+            const cr = Math.cos(-drone.roll), sr = Math.sin(-drone.roll);
+
+            // Column-major matrices for WebGL
+            const trans = [
+                1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                -drone.x, -drone.y, -drone.z, 1
+            ];
+            const rotY = [
+                cy, 0, -sy, 0,
+                0, 1, 0, 0,
+                sy, 0, cy, 0,
+                0, 0, 0, 1
+            ];
+            const rotX = [
+                1, 0, 0, 0,
+                0, cp, sp, 0,
+                0, -sp, cp, 0,
+                0, 0, 0, 1
+            ];
+            const rotZ = [
+                cr, sr, 0, 0,
+                -sr, cr, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1
+            ];
+
+            // Note: multiplyMatrices uses row-major indexing, so transpose order matches standard right-to-left vector multiplication
+            let view = multiplyMatrices(trans, rotY);
+            view = multiplyMatrices(view, rotX);
+            view = multiplyMatrices(view, rotZ);
+            return view;
+        }
+
+        function updateDroneControls(dt) {
+            const moveSpeed = 4.5 * dt;
+            const lookSpeed = 1.8 * dt;
+
+            // Arrow Keys: 360-degree Gimbal Look (Pitch & Yaw)
+            if (keys['ArrowLeft'])  drone.yaw += lookSpeed;
+            if (keys['ArrowRight']) drone.yaw -= lookSpeed;
+            if (keys['ArrowUp'])    drone.pitch += lookSpeed;
+            if (keys['ArrowDown'])  drone.pitch -= lookSpeed;
+
+            // Full 360-degree forward, right, and up basis vectors from current yaw & pitch
+            const forwardX = -Math.sin(drone.yaw) * Math.cos(drone.pitch);
+            const forwardY = Math.sin(drone.pitch);
+            const forwardZ = -Math.cos(drone.yaw) * Math.cos(drone.pitch);
+
+            const rightX = Math.cos(drone.yaw);
+            const rightZ = -Math.sin(drone.yaw);
+
+            // WSAD Traversal: Forward, Backward, Strafe Left, Strafe Right
+            if (keys['KeyW']) {
+                drone.x += forwardX * moveSpeed;
+                drone.y += forwardY * moveSpeed;
+                drone.z += forwardZ * moveSpeed;
+            }
+            if (keys['KeyS']) {
+                drone.x -= forwardX * moveSpeed;
+                drone.y -= forwardY * moveSpeed;
+                drone.z -= forwardZ * moveSpeed;
+            }
+            if (keys['KeyA']) {
+                drone.x -= rightX * moveSpeed;
+                drone.z -= rightZ * moveSpeed;
+            }
+            if (keys['KeyD']) {
+                drone.x += rightX * moveSpeed;
+                drone.z += rightZ * moveSpeed;
+            }
+            // Elevation / Vertical Drone Thrusters (Q / E or Space / Shift)
+            if (keys['KeyE'] || keys['Space']) {
+                drone.y += moveSpeed;
+            }
+            if (keys['KeyQ'] || keys['ShiftLeft'] || keys['ShiftRight']) {
+                drone.y -= moveSpeed;
+            }
+            // Instant Center-of-Mass Look-At Alignment (Key C)
+            if (keys['KeyC']) {
+                const dx = -drone.x;
+                const dy = -drone.y;
+                const dz = -drone.z;
+                const distXZ = Math.hypot(dx, dz);
+                drone.yaw = Math.atan2(-dx, -dz);
+                drone.pitch = Math.atan2(dy, distXZ);
+            }
+        }
+
+        // Mouse / Touch 360° Free-Look Gimbal
+        window.addEventListener('mousedown', e => {
+            if (e.target.closest('.pointer-events-auto')) return;
+            isDragging = true;
+            prevMouseX = e.clientX;
+            prevMouseY = e.clientY;
+        });
+
+        window.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            const deltaX = e.clientX - prevMouseX;
+            const deltaY = e.clientY - prevMouseY;
+            drone.yaw -= deltaX * 0.004;
+            drone.pitch -= deltaY * 0.004;
+            prevMouseX = e.clientX;
+            prevMouseY = e.clientY;
+        });
+
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        window.addEventListener('touchstart', e => {
+            if (e.target.closest('.pointer-events-auto')) return;
+            if (e.touches.length === 1) {
+                isDragging = true;
+                prevMouseX = e.touches[0].clientX;
+                prevMouseY = e.touches[0].clientY;
+            }
+        });
+
+        window.addEventListener('touchmove', e => {
+            if (!isDragging || e.touches.length !== 1) return;
+            const deltaX = e.touches[0].clientX - prevMouseX;
+            const deltaY = e.touches[0].clientY - prevMouseY;
+            drone.yaw -= deltaX * 0.004;
+            drone.pitch -= deltaY * 0.004;
+            prevMouseX = e.touches[0].clientX;
+            prevMouseY = e.touches[0].clientY;
+        });
+
+        window.addEventListener('touchend', () => isDragging = false);
+
+        // Scroll Wheel Forward/Backward Drone Thrust
+        window.addEventListener('wheel', e => {
+            if (e.target.closest('.pointer-events-auto')) return;
+            const thrust = -e.deltaY * 0.004;
+            const forwardX = -Math.sin(drone.yaw) * Math.cos(drone.pitch);
+            const forwardY = Math.sin(drone.pitch);
+            const forwardZ = -Math.cos(drone.yaw) * Math.cos(drone.pitch);
+            drone.x += forwardX * thrust;
+            drone.y += forwardY * thrust;
+            drone.z += forwardZ * thrust;
+        });
+
+        // --- Viewport Resize Handler ---
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // --- UI Event Listeners ---
+        const rangeDepth = document.getElementById('range-depth');
+        const valDepth = document.getElementById('val-depth');
+        rangeDepth.addEventListener('input', (e) => {
+            currentDepth = parseInt(e.target.value);
+            valDepth.innerText = currentDepth;
+            regenerateFractalData();
+        });
+
+        const rangeScale = document.getElementById('range-scale');
+        const valScale = document.getElementById('val-scale');
+        rangeScale.addEventListener('input', (e) => {
+            currentScale = parseFloat(e.target.value);
+            valScale.innerText = currentScale.toFixed(1);
+            regenerateFractalData();
+        });
+
+        const btnAutorotate = document.getElementById('toggle-autorotate');
+        btnAutorotate.addEventListener('click', () => {
+            autoRotate = !autoRotate;
+            btnAutorotate.innerText = autoRotate ? 'ORBIT: ACTIVE' : 'ORBIT: FROZEN';
+            btnAutorotate.classList.toggle('bg-cyber-cyan/30', autoRotate);
+            btnAutorotate.classList.toggle('bg-slate-800', !autoRotate);
+        });
+
+        document.getElementById('toggle-lines').addEventListener('change', (e) => { showLines = e.target.checked; });
+        document.getElementById('toggle-facets').addEventListener('change', (e) => { showFacets = e.target.checked; });
+        document.getElementById('toggle-gems').addEventListener('change', (e) => { showGems = e.target.checked; });
+        document.getElementById('toggle-faces').addEventListener('change', (e) => { showFaces = e.target.checked; });
+        document.getElementById('toggle-edges').addEventListener('change', (e) => { showEdges = e.target.checked; });
+        document.getElementById('toggle-quads').addEventListener('change', (e) => { showQuads = e.target.checked; });
+
+        document.getElementById('btn-reset-view').addEventListener('click', () => {
+            resetDroneAlignment();
+        });
+
+        // --- Double-Click Header to Clear UI / Double-Click Screen to Restore ---
+        const uiOverlay = document.getElementById('ui-overlay');
+        const hudHeader = document.getElementById('hud-header');
+        let isUiHidden = false;
+
+        hudHeader.addEventListener('dblclick', (e) => {
+            if (e.target.closest('button')) return;
+            e.stopPropagation();
+            isUiHidden = true;
+            uiOverlay.classList.add('opacity-0');
+            hudHeader.classList.remove('pointer-events-auto');
+            uiOverlay.querySelectorAll('.pointer-events-auto').forEach(el => {
+                el.dataset.wasInteractive = 'true';
+                el.classList.remove('pointer-events-auto');
+            });
+        });
+
+        window.addEventListener('dblclick', () => {
+            if (!isUiHidden) return;
+            isUiHidden = false;
+            uiOverlay.classList.remove('opacity-0');
+            uiOverlay.querySelectorAll('[data-was-interactive="true"]').forEach(el => {
+                el.classList.add('pointer-events-auto');
+                delete el.dataset.wasInteractive;
+            });
+        });
+
+        // --- Render Loop ---
+        let lastTime = 0;
+        let frameCount = 0;
+        let lastFpsUpdate = 0;
+
+        function render(time) {
+            time *= 0.001; // convert to seconds
+            const deltaTime = Math.min(0.05, time - lastTime);
+            lastTime = time;
+
+            // Update WSAD + Arrow Key Drone Traversal
+            updateDroneControls(deltaTime);
+
+            // FPS Counter & Telemetry update
+            frameCount++;
+            if (time - lastFpsUpdate >= 1.0) {
+                document.getElementById('fps-counter').innerText = frameCount;
+                frameCount = 0;
+                lastFpsUpdate = time;
+            }
+
+            const degYaw = Math.round(((drone.yaw * 180 / Math.PI) % 360 + 360) % 360);
+            const degPitch = Math.round(((drone.pitch * 180 / Math.PI) % 360 + 360) % 360);
+            document.getElementById('drone-telemetry').innerText =
+                `POS: (${drone.x.toFixed(1)}, ${drone.y.toFixed(1)}, ${drone.z.toFixed(1)}) | YAW: ${degYaw}° PITCH: ${degPitch}°`;
+
+            // Orbit remains frozen unless explicitly enabled
+            if (autoRotate) {
+                latticeSpinY += deltaTime * 0.25;
+            }
+
+            // Clear screen
+            gl.clearColor(0.011, 0.027, 0.071, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+            gl.enable(gl.DEPTH_TEST);
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+            // Setup Matrices (Center-of-Mass Model Matrix + 360° Drone View Matrix)
+            const aspect = gl.canvas.width / gl.canvas.height;
+            const projection = getPerspectiveMatrix(45 * Math.PI / 180, aspect, 0.05, 200);
+
+            const cosM = Math.cos(latticeSpinY);
+            const sinM = Math.sin(latticeSpinY);
+            const modelMatrix = [
+                cosM, 0, sinM, 0,
+                0, 1, 0, 0,
+                -sinM, 0, cosM, 0,
+                0, 0, 0, 1
+            ];
+
+            const viewMatrix = buildDroneViewMatrix();
+            const modelView = multiplyMatrices(modelMatrix, viewMatrix);
+            const mvp = multiplyMatrices(modelView, projection);
+
+            gl.uniformMatrix4fv(uMVP, false, new Float32Array(mvp));
+            gl.enableVertexAttribArray(aPosition);
+
+            // 1. Draw Translucent Gem Facets (8 Triangular Facets per Octahedral Cell)
+            if (showFacets && facetBuffer && facetColorBuffer) {
+                gl.depthMask(false);
+                gl.bindBuffer(gl.ARRAY_BUFFER, facetBuffer);
+                gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
+
+                gl.enableVertexAttribArray(aColor);
+                gl.bindBuffer(gl.ARRAY_BUFFER, facetColorBuffer);
+                gl.vertexAttribPointer(aColor, 4, gl.FLOAT, false, 0, 0);
+
+                gl.uniform1f(uUseVertexColor, 1.0);
+                gl.uniform1f(uIsGemPoint, 0.0);
+                gl.drawArrays(gl.TRIANGLES, 0, fractalFacetPositions.length / 3);
+                gl.depthMask(true);
+            }
+
+            // 2. Draw Prismatic Colored Edge Lines
+            if (showLines && lineBuffer && lineColorBuffer) {
+                gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
+                gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
+
+                gl.enableVertexAttribArray(aColor);
+                gl.bindBuffer(gl.ARRAY_BUFFER, lineColorBuffer);
+                gl.vertexAttribPointer(aColor, 4, gl.FLOAT, false, 0, 0);
+
+                gl.uniform1f(uUseVertexColor, 1.0);
+                gl.uniform1f(uIsGemPoint, 0.0);
+                gl.drawArrays(gl.LINES, 0, sierpinskiLinePositions.length / 3);
+            }
+
+            // 2b. Draw 4-Quadrant Prism Bisecting Planes & Center-to-Apex Convergence Quad Lines
+            if (showQuads && quadFacetBuffer && quadLineBuffer) {
+                gl.depthMask(false);
+                gl.bindBuffer(gl.ARRAY_BUFFER, quadFacetBuffer);
+                gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
+
+                gl.enableVertexAttribArray(aColor);
+                gl.bindBuffer(gl.ARRAY_BUFFER, quadFacetColorBuffer);
+                gl.vertexAttribPointer(aColor, 4, gl.FLOAT, false, 0, 0);
+
+                gl.uniform1f(uUseVertexColor, 1.0);
+                gl.uniform1f(uIsGemPoint, 0.0);
+                gl.drawArrays(gl.TRIANGLES, 0, prismQuadFacetPositions.length / 3);
+                gl.depthMask(true);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, quadLineBuffer);
+                gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
+
+                gl.bindBuffer(gl.ARRAY_BUFFER, quadLineColorBuffer);
+                gl.vertexAttribPointer(aColor, 4, gl.FLOAT, false, 0, 0);
+
+                gl.drawArrays(gl.LINES, 0, prismQuadLinePositions.length / 3);
+            }
+
+            // Disable vertex color attribute for uniform-colored gem/midpoint layers
+            gl.disableVertexAttribArray(aColor);
+            gl.uniform1f(uUseVertexColor, 0.0);
+
+            // 3. Draw Vertex Gems (6-Axis Apex Diamond Nodes)
+            if (showGems && gemBuffer) {
+                gl.bindBuffer(gl.ARRAY_BUFFER, gemBuffer);
+                gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
+                gl.uniform1f(uPointSize, 6.5);
+                gl.uniform1f(uIsGemPoint, 1.0);
+                gl.uniform4f(uUniformColor, 0.98, 0.75, 0.14, 0.98); // Luminous Gold Gems
+                gl.drawArrays(gl.POINTS, 0, fractalVertexGems.length / 3);
+            }
+
+            // 4. Draw Face Centers (Rose Diamond Nodes)
+            if (showFaces && faceBuffer) {
+                gl.bindBuffer(gl.ARRAY_BUFFER, faceBuffer);
+                gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
+                gl.uniform1f(uPointSize, 4.5);
+                gl.uniform1f(uIsGemPoint, 1.0);
+                gl.uniform4f(uUniformColor, 0.96, 0.25, 0.37, 0.95); // Rose Face Centroids
+                gl.drawArrays(gl.POINTS, 0, fractalFaceCenters.length / 3);
+            }
+
+            // 5. Draw Edge Midpoints (Emerald Diamond Nodes)
+            if (showEdges && edgeBuffer) {
+                gl.bindBuffer(gl.ARRAY_BUFFER, edgeBuffer);
+                gl.vertexAttribPointer(aPosition, 3, gl.FLOAT, false, 0, 0);
+                gl.uniform1f(uPointSize, 4.5);
+                gl.uniform1f(uIsGemPoint, 1.0);
+                gl.uniform4f(uUniformColor, 0.06, 0.73, 0.51, 0.95); // Emerald Edge Midpoints
+                gl.drawArrays(gl.POINTS, 0, fractalEdgePoints.length / 3);
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        requestAnimationFrame(render);
+    </script>
+</body>
+</html>
